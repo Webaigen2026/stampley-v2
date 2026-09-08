@@ -1,0 +1,264 @@
+// AIDES-T2D / Stampley — Prisma 7.10 schema for a new Neon PostgreSQL database.
+// Source of truth: lib/schema.sql, migrations/, and live queries.
+// Do not point this at the old AWS RDS instance.
+
+generator client {
+  provider        = "prisma-client"
+  output          = "../lib/generated/prisma"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  extensions = [pgcrypto]
+}
+
+enum UserRole {
+  ADMIN
+  PARTICIPANT
+
+  @@map("user_role")
+}
+
+model User {
+  id        String    @id @default(dbgenerated("gen_random_uuid()::text"))
+  email     String    @unique
+  password  String
+  role      UserRole  @default(PARTICIPANT)
+  studyId   String?   @unique @map("study_id")
+  createdAt DateTime? @default(now()) @map("created_at") @db.Timestamp(6)
+
+  checkInSubmissions   CheckInSubmission[]
+  stampleyChatSessions StampleyChatSession[]
+  reflections          Reflection[]
+  passwordResetTokens  PasswordResetToken[]
+  ddsResponse          DdsResponse?
+  weeklyDomains        UserWeeklyDomain[]
+  studyProgress        UserStudyProgress?
+  postSurveyResponse   PostSurveyResponse?
+  preSurveyResponse    PreSurveyResponse?
+
+  @@map("users")
+}
+
+model StudyKey {
+  id        String    @id @default(dbgenerated("gen_random_uuid()::text"))
+  key       String    @unique
+  isUsed    Boolean?  @default(false) @map("is_used")
+  createdBy String?   @map("created_by")
+  createdAt DateTime? @default(now()) @map("created_at") @db.Timestamp(6)
+
+  @@map("study_keys")
+}
+
+model CheckInSubmission {
+  id                          String    @id @default(dbgenerated("gen_random_uuid()::text"))
+  userId                      String    @map("user_id")
+  domain                      String
+  subscale                    String
+  distress                    Int
+  mood                        Int?
+  energy                      Int?
+  reflection                  String?
+  copingAction                String?   @map("coping_action")
+  contextTags                 Json?     @default(dbgenerated("'[]'::jsonb")) @map("context_tags") @db.JsonB
+  needsSafetyEscalation       Boolean?  @default(false) @map("needs_safety_escalation")
+  consecutiveHighDistressDays Int?      @default(0) @map("consecutive_high_distress_days")
+  weekNumber                  Int?      @default(1) @map("week_number")
+  dayNumber                   Int?      @default(1) @map("day_number")
+  checkInDate                 DateTime? @default(dbgenerated("CURRENT_DATE")) @map("check_in_date") @db.Date
+  createdAt                   DateTime? @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt                   DateTime? @default(now()) @map("updated_at") @db.Timestamp(6)
+
+  user                 User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  stampleyChatSessions StampleyChatSession[]
+
+  @@unique([userId, checkInDate], map: "check_in_submissions_user_id_check_in_date_key")
+  @@map("check_in_submissions")
+}
+
+model StampleyChatSession {
+  id                    String    @id @default(dbgenerated("gen_random_uuid()::text"))
+  userId                String    @map("user_id")
+  checkInSubmissionId   String?   @map("check_in_submission_id")
+  domain                String?
+  stressLevel           Int?      @map("stress_level")
+  mood                  Int?
+  energy                Int?
+  userMessageCount      Int?      @default(0) @map("user_message_count")
+  assistantMessageCount Int?      @default(0) @map("assistant_message_count")
+  summary               String?
+  messages              Json?     @default(dbgenerated("'[]'::jsonb")) @db.JsonB
+  createdAt             DateTime? @default(now()) @map("created_at") @db.Timestamp(6)
+
+  user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  checkInSubmission CheckInSubmission? @relation(fields: [checkInSubmissionId], references: [id], onDelete: SetNull)
+
+  @@index([userId], map: "idx_stampley_chat_sessions_user_id")
+  @@index([createdAt], map: "idx_stampley_chat_sessions_created_at")
+  @@index([checkInSubmissionId], map: "idx_stampley_chat_sessions_check_in_submission_id")
+  @@map("stampley_chat_sessions")
+}
+
+model Reflection {
+  id        String    @id @default(dbgenerated("gen_random_uuid()::text"))
+  userId    String    @map("user_id")
+  content   String
+  createdAt DateTime? @default(now()) @map("created_at") @db.Timestamp(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("reflections")
+}
+
+model PasswordResetToken {
+  id        String    @id @default(dbgenerated("gen_random_uuid()::text"))
+  userId    String    @map("user_id")
+  tokenHash String    @unique @map("token_hash")
+  expiresAt DateTime  @map("expires_at") @db.Timestamp(6)
+  createdAt DateTime? @default(now()) @map("created_at") @db.Timestamp(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("password_reset_tokens")
+}
+
+model DdsResponse {
+  id                 String    @id @default(dbgenerated("gen_random_uuid()::text"))
+  userId             String    @unique @map("user_id")
+  q1                 Int?
+  q2                 Int?
+  q3                 Int?
+  q4                 Int?
+  q5                 Int?
+  q6                 Int?
+  q7                 Int?
+  q8                 Int?
+  q9                 Int?
+  q10                Int?
+  q11                Int?
+  q12                Int?
+  q13                Int?
+  q14                Int?
+  q15                Int?
+  q16                Int?
+  q17                Int?
+  emotionalScore     Decimal?  @map("emotional_score") @db.Decimal
+  physicianScore     Decimal?  @map("physician_score") @db.Decimal
+  regimenScore       Decimal?  @map("regimen_score") @db.Decimal
+  interpersonalScore Decimal?  @map("interpersonal_score") @db.Decimal
+  totalScore         Decimal?  @map("total_score") @db.Decimal
+  recommendedDomain  String?   @map("recommended_domain")
+  confirmedDomain    String?   @map("confirmed_domain")
+  createdAt          DateTime? @default(now()) @map("created_at") @db.Timestamp(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("dds_responses")
+}
+
+model UserWeeklyDomain {
+  id         String    @id @default(dbgenerated("gen_random_uuid()::text"))
+  userId     String    @map("user_id")
+  weekNumber Int       @map("week_number")
+  domain     String
+  startedAt  DateTime? @default(now()) @map("started_at") @db.Timestamp(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, weekNumber], map: "user_weekly_domains_user_id_week_number_key")
+  @@map("user_weekly_domains")
+}
+
+model UserStudyProgress {
+  id                          String    @id @default(dbgenerated("gen_random_uuid()::text"))
+  userId                      String    @unique @map("user_id")
+  studyStartDate              DateTime? @default(dbgenerated("CURRENT_DATE")) @map("study_start_date") @db.Date
+  currentWeek                 Int?      @default(1) @map("current_week")
+  totalCheckins               Int?      @default(0) @map("total_checkins")
+  lastCheckinDate             DateTime? @map("last_checkin_date") @db.Date
+  consecutiveHighDistressDays Int?      @default(0) @map("consecutive_high_distress_days")
+  updatedAt                   DateTime? @default(now()) @map("updated_at") @db.Timestamp(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_study_progress")
+}
+
+model PostSurveyResponse {
+  id                    String    @id @default(dbgenerated("gen_random_uuid()::text"))
+  userId                String    @unique @map("user_id")
+  ddsAnswers            Json?     @map("dds_answers") @db.JsonB
+  ddsScores             Json?     @map("dds_scores") @db.JsonB
+  phqAnswers            Json?     @map("phq_answers") @db.JsonB
+  phqTotal              Int?      @map("phq_total")
+  phqSeverity           String?   @map("phq_severity")
+  susAnswers            Json?     @map("sus_answers") @db.JsonB
+  susScore              Decimal?  @map("sus_score") @db.Decimal
+  stampleyFeedback      Json?     @map("stampley_feedback") @db.JsonB
+  openReflection        String?   @map("open_reflection")
+  futureResearchContact Boolean?  @map("future_research_contact")
+  contactName           String?   @map("contact_name")
+  contactEmail          String?   @map("contact_email")
+  contactPhone          String?   @map("contact_phone")
+  completedAt           DateTime? @map("completed_at") @db.Timestamp(6)
+  createdAt             DateTime? @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt             DateTime? @default(now()) @map("updated_at") @db.Timestamp(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("post_survey_responses")
+}
+
+/// Not in lib/schema.sql. Reconstructed from actions/pre-survey.ts and admin SELECTs.
+/// Array columns are TEXT[] because node-pg sends JS arrays and admin formatArray() expects arrays.
+model PreSurveyResponse {
+  id                        String    @id @default(dbgenerated("gen_random_uuid()::text"))
+  userId                    String    @unique @map("user_id")
+  consentStatus             String?   @map("consent_status")
+  diagnosisVerified         Boolean?  @map("diagnosis_verified")
+  diagnosisFileUrl          String?   @map("diagnosis_file_url")
+  diagnosisDuration         String?   @map("diagnosis_duration")
+  age                       Int?
+  gender                    String?
+  race                      String[]
+  ethnicity                 String?
+  maritalStatus             String?   @map("marital_status")
+  education                 String?
+  employmentStatus          String?   @map("employment_status")
+  householdIncome           String?   @map("household_income")
+  insuranceType             String?   @map("insurance_type")
+  medicalFormsConfidence   String?   @map("medical_forms_confidence")
+  readingHelpFrequency      String?   @map("reading_help_frequency")
+  diabetesDuration          String?   @map("diabetes_duration")
+  currentTreatments         String[]  @map("current_treatments")
+  attendedDiabetesClasses   Boolean?  @map("attended_diabetes_classes")
+  diabetesToolsUsed         String[]  @map("diabetes_tools_used")
+  overallHealthRating       String?   @map("overall_health_rating")
+  ownsSmartphone            Boolean?  @map("owns_smartphone")
+  internetUsage             String?   @map("internet_usage")
+  appComfort                String?   @map("app_comfort")
+  telehealthUsed            Boolean?  @map("telehealth_used")
+  mentalHealthAppsUsed      Boolean?  @map("mental_health_apps_used")
+  smartphoneAppComfort      Int?      @map("smartphone_app_comfort")
+  digitalHealthToolsUsed    Boolean?  @map("digital_health_tools_used")
+  voiceTechComfort          Int?      @map("voice_tech_comfort")
+  communicationPreference   String?   @map("communication_preference")
+  phq1                      Int?
+  phq2                      Int?
+  phq3                      Int?
+  phq4                      Int?
+  phq5                      Int?
+  phq6                      Int?
+  phq7                      Int?
+  phq8                      Int?
+  phq9                      Int?
+  phqTotal                  Int?      @map("phq_total")
+  phqSeverity               String?   @map("phq_severity")
+  needsMentalHealthFollowup Boolean?  @map("needs_mental_health_followup")
+  completedAt               DateTime? @map("completed_at") @db.Timestamp(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("pre_survey_responses")
+}

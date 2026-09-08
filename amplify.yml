@@ -1,0 +1,25 @@
+version: 1
+
+frontend:
+  phases:
+    preBuild:
+      commands:
+        # Install devDependencies (typescript, eslint, etc.) — plain npm ci omits them in production.
+        - npm ci --include=dev
+
+    build:
+      commands:
+        - rm -f .env.production
+        - env | grep -E '^(AUTH_SECRET|AUTH_TRUST_HOST|AUTH_URL|DATABASE_URL|EMAIL_FROM|RESEND_API_KEY|OPENAI_API_KEY|NODE_ENV|NEXTAUTH_SECRET|NEXTAUTH_URL)=' >> .env.production
+        - echo "Amplify env keys written to .env.production"
+        - cut -d= -f1 .env.production | sort -u
+        - npm run build
+
+  artifacts:
+    baseDirectory: .next
+    files:
+      - '**/*'
+
+  cache:
+    paths:
+      - node_modules/**/*
