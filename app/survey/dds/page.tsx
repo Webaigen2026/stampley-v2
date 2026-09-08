@@ -1,7 +1,6 @@
 import { auth } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import { prisma } from "@/lib/prisma"
-import { redirectIfUnenrolled } from "@/lib/study-enrollment"
 import DDSClient from "./dds-client"
 import Link from "next/link"
 import Image from "next/image"
@@ -12,8 +11,6 @@ export default async function Page() {
   if (!session?.user?.id) {
     redirect("/login")
   }
-
-  await redirectIfUnenrolled()
 
   const preSurvey = await prisma.preSurveyResponse.findUnique({
     where: { userId: session.user.id },

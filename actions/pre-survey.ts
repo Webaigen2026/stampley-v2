@@ -2,7 +2,6 @@
 
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { assertParticipantEnrolled } from "@/lib/study-enrollment";
 
 export async function submitPreSurvey(data: any) {
   const session = await auth();
@@ -10,8 +9,6 @@ export async function submitPreSurvey(data: any) {
   if (!session?.user?.id) {
     throw new Error("Unauthorized");
   }
-
-  await assertParticipantEnrolled(session.user.id, session.user.role);
 
   const phqTotal =
     Number(data.phq1) +

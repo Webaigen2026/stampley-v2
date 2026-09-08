@@ -4,7 +4,6 @@ export const dynamic = "force-dynamic"
 import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
-import { enrollmentForbiddenResponse } from "@/lib/study-enrollment"
 
 type DomainName = "Emotional" | "Regimen" | "Physician" | "Interpersonal"
 
@@ -37,8 +36,6 @@ export async function GET() {
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
-  const enrollmentError = await enrollmentForbiddenResponse(session)
-  if (enrollmentError) return enrollmentError
 
   try {
     const row = await prisma.ddsResponse.findUnique({

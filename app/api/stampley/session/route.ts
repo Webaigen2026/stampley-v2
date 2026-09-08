@@ -4,15 +4,12 @@ export const dynamic = "force-dynamic"
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
-import { enrollmentForbiddenResponse } from "@/lib/study-enrollment"
 
 export async function POST(req: NextRequest) {
   const session = await auth()
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
-  const enrollmentError = await enrollmentForbiddenResponse(session)
-  if (enrollmentError) return enrollmentError
 
   try {
     const body = await req.json()

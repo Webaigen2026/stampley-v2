@@ -1,7 +1,6 @@
 import { auth } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import { prisma } from "@/lib/prisma"
-import { redirectIfUnenrolled } from "@/lib/study-enrollment"
 import DomainConfirmation from "./domain-confirmation"
 
 const DOMAINS = [
@@ -85,8 +84,6 @@ export default async function DDSResultsPage() {
   if (!session?.user?.id) {
     redirect("/login")
   }
-
-  await redirectIfUnenrolled()
 
   const row = await prisma.ddsResponse.findUnique({
     where: { userId: session.user.id },

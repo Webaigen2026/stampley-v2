@@ -13,7 +13,6 @@ import {
 } from "@/lib/check-in-utils"
 import { resolveWeeklyDomainForUser } from "@/lib/resolve-weekly-domain"
 import { STUDY_DOMAINS } from "@/lib/weekly-domain-progress"
-import { enrollmentForbiddenResponse } from "@/lib/study-enrollment"
 
 const DUPLICATE_CHECK_IN_MESSAGE =
   "You have already completed today's check-in."
@@ -45,8 +44,6 @@ export async function POST(req: NextRequest) {
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
-  const enrollmentError = await enrollmentForbiddenResponse(session)
-  if (enrollmentError) return enrollmentError
 
   try {
     const body = await req.json()

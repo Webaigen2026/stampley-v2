@@ -1,6 +1,5 @@
 import { auth } from "@/lib/auth"
 import { redirect } from "next/navigation"
-import { isParticipantEnrolled } from "@/lib/study-enrollment"
 import Link from "next/link"
 import Image from "next/image"
 
@@ -13,8 +12,7 @@ export default async function EnrollmentPage() {
   }
 
   if (session.user.role === "PARTICIPANT") {
-    const enrolled = await isParticipantEnrolled(session.user.id)
-    if (enrolled) redirect("/dashboard")
+    redirect("/dashboard")
   }
 
   return (
