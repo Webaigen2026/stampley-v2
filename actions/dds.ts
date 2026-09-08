@@ -5,10 +5,16 @@ import { auth } from "@/lib/auth"
 import { revalidatePath } from "next/cache"
 import { calculateDDSScores, type DDSAnswers } from "@/lib/dds-scoring"
 import { Prisma } from "@/lib/generated/prisma/client"
+import { assertParticipantEnrolled } from "@/lib/study-enrollment"
 
 export async function submitDDS(formData: FormData) {
   const session = await auth()
   if (!session?.user?.id) return { error: "Unauthorized" }
+  try {
+    await assertParticipantEnrolled(session.user.id, session.user.role)
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : "Unauthorized" }
+  }
 
   try {
     const answers: DDSAnswers = {
@@ -83,6 +89,11 @@ export async function submitDDS(formData: FormData) {
 export async function confirmDomain(domain: string) {
   const session = await auth()
   if (!session?.user?.id) return { error: "Unauthorized" }
+  try {
+    await assertParticipantEnrolled(session.user.id, session.user.role)
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : "Unauthorized" }
+  }
 
   try {
     await prisma.$transaction(async (tx) => {

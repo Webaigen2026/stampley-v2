@@ -33,7 +33,7 @@ export default function RegisterPage() {
       setError(result.error)
       setLoading(false)
     } else {
-      router.push("/login?message=Account created! Please sign in.")
+      router.push("/register/verify")
     }
   }
 
@@ -289,8 +289,8 @@ export default function RegisterPage() {
       </h1>
 
       <p className="max-w-[390px] text-sm font-light leading-[1.75] text-white/[0.45]">
-        Your Study ID connects you to the program. Once registered,
-        you can access your account and continue with your participant experience.
+        Create an account with your email. A Study ID is optional and is required
+        only if you are joining the AIDES-T2D research study.
       </p>
     </div>
 
@@ -304,18 +304,18 @@ export default function RegisterPage() {
         {[
           {
             num: "01",
-            title: "Enter your Study ID",
-            desc: "Use the unique key provided by your research coordinator.",
+            title: "Create your account",
+            desc: "Enter your email and password. A Study ID is optional.",
           },
           {
             num: "02",
-            title: "Create your account",
-            desc: "Set your email and password to access your portal securely.",
+            title: "Verify your email",
+            desc: "We will send a 6-digit code that expires in 10 minutes.",
           },
           {
             num: "03",
             title: "Sign in and begin",
-            desc: "Once registered, return to login and access your account.",
+            desc: "After verification, return to login and access your account.",
           },
         ].map((step, i) => (
           <div
@@ -351,7 +351,7 @@ export default function RegisterPage() {
     }}
     >
       {[
-        { value: "ID", label: "Required" },
+        { value: "Email", label: "Verified" },
         { value: "SSL", label: "Protected" },
         { value: "100%", label: "Confidential" },
       ].map((badge, i) => (
@@ -402,14 +402,14 @@ export default function RegisterPage() {
                 className="mb-2 text-[36px] font-normal leading-[1.1] text-[#0a0a0f]"
                 style={{ letterSpacing: "-0.02em",     fontFamily: "'Inter', sans-serif", }}
               >
-                Join the study.
+                Join AIDES-T2D.
               </h2>
               <p className="text-[14px] font-light leading-[1.6] text-black"
               style  ={{
                 fontFamily: "'Inter', sans-serif",
               }}
               >
-                Enter your Study ID to create your account.
+                Verify your email to create your account. A Study ID is optional.
               </p>
             </div>
 
@@ -437,7 +437,7 @@ export default function RegisterPage() {
                   htmlFor="studyId"
                   className="f-mono text-[12px] uppercase tracking-[0.16em] text-black/70 select-none"
                 >
-                  Study ID
+                  Study ID <span className="normal-case tracking-normal text-black/40">(optional)</span>
                 </label>
                 <div className="input-group relative">
                   <svg
@@ -454,13 +454,12 @@ export default function RegisterPage() {
                     name="studyId"
                     type="text"
                     placeholder="AIDES-XXXXXX"
-                    required
                     disabled={loading}
                     className="styled-input f-mono w-full rounded-[10px] border border-black/[0.12] bg-white py-[13px] pl-[42px] pr-4 text-[13px] uppercase tracking-[0.1em] text-[#0a0a0f] outline-none transition-all duration-200 placeholder:text-black/30 placeholder:normal-case placeholder:tracking-normal focus:border-[#3d5a80] focus:bg-[#fefdfb] focus:shadow-[0_0_0_3.5px_rgba(61,90,128,0.12)] disabled:cursor-not-allowed disabled:opacity-40"
                   />
                 </div>
                 <p className="text-[12px] text-black font-light pl-1">
-                  Provided by your research coordinator
+                  Optional. Provided by your research coordinator to join the study.
                 </p>
               </div>
 
@@ -605,11 +604,11 @@ export default function RegisterPage() {
                   {loading ? (
                     <>
                       <span className="spinner inline-block h-3.5 w-3.5 rounded-full border-[1.5px] border-white/20 border-t-white" />
-                      <span className="text-[11px] tracking-[0.12em]">Creating account...</span>
+                      <span className="text-[11px] tracking-[0.12em]">Sending code...</span>
                     </>
                   ) : (
                     <>
-                      Create Account
+                      Continue
                       <svg
                         width="13"
                         height="13"

@@ -3,6 +3,7 @@ import Image from "next/image"
 import { auth } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import { getPostSurveyAccessStatus } from "@/lib/post-survey-access"
+import { redirectIfUnenrolled } from "@/lib/study-enrollment"
 
 export default async function PostSurveyResultsPage() {
   const session = await auth()
@@ -10,6 +11,8 @@ export default async function PostSurveyResultsPage() {
   if (!session?.user?.id) {
     redirect("/login")
   }
+
+  await redirectIfUnenrolled()
 
   const access = await getPostSurveyAccessStatus(session.user.id)
 

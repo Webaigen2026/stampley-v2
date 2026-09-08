@@ -2,11 +2,14 @@ import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { redirect } from "next/navigation"
 import { STUDY_TOTAL_CHECKINS } from "@/lib/check-in-utils"
+import { redirectIfUnenrolled } from "@/lib/study-enrollment"
 
 export async function redirectIfOnboardingIncomplete() {
   const session = await auth()
   if (!session?.user?.id) redirect("/login")
   if (session.user.role !== "PARTICIPANT") return
+
+  await redirectIfUnenrolled()
 
   const preSurvey = await prisma.preSurveyResponse.findUnique({
     where: { userId: session.user.id },

@@ -13,6 +13,7 @@ import {
 } from "@/lib/post-survey-scoring"
 import { getPostSurveyAccessStatus } from "@/lib/post-survey-access"
 import { redirect } from "next/navigation"
+import { assertParticipantEnrolled } from "@/lib/study-enrollment"
 
 function parseDdsAnswers(raw: Record<string, unknown>): DDSAnswers | null {
   const answers = {} as DDSAnswers
@@ -73,6 +74,8 @@ export async function submitPostSurvey(data: {
   if (!session?.user?.id) {
     throw new Error("Unauthorized")
   }
+
+  await assertParticipantEnrolled(session.user.id, session.user.role)
 
   const access = await getPostSurveyAccessStatus(session.user.id)
   if (!access.studyComplete) {

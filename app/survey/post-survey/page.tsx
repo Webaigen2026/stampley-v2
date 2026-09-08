@@ -1,6 +1,7 @@
 import { auth } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import { getPostSurveyAccessStatus } from "@/lib/post-survey-access"
+import { redirectIfUnenrolled } from "@/lib/study-enrollment"
 import PostSurveyClient from "./post-survey-client"
 
 export default async function PostSurveyPage() {
@@ -9,6 +10,8 @@ export default async function PostSurveyPage() {
   if (!session?.user?.id) {
     redirect("/login")
   }
+
+  await redirectIfUnenrolled()
 
   const access = await getPostSurveyAccessStatus(session.user.id)
 

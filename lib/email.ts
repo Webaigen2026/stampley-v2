@@ -194,3 +194,74 @@ export async function sendStudyKeyEmail({
 
   return { success: true }
 }
+
+export async function sendRegistrationVerificationEmail({
+  email,
+  code,
+}: {
+  email: string
+  code: string
+}) {
+  const { error } = await resend.emails.send({
+    from: process.env.EMAIL_FROM || "AIDES-T2D <onboarding@resend.dev>",
+    to: email,
+    subject: "Verify your email",
+    html: `
+      <!DOCTYPE html>
+      <html>
+        <body style="font-family: Arial, sans-serif; background-color: #f9fafb; margin: 0; padding: 40px 20px;">
+          <div style="max-width: 480px; margin: 0 auto; background: white; border-radius: 16px; padding: 40px; border: 1px solid #e5e7eb;">
+            
+            <div style="text-align: center; margin-bottom: 32px;">
+              <h1 style="font-size: 24px; font-weight: 700; color: #111827; margin: 0;">AIDES-T2D</h1>
+              <p style="color: #6b7280; font-size: 14px; margin-top: 4px;">
+                AI-Driven Emotional Support for Type 2 Diabetes
+              </p>
+            </div>
+
+            <hr style="border: none; border-top: 1px solid #e5e7eb; margin-bottom: 32px;">
+
+            <h2 style="font-size: 18px; font-weight: 600; color: #111827; margin: 0 0 12px 0;">
+              Verify your email
+            </h2>
+            <p style="color: #4b5563; font-size: 14px; line-height: 1.6; margin: 0 0 24px 0;">
+              Use this 6-digit code to finish creating your AIDES-T2D account.
+              This code expires in <strong>10 minutes</strong>.
+            </p>
+
+            <div style="background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px 20px; margin-bottom: 24px; text-align: center;">
+              <p style="font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 28px; font-weight: 700; color: #111827; margin: 0; letter-spacing: 0.24em;">
+                ${code}
+              </p>
+            </div>
+
+            <div style="background-color: #f9fafb; border-radius: 8px; padding: 16px; margin-bottom: 24px;">
+              <p style="color: #6b7280; font-size: 12px; margin: 0; line-height: 1.6;">
+                Do not share this code with anyone. If you did not request this, you can ignore this email.
+              </p>
+            </div>
+
+            <hr style="border: none; border-top: 1px solid #e5e7eb; margin-bottom: 24px;">
+
+            <div style="text-align: center;">
+              <p style="color: #9ca3af; font-size: 12px; margin: 0;">
+                AIDES-T2D Study  |  University of Massachusetts Boston
+              </p>
+              <p style="color: #9ca3af; font-size: 12px; margin: 4px 0 0 0;">
+                pcrg@umb.edu  |  617-287-4067
+              </p>
+            </div>
+
+          </div>
+        </body>
+      </html>
+    `,
+  })
+
+  if (error) {
+    console.error("[sendRegistrationVerificationEmail] error:", error)
+    throw new Error("Failed to send email")
+  }
+
+  return { success: true }
+}

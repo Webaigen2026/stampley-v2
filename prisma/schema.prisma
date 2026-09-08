@@ -123,6 +123,23 @@ model PasswordResetToken {
   @@map("password_reset_tokens")
 }
 
+/// Temporary hashed registration payload. Consumed after email verification.
+/// Never stores plaintext passwords or verification codes.
+model RegistrationVerification {
+  id           String    @id @default(dbgenerated("gen_random_uuid()::text"))
+  email        String    @unique
+  passwordHash String    @map("password_hash")
+  studyKey     String?   @map("study_key")
+  codeHash     String    @map("code_hash")
+  expiresAt    DateTime  @map("expires_at") @db.Timestamp(6)
+  attempts     Int       @default(0)
+  lastSentAt   DateTime  @map("last_sent_at") @db.Timestamp(6)
+  createdAt    DateTime? @default(now()) @map("created_at") @db.Timestamp(6)
+
+  @@index([expiresAt], map: "idx_registration_verifications_expires_at")
+  @@map("registration_verifications")
+}
+
 model DdsResponse {
   id                 String    @id @default(dbgenerated("gen_random_uuid()::text"))
   userId             String    @unique @map("user_id")
