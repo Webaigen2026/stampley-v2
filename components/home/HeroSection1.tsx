@@ -1,10 +1,34 @@
+"use client"
+
+import { useEffect, useRef, useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { ArrowRight } from "lucide-react"
 
 export default function HeroSection() {
+  const sectionRef = useRef<HTMLElement>(null)
+  const [inView, setInView] = useState(false)
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setInView(entry.isIntersecting)
+      },
+      {
+        threshold: 0.18,
+      }
+    )
+
+    if (sectionRef.current) {
+      observer.observe(sectionRef.current)
+    }
+
+    return () => observer.disconnect()
+  }, [])
+
   return (
     <section
+      ref={sectionRef}
       className="
         relative
         overflow-hidden
@@ -43,18 +67,26 @@ export default function HeroSection() {
           {/* Soft blue ambient wash */}
           <div
             aria-hidden="true"
-            className="
+            className={`
               pointer-events-none
               absolute
               inset-0
               bg-[radial-gradient(circle_at_12%_12%,rgba(30,64,175,0.06)_0%,rgba(30,64,175,0.02)_30%,transparent_58%)]
-            "
+              transition-all
+              duration-[1400ms]
+              ease-out
+              ${
+                inView
+                  ? "scale-100 opacity-100"
+                  : "scale-110 opacity-0"
+              }
+            `}
           />
 
           {/* Secondary soft wash */}
           <div
             aria-hidden="true"
-            className="
+            className={`
               pointer-events-none
               absolute
               -bottom-[180px]
@@ -64,13 +96,21 @@ export default function HeroSection() {
               rounded-full
               bg-blue-500/[0.035]
               blur-3xl
-            "
+              transition-all
+              duration-[1600ms]
+              ease-out
+              ${
+                inView
+                  ? "scale-100 opacity-100"
+                  : "scale-75 opacity-0"
+              }
+            `}
           />
 
           {/* Decorative rings */}
           <div
             aria-hidden="true"
-            className="
+            className={`
               pointer-events-none
               absolute
               -right-[210px]
@@ -80,12 +120,20 @@ export default function HeroSection() {
               rounded-full
               border
               border-blue-900/[0.055]
-            "
+              transition-all
+              duration-[1200ms]
+              ease-out
+              ${
+                inView
+                  ? "translate-x-0 scale-100 opacity-100"
+                  : "translate-x-16 scale-95 opacity-0"
+              }
+            `}
           />
 
           <div
             aria-hidden="true"
-            className="
+            className={`
               pointer-events-none
               absolute
               -right-[135px]
@@ -95,13 +143,22 @@ export default function HeroSection() {
               rounded-full
               border
               border-blue-900/[0.035]
-            "
+              transition-all
+              delay-100
+              duration-[1200ms]
+              ease-out
+              ${
+                inView
+                  ? "translate-x-0 scale-100 opacity-100"
+                  : "translate-x-12 scale-90 opacity-0"
+              }
+            `}
           />
 
           {/* Small dot matrix */}
           <div
             aria-hidden="true"
-            className="
+            className={`
               pointer-events-none
               absolute
               right-[8%]
@@ -109,8 +166,16 @@ export default function HeroSection() {
               grid
               grid-cols-4
               gap-[9px]
-              opacity-[0.12]
-            "
+              transition-all
+              delay-200
+              duration-1000
+              ease-out
+              ${
+                inView
+                  ? "translate-y-0 opacity-[0.12]"
+                  : "-translate-y-5 opacity-0"
+              }
+            `}
           >
             {Array.from({ length: 16 }).map((_, index) => (
               <span
@@ -129,17 +194,25 @@ export default function HeroSection() {
           <div className="relative z-10 w-full max-w-[570px]">
             {/* Heading */}
             <h1
-              className="
+              className={`
                 whitespace-nowrap
                 text-[30px]
                 font-normal
                 leading-[1.08]
                 tracking-[-0.03em]
                 text-blue-900
+                transition-all
+                duration-700
+                ease-out
                 sm:text-[34px]
                 lg:text-[38px]
                 xl:text-[42px]
-              "
+                ${
+                  inView
+                    ? "translate-x-0 opacity-100"
+                    : "-translate-x-12 opacity-0"
+                }
+              `}
             >
               We&apos;re glad{" "}
               <span className="text-blue-900">
@@ -149,7 +222,7 @@ export default function HeroSection() {
 
             {/* Intro */}
             <p
-              className="
+              className={`
                 mt-7
                 max-w-[530px]
                 text-[16px]
@@ -157,8 +230,17 @@ export default function HeroSection() {
                 leading-[1.8]
                 tracking-[-0.01em]
                 text-black/75
+                transition-all
+                delay-100
+                duration-700
+                ease-out
                 sm:text-[17px]
-              "
+                ${
+                  inView
+                    ? "translate-x-0 opacity-100"
+                    : "-translate-x-12 opacity-0"
+                }
+              `}
             >
               AIDES-T2D is a four-week study designed to understand how AI
               can provide emotional support for people living with Type 2
@@ -167,12 +249,21 @@ export default function HeroSection() {
 
             {/* Main commitment */}
             <div
-              className="
+              className={`
                 mt-9
                 border-l-[3px]
                 border-blue-900
                 pl-5
-              "
+                transition-all
+                delay-200
+                duration-700
+                ease-out
+                ${
+                  inView
+                    ? "translate-x-0 opacity-100"
+                    : "-translate-x-12 opacity-0"
+                }
+              `}
             >
               <p
                 className="
@@ -217,13 +308,22 @@ export default function HeroSection() {
             >
               {/* Time */}
               <div
-                className="
+                className={`
                   group
                   relative
                   overflow-hidden
                   rounded-[14px]
                   p-[1px]
-                "
+                  transition-all
+                  delay-300
+                  duration-700
+                  ease-out
+                  ${
+                    inView
+                      ? "translate-y-0 scale-100 opacity-100"
+                      : "translate-y-8 scale-[0.97] opacity-0"
+                  }
+                `}
               >
                 {/* Moving blue light */}
                 <div
@@ -237,7 +337,6 @@ export default function HeroSection() {
                   "
                 />
 
-                {/* Card surface */}
                 <div
                   className="
                     relative
@@ -315,13 +414,22 @@ export default function HeroSection() {
 
               {/* Hardware */}
               <div
-                className="
+                className={`
                   group
                   relative
                   overflow-hidden
                   rounded-[14px]
                   p-[1px]
-                "
+                  transition-all
+                  delay-[380ms]
+                  duration-700
+                  ease-out
+                  ${
+                    inView
+                      ? "translate-y-0 scale-100 opacity-100"
+                      : "translate-y-8 scale-[0.97] opacity-0"
+                  }
+                `}
               >
                 {/* Moving blue light */}
                 <div
@@ -335,7 +443,6 @@ export default function HeroSection() {
                   "
                 />
 
-                {/* Card surface */}
                 <div
                   className="
                     relative
@@ -414,17 +521,26 @@ export default function HeroSection() {
 
             {/* CTA */}
             <div
-              className="
+              className={`
                 mt-9
                 flex
                 flex-col
                 gap-5
+                transition-all
+                delay-[460ms]
+                duration-700
+                ease-out
                 sm:flex-row
                 sm:items-center
-              "
+                ${
+                  inView
+                    ? "translate-y-0 opacity-100"
+                    : "translate-y-8 opacity-0"
+                }
+              `}
             >
               <Link
-                href="/login"
+                href="/register"
                 className="
                   group
                   flex
@@ -449,7 +565,7 @@ export default function HeroSection() {
                   sm:w-[220px]
                 "
               >
-                <span>Sign in</span>
+                <span>Register</span>
 
                 <span
                   className="
@@ -482,25 +598,48 @@ export default function HeroSection() {
             RIGHT — REALISTIC PARTICIPANT IMAGE
         ====================================================== */}
         <div
-          className="
+          className={`
             relative
             min-h-[420px]
             overflow-hidden
+            transition-all
+            duration-[1100ms]
+            ease-out
             sm:min-h-[520px]
             lg:min-h-full
-          "
+            ${
+              inView
+                ? "translate-x-0 opacity-100"
+                : "translate-x-16 opacity-0"
+            }
+          `}
         >
-          <Image
-            src="/hero/womanHero.png"
-            alt="A woman sitting comfortably at home using her phone"
-            fill
-            priority
-            sizes="(min-width: 1024px) 53vw, 100vw"
-            className="
-              object-cover
-              object-center
-            "
-          />
+          <div
+            className={`
+              absolute
+              inset-0
+              transition-transform
+              duration-[1500ms]
+              ease-out
+              ${
+                inView
+                  ? "scale-100"
+                  : "scale-[1.08]"
+              }
+            `}
+          >
+            <Image
+              src="/hero/womanHero.png"
+              alt="A woman sitting comfortably at home using her phone"
+              fill
+              priority
+              sizes="(min-width: 1024px) 53vw, 100vw"
+              className="
+                object-cover
+                object-center
+              "
+            />
+          </div>
 
           {/* White-to-photo transition */}
           <div
@@ -564,7 +703,7 @@ export default function HeroSection() {
 
           {/* Study duration badge */}
           <div
-            className="
+            className={`
               absolute
               bottom-[110px]
               left-5
@@ -577,10 +716,19 @@ export default function HeroSection() {
               py-3
               shadow-[0_8px_30px_rgba(0,0,0,0.08)]
               backdrop-blur-md
+              transition-all
+              delay-[500ms]
+              duration-700
+              ease-out
               sm:left-7
               lg:bottom-[135px]
               lg:left-8
-            "
+              ${
+                inView
+                  ? "translate-y-0 scale-100 opacity-100"
+                  : "translate-y-8 scale-95 opacity-0"
+              }
+            `}
           >
             <p
               className="
@@ -614,18 +762,26 @@ export default function HeroSection() {
       ====================================================== */}
       <div
         aria-hidden="true"
-        className="
+        className={`
           pointer-events-none
           absolute
           inset-x-0
           bottom-[40px]
           z-40
           h-[300px]
+          transition-all
+          duration-[1200ms]
+          ease-out
           sm:bottom-[50px]
           sm:h-[340px]
           lg:bottom-[70px]
           lg:h-[270px]
-        "
+          ${
+            inView
+              ? "translate-y-0 opacity-100"
+              : "translate-y-16 opacity-0"
+          }
+        `}
       >
         <svg
           viewBox="0 0 1440 120"

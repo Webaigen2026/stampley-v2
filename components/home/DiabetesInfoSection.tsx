@@ -18,30 +18,42 @@ const steps = [
   {
     icon: UserPlus,
     label: "Create\nAccount",
+    tooltip: "Create your secure participant account to begin the study.",
   },
   {
     icon: MailCheck,
     label: "Verify\nEmail",
+    tooltip:
+      "Confirm your email address using the verification code we send you.",
   },
   {
     icon: ClipboardCheck,
     label: "Pre-Survey",
+    tooltip:
+      "Complete the initial survey before beginning your study activities.",
   },
   {
     icon: ListChecks,
     label: "DDS\nSurvey",
+    tooltip: "Complete the Diabetes Distress Scale assessment.",
   },
   {
     icon: CalendarCheck2,
     label: "Study\nSessions",
+    tooltip:
+      "Complete at least five study sessions each week for four weeks.",
   },
   {
     icon: MessageCircleHeart,
     label: "Talk With\nStampley",
+    tooltip:
+      "Have supportive conversations with Stampley during your study sessions.",
   },
   {
     icon: BadgeCheck,
     label: "Post-Survey",
+    tooltip:
+      "Complete the final survey at the end of your study participation.",
   },
 ]
 
@@ -101,7 +113,7 @@ export default function DiabetesInfoSection() {
             }
           `}
         >
-          {steps.map(({ icon: Icon, label }, index) => (
+          {steps.map(({ icon: Icon, label, tooltip }, index) => (
             <div
               key={label}
               className={`
@@ -114,7 +126,6 @@ export default function DiabetesInfoSection() {
                 items-center
                 justify-center
                 gap-4
-                overflow-hidden
                 bg-white
                 text-center
                 text-blue-900
@@ -131,9 +142,7 @@ export default function DiabetesInfoSection() {
                 }
               `}
               style={{
-                transitionDelay: inView
-                  ? `${index * 90}ms`
-                  : "0ms",
+                transitionDelay: inView ? `${index * 90}ms` : "0ms",
               }}
             >
               {/* Step number */}
@@ -163,7 +172,7 @@ export default function DiabetesInfoSection() {
                 "
               />
 
-              {/* Label */}
+              {/* Step label */}
               <span
                 className="
                   whitespace-pre-line
@@ -175,7 +184,7 @@ export default function DiabetesInfoSection() {
                 {label}
               </span>
 
-              {/* Bottom accent */}
+              {/* Animated bottom accent */}
               <span
                 aria-hidden="true"
                 className="
@@ -190,12 +199,99 @@ export default function DiabetesInfoSection() {
                   group-hover:w-full
                 "
               />
+
+              {/* =================================================
+                  WHITE BOTTOM TOOLTIP
+              ================================================== */}
+              <div
+                role="tooltip"
+                className="
+                  pointer-events-none
+                  absolute
+                  left-1/2
+                  top-[calc(100%+14px)]
+                  z-50
+                  w-[210px]
+                  -translate-x-1/2
+                  translate-y-2
+                  rounded-[12px]
+                  border
+                  border-slate-200/80
+                  bg-white
+                  px-4
+                  py-3
+                  text-left
+                  opacity-0
+                  shadow-[0_14px_40px_rgba(15,23,42,0.16)]
+                  transition-all
+                  duration-200
+                  group-hover:translate-y-0
+                  group-hover:opacity-100
+                "
+              >
+                {/* Tooltip arrow */}
+                <span
+                  aria-hidden="true"
+                  className="
+                    absolute
+                    -top-[6px]
+                    left-1/2
+                    h-3
+                    w-3
+                    -translate-x-1/2
+                    rotate-45
+                    border-l
+                    border-t
+                    border-slate-200/80
+                    bg-white
+                  "
+                />
+
+                {/* Tooltip step number */}
+                <p
+                  className="
+                    mb-1.5
+                    text-[9px]
+                    font-semibold
+                    uppercase
+                    tracking-[0.18em]
+                    text-blue-900/45
+                  "
+                >
+                  Step {String(index + 1).padStart(2, "0")}
+                </p>
+
+                {/* Tooltip title */}
+                <p
+                  className="
+                    text-[13px]
+                    font-semibold
+                    leading-5
+                    text-blue-900
+                  "
+                >
+                  {label.replace("\n", " ")}
+                </p>
+
+                {/* Tooltip description */}
+                <p
+                  className="
+                    mt-1
+                    text-[11.5px]
+                    font-normal
+                    leading-[1.55]
+                    text-slate-500
+                  "
+                >
+                  {tooltip}
+                </p>
+              </div>
             </div>
           ))}
         </div>
 
         {/* =====================================================
-            REUSABLE VIDEO + TEXT
+            REUSABLE VIDEO + TEXT COMPONENT
         ====================================================== */}
         <DiabetesVideoFeature inView={inView} />
       </div>
@@ -203,8 +299,10 @@ export default function DiabetesInfoSection() {
       {/* =====================================================
           DECORATIVE SIDE TAB
       ====================================================== */}
-      <button
-        type="button"
+      <a
+        href="https://stampleyresearchgroup.com"
+        target="_blank"
+        rel="noopener noreferrer"
         className={`
           fixed
           right-0
@@ -238,10 +336,10 @@ export default function DiabetesInfoSection() {
           }
         `}
         aria-label="Learn More"
-        onClick={() => window.open("#about", "_blank")}
       >
         Learn More
-      </button>
+      </a>
+ 
     </section>
   )
 }
