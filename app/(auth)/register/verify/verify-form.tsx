@@ -5,9 +5,20 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import Image from "next/image"
 import {
+  ArrowLeft,
+  ArrowRight,
+  CircleAlert,
+  MailCheck,
+  RotateCcw,
+  ShieldCheck,
+} from "lucide-react"
+
+import {
   resendRegistrationCode,
   verifyRegistration,
 } from "@/actions/register"
+
+import AuthBackgroundDecoration from "@/components/auth/AuthBackgroundDecoration"
 
 export function RegisterVerifyForm({ email }: { email: string }) {
   const [digits, setDigits] = useState(["", "", "", "", "", ""])
@@ -15,6 +26,7 @@ export function RegisterVerifyForm({ email }: { email: string }) {
   const [info, setInfo] = useState("")
   const [loading, setLoading] = useState(false)
   const [resending, setResending] = useState(false)
+
   const inputsRef = useRef<Array<HTMLInputElement | null>>([])
   const router = useRouter()
 
@@ -31,6 +43,7 @@ export function RegisterVerifyForm({ email }: { email: string }) {
 
   async function submitCode(codeDigits: string[]) {
     const code = codeDigits.join("")
+
     if (code.length !== 6) {
       setError("Enter the 6-digit verification code.")
       return
@@ -42,6 +55,7 @@ export function RegisterVerifyForm({ email }: { email: string }) {
 
     const formData = new FormData()
     formData.set("code", code)
+
     const result = await verifyRegistration(formData)
 
     if (result?.error) {
@@ -58,10 +72,12 @@ export function RegisterVerifyForm({ email }: { email: string }) {
   function handleChange(index: number, raw: string) {
     const value = raw.replace(/\D/g, "").slice(-1)
     const next = setDigitAt(index, value)
+
     if (value && index < 5) {
       inputsRef.current[index + 1]?.focus()
     }
-    if (value && next.every((d) => d.length === 1)) {
+
+    if (value && next.every((digit) => digit.length === 1)) {
       void submitCode(next)
     }
   }
@@ -77,13 +93,25 @@ export function RegisterVerifyForm({ email }: { email: string }) {
 
   function handlePaste(event: React.ClipboardEvent<HTMLInputElement>) {
     event.preventDefault()
-    const pasted = event.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6)
+
+    const pasted = event.clipboardData
+      .getData("text")
+      .replace(/\D/g, "")
+      .slice(0, 6)
+
     if (!pasted) return
+
     const next = ["", "", "", "", "", ""]
-    for (let i = 0; i < pasted.length; i++) next[i] = pasted[i]
+
+    for (let i = 0; i < pasted.length; i++) {
+      next[i] = pasted[i]
+    }
+
     setDigits(next)
+
     const focusIndex = Math.min(pasted.length, 5)
     inputsRef.current[focusIndex]?.focus()
+
     if (pasted.length === 6) {
       void submitCode(next)
     }
@@ -98,7 +126,9 @@ export function RegisterVerifyForm({ email }: { email: string }) {
     setResending(true)
     setError("")
     setInfo("")
+
     const result = await resendRegistrationCode()
+
     if (result?.error) {
       setError(result.error)
     } else {
@@ -106,72 +136,201 @@ export function RegisterVerifyForm({ email }: { email: string }) {
       setDigits(["", "", "", "", "", ""])
       inputsRef.current[0]?.focus()
     }
+
     setResending(false)
   }
 
   return (
-    <>
-      <style>{`
-        .f-display,
-        .f-mono,
-        .f-body {
-          font-family: AmericanSansLight, Helvetica, Arial, sans-serif;
-        }
+    <main
+      className="
+        relative
+        flex
+        min-h-dvh
+        items-center
+        justify-center
+        overflow-hidden
+        bg-white
+        px-6
+        py-12
+        font-[AmericanSansLight,Helvetica,Arial,sans-serif]
+        text-black
+        sm:px-10
+      "
+    >
+      <AuthBackgroundDecoration />
 
-        @keyframes spin { to { transform: rotate(360deg); } }
-        .spinner { animation: spin 0.7s linear infinite; }
-
-        .btn-shimmer::before {
-          content: '';
-          position: absolute; top: 0; left: -100%;
-          width: 60%; height: 100%;
-          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent);
-          transition: left 0.6s ease;
-        }
-        .btn-shimmer:hover:not(:disabled)::before { left: 120%; }
-      `}</style>
-
-      <div className="f-body relative flex min-h-screen items-center justify-center overflow-hidden bg-[#fefdfb] px-6 py-12 font-[AmericanSansLight,Helvetica,Arial,sans-serif]">
-        <div className="relative z-10 w-full max-w-[420px]">
-          <Link href="/" className="mb-8 flex items-center gap-3">
+      <div className="relative z-10 w-full max-w-[460px]">
+        {/* Brand / page title */}
+        <div className="flex items-center gap-3">
+          <Link
+            href="/"
+            className="inline-flex items-center"
+            aria-label="Go to AIDES-T2D home"
+          >
             <Image
               src="/images/stampleyLogo.png"
               alt="AIDES-T2D"
-              width={32}
-              height={32}
+              width={36}
+              height={36}
+              className="
+                h-9
+                w-auto
+                transition-transform
+                duration-200
+                hover:scale-[1.03]
+              "
             />
-            <span className="f-mono text-[10.5px] font-medium uppercase tracking-[0.2em] text-black/40">
-              AIDES-T2D
-            </span>
           </Link>
 
           <h1
-            className="mb-2 text-[32px] font-normal leading-[1.15] tracking-[-0.02em] text-[#0a0a0f] font-[AmericanSansLight,Helvetica,Arial,sans-serif]"
+            className="
+              font-[AmericanSansLight,Helvetica,Arial,sans-serif]
+              text-[19px]
+              font-normal
+              leading-[1.05]
+              tracking-[-0.025em]
+              text-blue-900
+              sm:text-[22px]
+              lg:text-[26px]
+            "
           >
-            Verify your email
+            Verify your email.
           </h1>
+        </div>
+
+        {/* Supporting copy */}
+        <div className="mt-10">
           <p
-            className="mb-8 text-[14px] font-light leading-[1.6] text-black/70 font-[AmericanSansLight,Helvetica,Arial,sans-serif]"
+            className="
+              max-w-[40ch]
+              font-[AmericanSansLight,Helvetica,Arial,sans-serif]
+              text-[13px]
+              font-normal
+              leading-6
+              text-black
+            "
           >
-            We sent a 6-digit code to:
-            <br />
-            <span className="font-medium text-[#0a0a0f]">{email}</span>
+            We sent a 6-digit verification code to:
           </p>
 
-          {error && (
-            <div className="mb-6 flex items-start gap-2.5 rounded-xl border border-red-100/80 bg-red-50/60 px-4 py-3 text-[12.5px] leading-relaxed text-[#9b2226]">
-              <span>{error}</span>
-            </div>
-          )}
+          <div
+            className="
+              mt-3
+              inline-flex
+              items-center
+              gap-2
+              rounded-full
+              border
+              border-[#86868b]
+              bg-white
+              px-3.5
+              py-2
+            "
+          >
+            <MailCheck
+              aria-hidden="true"
+              strokeWidth={1.5}
+              className="h-4 w-4 text-black"
+            />
 
-          {info && (
-            <div className="mb-6 rounded-xl border border-emerald-100/80 bg-emerald-50/60 px-4 py-3 text-[12.5px] leading-relaxed text-emerald-800">
-              {info}
-            </div>
-          )}
+            <span
+              className="
+                max-w-[280px]
+                truncate
+                font-[AmericanSansLight,Helvetica,Arial,sans-serif]
+                text-[13px]
+                font-normal
+                text-black
+              "
+            >
+              {email}
+            </span>
+          </div>
+        </div>
 
-          <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-            <div className="flex justify-between gap-2">
+        {/* Error */}
+        {error && (
+          <div
+            role="alert"
+            className="
+              mt-7
+              flex
+              items-start
+              gap-3
+              rounded-[10px]
+              border
+              border-red-200
+              bg-red-50
+              px-4
+              py-3.5
+              font-[AmericanSansLight,Helvetica,Arial,sans-serif]
+              text-[13px]
+              leading-5
+              text-black
+            "
+          >
+            <CircleAlert
+              aria-hidden="true"
+              strokeWidth={1.7}
+              className="mt-0.5 h-4 w-4 shrink-0 text-black"
+            />
+
+            <span>{error}</span>
+          </div>
+        )}
+
+        {/* Info */}
+        {info && (
+          <div
+            className="
+              mt-7
+              flex
+              items-start
+              gap-3
+              rounded-[10px]
+              border
+              border-[#86868b]
+              bg-white
+              px-4
+              py-3.5
+              font-[AmericanSansLight,Helvetica,Arial,sans-serif]
+              text-[13px]
+              leading-5
+              text-black
+            "
+          >
+            <MailCheck
+              aria-hidden="true"
+              strokeWidth={1.6}
+              className="mt-0.5 h-4 w-4 shrink-0 text-black"
+            />
+
+            <span>{info}</span>
+          </div>
+        )}
+
+        <form
+          onSubmit={handleSubmit}
+          className="mt-10 flex flex-col gap-6"
+        >
+          {/* Verification code */}
+          <div>
+            <label
+              className="
+                mb-2.5
+                block
+                font-[AmericanSansLight,Helvetica,Arial,sans-serif]
+                text-[13px]
+                font-normal
+                leading-5
+                tracking-[-0.005em]
+                text-black
+              "
+            >
+              Verification code
+            </label>
+
+            <div className="grid grid-cols-6 gap-2 sm:gap-3">
               {digits.map((digit, index) => (
                 <input
                   key={index}
@@ -184,52 +343,255 @@ export function RegisterVerifyForm({ email }: { email: string }) {
                   maxLength={1}
                   value={digit}
                   disabled={loading}
-                  onChange={(e) => handleChange(index, e.target.value)}
-                  onKeyDown={(e) => handleKeyDown(index, e)}
+                  onChange={(e) =>
+                    handleChange(index, e.target.value)
+                  }
+                  onKeyDown={(e) =>
+                    handleKeyDown(index, e)
+                  }
                   onPaste={handlePaste}
                   aria-label={`Digit ${index + 1}`}
-                  className="auth-input h-14 w-12 rounded-[10px] border border-black/[0.12] bg-white text-center f-mono text-[22px] text-[#0a0a0f] outline-none transition-all duration-200 focus:border-[#3d5a80] focus:shadow-[0_0_0_3.5px_rgba(61,90,128,0.12)] disabled:opacity-40"
+                  className="
+                    auth-input
+                    h-[56px]
+                    min-w-0
+                    w-full
+                    rounded-[10px]
+                    border
+                    border-[#86868b]
+                    bg-white
+                    text-center
+                    font-[AmericanSansLight,Helvetica,Arial,sans-serif]
+                    text-[20px]
+                    font-normal
+                    text-black
+                    outline-none
+                    transition-all
+                    duration-200
+                    focus:border-[#1473E6]
+                    focus:ring-[2px]
+                    focus:ring-[#1473E6]
+                    disabled:cursor-not-allowed
+                    disabled:opacity-50
+                    sm:text-[22px]
+                  "
                 />
               ))}
             </div>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="btn-shimmer relative w-full cursor-pointer overflow-hidden rounded-[10px] border-none bg-blue-900 px-6 py-[14px] f-body text-[13px] font-normal uppercase tracking-[0.06em] text-white shadow-[0_4px_16px_rgba(10,10,15,0.18)] transition-all duration-300 hover:not-disabled:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-40"
+            <p
+              className="
+                mt-3
+                font-[AmericanSansLight,Helvetica,Arial,sans-serif]
+                text-[12px]
+                font-normal
+                leading-5
+                text-black
+              "
             >
-              <span className="relative z-10 flex items-center justify-center gap-2">
-                {loading ? (
-                  <>
-                    <span className="spinner inline-block h-3.5 w-3.5 rounded-full border-[1.5px] border-white/20 border-t-white" />
-                    <span className="text-[11px] tracking-[0.12em]">Verifying...</span>
-                  </>
-                ) : (
-                  "Verify Email"
-                )}
-              </span>
-            </button>
-          </form>
+              Enter the code from your email. You can also paste all 6 digits
+              at once.
+            </p>
+          </div>
 
-          <p className="mt-8 text-center text-[12.5px] font-light text-black/70">
-            Didn&apos;t receive the code?{" "}
-            <button
-              type="button"
-              onClick={() => void handleResend()}
-              disabled={resending || loading}
-              className="cursor-pointer border-0 bg-transparent p-0 font-medium text-[#0a0a0f] underline-offset-2 hover:underline disabled:opacity-40"
-            >
-              {resending ? "Sending..." : "Resend code"}
-            </button>
-          </p>
+          {/* Verify button */}
+          <button
+            type="submit"
+            disabled={loading}
+            className="
+              group
+              mt-1
+              flex
+              h-[56px]
+              w-full
+              cursor-pointer
+              items-center
+              justify-between
+              rounded-[10px]
+              bg-[#173B7A]
+              px-5
+              font-[AmericanSansLight,Helvetica,Arial,sans-serif]
+              text-[14px]
+              font-normal
+              tracking-[-0.005em]
+              text-white
+              transition-all
+              duration-200
+              hover:bg-[#122E60]
+              active:scale-[0.995]
+              disabled:cursor-not-allowed
+              disabled:opacity-50
+            "
+          >
+            {loading ? (
+              <div className="flex w-full items-center justify-center gap-2.5">
+                <span
+                  className="
+                    h-4
+                    w-4
+                    animate-spin
+                    rounded-full
+                    border-[1.5px]
+                    border-white/30
+                    border-t-white
+                  "
+                />
 
-          <p className="mt-4 text-center text-[12.5px] font-light text-black/50">
-            <Link href="/register" className="text-[#3d5a80] hover:text-[#0a0a0f]">
-              Start over
-            </Link>
-          </p>
+                <span>Verifying...</span>
+              </div>
+            ) : (
+              <>
+                <span>Verify email</span>
+
+                <span
+                  className="
+                    flex
+                    h-8
+                    w-8
+                    shrink-0
+                    items-center
+                    justify-center
+                    rounded-full
+                    border
+                    border-white/70
+                    bg-transparent
+                    text-white
+                    transition-all
+                    duration-200
+                    group-hover:border-white
+                    group-hover:bg-white/[0.08]
+                  "
+                >
+                  <ArrowRight
+                    aria-hidden="true"
+                    strokeWidth={1.8}
+                    className="h-[15px] w-[15px]"
+                  />
+                </span>
+              </>
+            )}
+          </button>
+        </form>
+
+        {/* Resend */}
+        <div
+          className="
+            mt-8
+            flex
+            flex-col
+            items-center
+            justify-center
+            gap-3
+            sm:flex-row
+            sm:gap-2
+          "
+        >
+          <span
+            className="
+              font-[AmericanSansLight,Helvetica,Arial,sans-serif]
+              text-[13px]
+              font-normal
+              text-black
+            "
+          >
+            Didn&apos;t receive the code?
+          </span>
+
+          <button
+            type="button"
+            onClick={() => void handleResend()}
+            disabled={resending || loading}
+            className="
+              inline-flex
+              cursor-pointer
+              items-center
+              gap-1.5
+              border-0
+              bg-transparent
+              p-0
+              font-[AmericanSansLight,Helvetica,Arial,sans-serif]
+              text-[13px]
+              font-normal
+              text-black
+              underline
+              decoration-black/25
+              underline-offset-4
+              transition
+              hover:decoration-black
+              disabled:cursor-not-allowed
+              disabled:opacity-50
+            "
+          >
+            <RotateCcw
+              aria-hidden="true"
+              strokeWidth={1.6}
+              className={`h-3.5 w-3.5 ${
+                resending ? "animate-spin" : ""
+              }`}
+            />
+
+            <span>{resending ? "Sending..." : "Resend code"}</span>
+          </button>
+        </div>
+
+        {/* Start over */}
+        <Link
+          href="/register"
+          className="
+            mt-5
+            inline-flex
+            items-center
+            gap-2
+            font-[AmericanSansLight,Helvetica,Arial,sans-serif]
+            text-[13px]
+            font-normal
+            text-black
+            underline
+            decoration-black/25
+            underline-offset-4
+            transition
+            hover:decoration-black
+          "
+        >
+          <ArrowLeft
+            aria-hidden="true"
+            strokeWidth={1.7}
+            className="h-4 w-4"
+          />
+
+          <span>Start over</span>
+        </Link>
+
+        {/* Privacy */}
+        <div
+          className="
+            mt-8
+            flex
+            items-center
+            justify-center
+            gap-2
+            border-t
+            border-black/[0.08]
+            pt-6
+            text-center
+            font-[AmericanSansLight,Helvetica,Arial,sans-serif]
+            text-[11.5px]
+            font-normal
+            leading-5
+            text-black
+          "
+        >
+          <ShieldCheck
+            aria-hidden="true"
+            strokeWidth={1.5}
+            className="h-[13px] w-[13px] shrink-0 text-black"
+          />
+
+          <span>
+            Your verification code is used only to confirm your registration.
+          </span>
         </div>
       </div>
-    </>
+    </main>
   )
 }
