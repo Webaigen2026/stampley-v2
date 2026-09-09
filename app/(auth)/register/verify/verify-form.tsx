@@ -112,11 +112,11 @@ export function RegisterVerifyForm({ email }: { email: string }) {
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;1,9..144,300;1,9..144,400&family=JetBrains+Mono:wght@300;400;500&family=Outfit:wght@300;400;500;600&display=swap');
-
-        .f-display { font-family: 'Fraunces', Georgia, serif; }
-        .f-mono    { font-family: 'JetBrains Mono', monospace; }
-        .f-body    { font-family: 'Outfit', system-ui, sans-serif; }
+        .f-display,
+        .f-mono,
+        .f-body {
+          font-family: AmericanSansLight, Helvetica, Arial, sans-serif;
+        }
 
         @keyframes spin { to { transform: rotate(360deg); } }
         .spinner { animation: spin 0.7s linear infinite; }
@@ -131,7 +131,7 @@ export function RegisterVerifyForm({ email }: { email: string }) {
         .btn-shimmer:hover:not(:disabled)::before { left: 120%; }
       `}</style>
 
-      <div className="f-body relative flex min-h-screen items-center justify-center overflow-hidden bg-[#fefdfb] px-6 py-12">
+      <div className="f-body relative flex min-h-screen items-center justify-center overflow-hidden bg-[#fefdfb] px-6 py-12 font-[AmericanSansLight,Helvetica,Arial,sans-serif]">
         <div className="relative z-10 w-full max-w-[420px]">
           <Link href="/" className="mb-8 flex items-center gap-3">
             <Image
@@ -146,14 +146,12 @@ export function RegisterVerifyForm({ email }: { email: string }) {
           </Link>
 
           <h1
-            className="mb-2 text-[32px] font-normal leading-[1.15] text-[#0a0a0f]"
-            style={{ fontFamily: "'Inter', sans-serif", letterSpacing: "-0.02em" }}
+            className="mb-2 text-[32px] font-normal leading-[1.15] tracking-[-0.02em] text-[#0a0a0f] font-[AmericanSansLight,Helvetica,Arial,sans-serif]"
           >
             Verify your email
           </h1>
           <p
-            className="mb-8 text-[14px] font-light leading-[1.6] text-black/70"
-            style={{ fontFamily: "'Inter', sans-serif" }}
+            className="mb-8 text-[14px] font-light leading-[1.6] text-black/70 font-[AmericanSansLight,Helvetica,Arial,sans-serif]"
           >
             We sent a 6-digit code to:
             <br />
@@ -190,7 +188,7 @@ export function RegisterVerifyForm({ email }: { email: string }) {
                   onKeyDown={(e) => handleKeyDown(index, e)}
                   onPaste={handlePaste}
                   aria-label={`Digit ${index + 1}`}
-                  className="h-14 w-12 rounded-[10px] border border-black/[0.12] bg-white text-center f-mono text-[22px] text-[#0a0a0f] outline-none transition-all duration-200 focus:border-[#3d5a80] focus:shadow-[0_0_0_3.5px_rgba(61,90,128,0.12)] disabled:opacity-40"
+                  className="auth-input h-14 w-12 rounded-[10px] border border-black/[0.12] bg-white text-center f-mono text-[22px] text-[#0a0a0f] outline-none transition-all duration-200 focus:border-[#3d5a80] focus:shadow-[0_0_0_3.5px_rgba(61,90,128,0.12)] disabled:opacity-40"
                 />
               ))}
             </div>
@@ -198,7 +196,7 @@ export function RegisterVerifyForm({ email }: { email: string }) {
             <button
               type="submit"
               disabled={loading}
-              className="btn-shimmer relative w-full cursor-pointer overflow-hidden rounded-[10px] border-none bg-blue-900 px-6 py-[14px] f-body text-[13px] font-semibold uppercase tracking-[0.06em] text-white shadow-[0_4px_16px_rgba(10,10,15,0.18)] transition-all duration-300 hover:not-disabled:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-40"
+              className="btn-shimmer relative w-full cursor-pointer overflow-hidden rounded-[10px] border-none bg-blue-900 px-6 py-[14px] f-body text-[13px] font-normal uppercase tracking-[0.06em] text-white shadow-[0_4px_16px_rgba(10,10,15,0.18)] transition-all duration-300 hover:not-disabled:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-40"
             >
               <span className="relative z-10 flex items-center justify-center gap-2">
                 {loading ? (

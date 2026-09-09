@@ -3,16 +3,31 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { registerWithKey } from "@/actions/register"
 import Image from "next/image"
+import {
+  ArrowRight,
+  CircleAlert,
+  Eye,
+  EyeOff,
+  KeyRound,
+  LockKeyhole,
+  Mail,
+  ShieldCheck,
+} from "lucide-react"
+
+import { registerWithKey } from "@/actions/register"
+import AuthBackgroundDecoration from "@/components/auth/AuthBackgroundDecoration"
+
 export default function RegisterPage() {
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
+
   const router = useRouter()
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
+
     setLoading(true)
     setError("")
 
@@ -32,455 +47,379 @@ export default function RegisterPage() {
     if (result?.error) {
       setError(result.error)
       setLoading(false)
-    } else {
-      router.push("/register/verify")
+      return
     }
+
+    router.push("/register/verify")
   }
 
   return (
-    <>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;1,9..144,300;1,9..144,400&family=JetBrains+Mono:wght@300;400;500&family=Outfit:wght@300;400;500;600&display=swap');
-
-        .f-display { font-family: 'Fraunces', Georgia, serif; }
-        .f-mono    { font-family: 'JetBrains Mono', monospace; }
-        .f-body    { font-family: 'Outfit', system-ui, sans-serif; }
-
-        @keyframes meshDrift {
-          0%   { transform: translate(0, 0) rotate(0deg); }
-          100% { transform: translate(30px, -20px) rotate(2deg); }
-        }
-        .mesh-drift { animation: meshDrift 25s ease-in-out infinite alternate; }
-
-        .grain::after {
-          content: '';
-          position: absolute; inset: 0;
-          background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.06'/%3E%3C/svg%3E");
-          opacity: 0.7;
-          pointer-events: none;
-          z-index: 1;
-        }
-
-        .dot-pattern::before {
-          content: '';
-          position: absolute; inset: 0;
-          background-image: radial-gradient(circle, rgba(10,10,15,0.04) 1px, transparent 1px);
-          background-size: 24px 24px;
-          opacity: 0.5;
-          pointer-events: none;
-        }
-
-        @keyframes fadeDown {
-          from { opacity: 0; transform: translateY(-14px); }
-          to   { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes fadeUp {
-          from { opacity: 0; transform: translateY(20px); }
-          to   { opacity: 1; transform: translateY(0); }
-        }
-
-        .anim-brand  { opacity: 0; animation: fadeDown 0.8s cubic-bezier(0.22,1,0.36,1) 0.1s forwards; }
-        .anim-hero   { opacity: 0; animation: fadeUp 1s cubic-bezier(0.22,1,0.36,1) 0.25s forwards; }
-        .anim-steps  { opacity: 0; animation: fadeUp 0.9s cubic-bezier(0.22,1,0.36,1) 0.5s forwards; }
-        .anim-badges { opacity: 0; animation: fadeUp 0.9s cubic-bezier(0.22,1,0.36,1) 0.65s forwards; }
-        .anim-form   { opacity: 0; animation: fadeUp 0.8s cubic-bezier(0.22,1,0.36,1) 0.15s forwards; }
-
-        .input-group:focus-within .input-icon {
-          stroke: #3d5a80;
-          transform: translateY(-50%) scale(1.06);
-        }
-
-        .styled-input:-webkit-autofill {
-          -webkit-box-shadow: 0 0 0 100px #f5f2ec inset !important;
-          -webkit-text-fill-color: #0a0a0f !important;
-        }
-        .styled-input:-webkit-autofill:focus {
-          -webkit-box-shadow: 0 0 0 100px #fefdfb inset !important;
-        }
-
-        .btn-shimmer::before {
-          content: '';
-          position: absolute; top: 0; left: -100%;
-          width: 60%; height: 100%;
-          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent);
-          transition: left 0.6s ease;
-        }
-        .btn-shimmer:hover:not(:disabled)::before { left: 120%; }
-
-        @keyframes spin { to { transform: rotate(360deg); } }
-        .spinner { animation: spin 0.7s linear infinite; }
-
-        .step-line::after {
-          content: '';
-          position: absolute;
-          left: 13px;
-          top: 28px;
-          width: 1px;
-          height: calc(100% - 8px);
-          background: linear-gradient(to bottom, rgba(61,90,128,0.25), transparent);
-        }
-
-        ::-webkit-scrollbar { width: 3px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.08); border-radius: 4px; }
-      `}</style>
-
-      <div className="f-body relative flex min-h-screen overflow-hidden bg-white">
-        {/* <div className="absolute left-6 top-6 z-20">
-          <a
-            href="/login"
-            className="flex items-center gap-2 px-3 py-3 rounded-full cursor-pointer hover:scale-105 transition text-[#0a0a0f] text-sm font-medium shadow border border-white/10 hover:border-white/20"
-            aria-label="Go to login"
-          >
-            <svg
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="text-[#3d5a80]"
-              aria-hidden="true"
-            >
-              <path d="M15 18l-6-6 6-6" />
-            </svg>
-          </a>
-        </div> */}
-
-        {/* LEFT — Dark editorial panel */}
-       {/* LEFT — Project themed editorial panel */}
-<div
-  className="grain hidden lg:flex flex-1 relative overflow-hidden flex-col justify-between px-14 py-18 text-white"
-  style={{
-    background: `
-      radial-gradient(circle at top left, rgba(255,177,0,0.12), transparent 30%),
-      radial-gradient(circle at bottom right, rgba(34,211,238,0.08), transparent 35%),
-      linear-gradient(135deg, #071224 0%, #0B1D39 45%, #10294D 100%)
-    `,
-  }}
->
-  {/* Animated mesh background */}
-  <div className="absolute inset-0 z-0 overflow-hidden">
-    <div
-      className="mesh-drift absolute"
-      style={{
-        width: "140%",
-        height: "140%",
-        top: "-20%",
-        left: "-20%",
-        background: [
-          "radial-gradient(ellipse 700px 520px at 20% 30%, rgba(37,99,235,0.28) 0%, transparent 72%)",
-          "radial-gradient(ellipse 540px 620px at 80% 70%, rgba(255,177,0,0.14) 0%, transparent 72%)",
-          "radial-gradient(ellipse 420px 420px at 50% 50%, rgba(34,211,238,0.10) 0%, transparent 70%)",
-        ].join(", "),
-      }}
-    />
-  </div>
-
-  {/* Decorative lines */}
-  <div className="absolute inset-0 z-[1] opacity-[0.05] pointer-events-none">
-    <svg
-      viewBox="0 0 800 900"
-      fill="none"
-      className="w-full h-full"
-      xmlns="http://www.w3.org/2000/svg"
+    <main
+      className="
+        min-h-dvh
+        bg-white
+        font-[AmericanSansLight,Helvetica,Arial,sans-serif]
+        text-black
+      "
     >
-      <path
-        d="M-50 200 C200 180, 400 260, 850 200"
-        stroke="white"
-        strokeWidth="0.8"
-      />
-      <path
-        d="M-50 280 C200 260, 450 340, 850 280"
-        stroke="white"
-        strokeWidth="0.6"
-      />
-      <path
-        d="M-50 360 C180 340, 420 400, 850 360"
-        stroke="white"
-        strokeWidth="0.5"
-      />
-      <path
-        d="M-50 440 C220 420, 380 480, 850 440"
-        stroke="white"
-        strokeWidth="0.4"
-      />
-      <path
-        d="M-50 520 C240 500, 400 560, 850 530"
-        stroke="white"
-        strokeWidth="0.5"
-      />
-      <path
-        d="M-50 600 C200 580, 440 640, 850 610"
-        stroke="white"
-        strokeWidth="0.6"
-      />
-      <path
-        d="M-50 680 C180 660, 460 720, 850 690"
-        stroke="white"
-        strokeWidth="0.4"
-      />
-      <path
-        d="M-50 760 C220 740, 400 800, 850 770"
-        stroke="white"
-        strokeWidth="0.3"
-      />
-    </svg>
-  </div>
-
-  <div className="relative z-[2] flex flex-col justify-between h-full">
-    {/* Brand */}
-    <div className="anim-brand flex items-center gap-3.5">
-     
-
-      <Link href="/" className="anim-brand flex items-center gap-3.5 hover:scale-110 transition-all duration-300">
-              {/* <div className="h-10 w-10 rounded-full border border-white/10 bg-white/5 flex items-center justify-center">
-                <span className="f-mono text-[10px] tracking-[0.2em] text-white/60">APP</span>
-              </div> */}
-
-              <Image src="/images/stampleyLogo.png" alt="AIDES-T2D" width={32} height={32} />
-              <span className=" text-[12px] font-medium uppercase tracking-[0.2em] text-white select-none "
-              
-              style ={{
-                fontFamily: "'Inter', sans-serif",
-                  
-               }}
-              >
-                AIDES-T2D
-              </span>
-            </Link>
-    </div>
-
-    {/* Hero */}
-    <div className="anim-hero max-w-[520px]">
-      <p className=" mb-7 flex items-center gap-3 text-[12px] uppercase tracking-[0.28em] text-[#FFB100]"
-     style ={{
-      fontFamily: "'Inter', sans-serif",
-        
-     }}
-      
-      >
-        {/* <span className="inline-block h-px w-7 bg-[#FFB100] opacity-60" /> */}
-        Participant Enrollment
-      </p>
-
-      <h1
-        className="f-display mb-6 font-light leading-[1.08] text-white/[0.96] select-none"
-        style={{
-       
-          letterSpacing: "-0.02em",
-
-          fontFamily: "'Poppins', sans-serif",
-          fontSize: "clamp(25px, 3vw, 40px)",
-        }}
-
-
-        
-      >
-        Begin your journey{" "}
-        <em className="italic  text-white/35"  
-        
-       
-        > <br />
-          with the study.
-        </em>
-      </h1>
-
-      <p className="max-w-[390px] text-sm font-light leading-[1.75] text-white/[0.45]">
-        Create an account with your email. A Study ID is optional and is required
-        only if you are joining the AIDES-T2D research study.
-      </p>
-    </div>
-
-    {/* Steps */}
-    <div className="anim-steps max-w-[400px]">
-      <p className="f-mono mb-5 text-[9px] uppercase tracking-[0.22em] text-white/30 select-none">
-        How it works
-      </p>
-
-      <div className="flex flex-col gap-0">
-        {[
-          {
-            num: "01",
-            title: "Create your account",
-            desc: "Enter your email and password. A Study ID is optional.",
-          },
-          {
-            num: "02",
-            title: "Verify your email",
-            desc: "We will send a 6-digit code that expires in 10 minutes.",
-          },
-          {
-            num: "03",
-            title: "Sign in and begin",
-            desc: "After verification, return to login and access your account.",
-          },
-        ].map((step, i) => (
-          <div
-            key={step.num}
-            className={`relative flex gap-5 pb-7 ${
-              i < 2 ? "step-line" : ""
-            }`}
-          >
-            <div className="shrink-0 flex h-[28px] w-[28px] items-center justify-center rounded-full border border-[#FFB100]/30 bg-[#FFB100]/10 backdrop-blur-sm">
-              <span className="f-mono text-[8.5px] font-medium text-[#FFB100]">
-                {step.num}
-              </span>
-            </div>
-
-            <div className="pt-[3px]">
-              <p className="text-[12.5px] font-medium text-white/75 mb-[3px]">
-                {step.title}
-              </p>
-
-              <p className="text-[11.5px] font-light text-white/35 leading-[1.5]">
-                {step.desc}
-              </p>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-
-    {/* Bottom badges */}
-    <div className="anim-badges flex items-center gap-6"
-    style= {{
-      fontFamily: "'Inter', sans-serif",
-    }}
-    >
-      {[
-        { value: "Email", label: "Verified" },
-        { value: "SSL", label: "Protected" },
-        { value: "100%", label: "Confidential" },
-      ].map((badge, i) => (
-        <div
-          key={badge.label}
-          className={`flex flex-col gap-[5px] px-8 ${
-            i === 0 ? "pl-0" : "border-l border-white/[0.08]"
-          }`}
+      <div className="flex min-h-dvh flex-col lg:flex-row">
+        {/* ======================================================
+            IMAGE / EDITORIAL PANEL
+        ====================================================== */}
+        <section
+          className="
+            relative
+            h-[270px]
+            shrink-0
+            overflow-hidden
+            sm:h-[320px]
+            lg:sticky
+            lg:top-0
+            lg:h-dvh
+            lg:w-[52%]
+          "
         >
-          <span className="f-display text-[26px] font-normal leading-none tracking-[-0.02em] text-white/[0.92]">
-            {badge.value}
-          </span>
-
-          <span className="f-mono text-[9px] uppercase tracking-[0.16em] text-white/30">
-            {badge.label}
-          </span>
-        </div>
-      ))}
-    </div>
-  </div>
-
-  {/* Bottom floating label */}
-  <div className="absolute bottom-11 right-12 z-[2] f-mono text-[8.5px] uppercase tracking-[0.2em] text-white/[0.10] select-none">
-    Secure · Private · Verified
-  </div>
-</div>
-        {/* RIGHT — Form panel */}
-        <div className="dot-pattern relative flex w-full items-center justify-center px-6 py-12 lg:w-[520px] lg:shrink-0 lg:bg-[#fefdfb] lg:px-14 lg:py-16 lg:shadow-[inset_1px_0_0_rgba(10,10,15,0.04),-32px_0_80px_rgba(10,10,15,0.04)]">
-          <div className="anim-form relative z-10 w-full max-w-[380px]">
           <Image
-         
-          src="/images/stampleyLogo.png" alt="AIDES-T2D" width={32} height={32} 
-           style ={{
-            position: "absolute",
-            top : -70,
-            right: 0,
-
-           }}
+            src="/auth/women2.png"
+            alt="A woman smiling while working on a laptop in a bright room"
+            fill
+            priority
+            sizes="(min-width: 1024px) 52vw, 100vw"
+            className="
+              object-cover
+              object-[66%_32%]
+              lg:object-[62%_34%]
+            "
           />
-           
-          
-           <div className="mb-10">
-              {/* <div className="f-mono mb-4 flex items-center gap-2 text-[9px] uppercase tracking-[0.24em] text-black select-none">
-                <span className="inline-block h-2 w-2 rounded-[3px] border-[1.5px] border-[#3d5a80] opacity-50" />
-                Participant Registration
-              </div> */}
-              <h2
-                className="mb-2 text-[36px] font-normal leading-[1.1] text-[#0a0a0f]"
-                style={{ letterSpacing: "-0.02em",     fontFamily: "'Inter', sans-serif", }}
-              >
-                Join AIDES-T2D.
-              </h2>
-              <p className="text-[14px] font-light leading-[1.6] text-black"
-              style  ={{
-                fontFamily: "'Inter', sans-serif",
-              }}
-              >
-                Verify your email to create your account. A Study ID is optional.
-              </p>
-            </div>
 
+          {/* White overlays */}
+          <div
+            className="
+              pointer-events-none
+              absolute
+              inset-0
+              bg-gradient-to-r
+              from-white/90
+              via-white/25
+              to-transparent
+            "
+          />
+
+          <div
+            className="
+              pointer-events-none
+              absolute
+              inset-0
+              bg-gradient-to-t
+              from-white/90
+              via-white/10
+              to-transparent
+              lg:from-white/60
+            "
+          />
+
+          {/* Brand */}
+          <Link
+            href="/"
+            className="
+              absolute
+              left-5
+              top-5
+              z-10
+              flex
+              items-center
+              gap-3
+              text-black
+              sm:left-7
+              sm:top-7
+              lg:left-10
+              lg:top-9
+            "
+          >
+            <Image
+              src="/images/stampleyLogo.png"
+              alt=""
+              width={30}
+              height={30}
+              className="h-[30px] w-auto"
+            />
+
+            <span
+              className="
+                font-[AmericanSansLight,Helvetica,Arial,sans-serif]
+                text-[10px]
+                uppercase
+                tracking-[0.18em]
+                text-blue-900
+              "
+            >
+              AIDES-T2D
+            </span>
+          </Link>
+
+          {/* Editorial copy */}
+          <div
+            className="
+              absolute
+              bottom-5
+              left-5
+              right-5
+              z-10
+              max-w-[540px]
+              sm:bottom-7
+              sm:left-7
+              lg:bottom-12
+              lg:left-10
+              lg:right-auto
+            "
+          >
+            <p
+              className="
+                mb-3
+                font-[AmericanSansLight,Helvetica,Arial,sans-serif]
+                text-[10px]
+                uppercase
+                tracking-[0.17em]
+                text-black
+              "
+            >
+              Your next step
+            </p>
+
+            <h1
+              className="
+                max-w-[20ch]
+                font-[AmericanSansLight,Helvetica,Arial,sans-serif]
+                text-[24px]
+                font-normal
+                leading-[0.95]
+                tracking-[-0.04em]
+                text-blue-900
+                sm:text-[30px]
+                lg:text-[36px]
+                xl:text-[40px]
+              "
+            >
+              Your next step starts here.
+            </h1>
+
+            <p
+              className="
+                mt-4
+                max-w-[38ch]
+                font-[AmericanSansLight,Helvetica,Arial,sans-serif]
+                text-[14px]
+                font-normal
+                leading-[1.6]
+                tracking-[-0.01em]
+                text-black
+                lg:mt-5
+                lg:text-[16px]
+              "
+            >
+              Create your account, verify your email, and continue your
+              AIDES-T2D experience.
+            </p>
+          </div>
+        </section>
+
+        {/* ======================================================
+            REGISTRATION PANEL
+        ====================================================== */}
+        <section
+          className="
+            relative
+            flex
+            flex-1
+            items-center
+            justify-center
+            overflow-hidden
+            bg-white
+            px-6
+            py-12
+            sm:px-10
+            lg:w-[48%]
+            lg:px-12
+            lg:py-16
+            xl:px-16
+          "
+        >
+          <AuthBackgroundDecoration />
+
+          <div className="relative z-10 w-full max-w-[460px]">
+            {/* Logo */}
+            <Link
+              href="/"
+              className="inline-flex"
+              aria-label="Go to AIDES-T2D home"
+            >
+              <Image
+                src="/images/stampleyLogo.png"
+                alt="AIDES-T2D"
+                width={36}
+                height={36}
+                className="
+                  h-9
+                  w-auto
+                  transition-transform
+                  duration-200
+                  hover:scale-[1.03]
+                "
+              />
+            </Link>
+
+            {/* Error */}
             {error && (
-              <div className="mb-6 flex items-start gap-2.5 rounded-xl border border-red-100/80 bg-red-50/60 px-4 py-3 text-[12.5px] leading-relaxed text-[#9b2226]">
-                <svg
-                  className="mt-[1px] h-3.5 w-3.5 shrink-0"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.6"
-                  strokeLinecap="round"
-                >
-                  <circle cx="12" cy="12" r="10" />
-                  <line x1="12" y1="8" x2="12" y2="13" />
-                  <circle cx="12" cy="16.5" r="0.5" fill="currentColor" />
-                </svg>
+              <div
+                role="alert"
+                className="
+                  mt-7
+                  flex
+                  items-start
+                  gap-3
+                  rounded-xl
+                  border
+                  border-red-200
+                  bg-red-50
+                  px-4
+                  py-3.5
+                  font-[AmericanSansLight,Helvetica,Arial,sans-serif]
+                  text-[13px]
+                  leading-5
+                  text-black
+                "
+              >
+                <CircleAlert
+                  aria-hidden="true"
+                  strokeWidth={1.7}
+                  className="mt-0.5 h-4 w-4 shrink-0 text-black"
+                />
+
                 <span>{error}</span>
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-              <div className="flex flex-col gap-2">
+            {/* Form */}
+            <form
+              onSubmit={handleSubmit}
+              className="mt-10 flex flex-col gap-6"
+            >
+              {/* Study ID */}
+              <div className="flex flex-col gap-2.5">
                 <label
                   htmlFor="studyId"
-                  className="f-mono text-[12px] uppercase tracking-[0.16em] text-black/70 select-none"
+                  className="
+                    font-[AmericanSansLight,Helvetica,Arial,sans-serif]
+                    text-[13px]
+                    font-normal
+                    leading-5
+                    tracking-[-0.005em]
+                    text-black
+                  "
                 >
-                  Study ID <span className="normal-case tracking-normal text-black/40">(optional)</span>
+                  Study ID <span className="text-black">(optional)</span>
                 </label>
-                <div className="input-group relative">
-                  <svg
-                    className="input-icon pointer-events-none absolute left-3.5 top-1/2 h-[15px] w-[15px] -translate-y-1/2 fill-none stroke-black/40 transition-all duration-200"
-                    viewBox="0 0 24 24"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4" />
-                  </svg>
+
+                <div className="relative">
+                  <KeyRound
+                    aria-hidden="true"
+                    strokeWidth={1.5}
+                    className="
+                      pointer-events-none
+                      absolute
+                      left-4
+                      top-1/2
+                      h-4
+                      w-4
+                      -translate-y-1/2
+                      text-black
+                    "
+                  />
+
                   <input
                     id="studyId"
                     name="studyId"
                     type="text"
                     placeholder="AIDES-XXXXXX"
                     disabled={loading}
-                    className="styled-input f-mono w-full rounded-[10px] border border-black/[0.12] bg-white py-[13px] pl-[42px] pr-4 text-[13px] uppercase tracking-[0.1em] text-[#0a0a0f] outline-none transition-all duration-200 placeholder:text-black/30 placeholder:normal-case placeholder:tracking-normal focus:border-[#3d5a80] focus:bg-[#fefdfb] focus:shadow-[0_0_0_3.5px_rgba(61,90,128,0.12)] disabled:cursor-not-allowed disabled:opacity-40"
+                    autoComplete="off"
+                    className="
+                      auth-input
+                      h-[56px]
+                      w-full
+                      rounded-[10px]
+                      border
+                      border-[#86868b]
+                      bg-white
+                      pl-11
+                      pr-4
+                      font-[AmericanSansLight,Helvetica,Arial,sans-serif]
+                      text-[15px]
+                      font-normal
+                      uppercase
+                      tracking-[0.04em]
+                      text-black
+                      outline-none
+                      transition-all
+                      duration-200
+                      placeholder:normal-case
+                      placeholder:tracking-normal
+                      placeholder:text-black/35
+                      focus:border-[#1473E6]
+                      focus:ring-[2px]
+                      focus:ring-[#1473E6]
+                      disabled:cursor-not-allowed
+                      disabled:opacity-50
+                    "
                   />
                 </div>
-                <p className="text-[12px] text-black font-light pl-1">
-                  Optional. Provided by your research coordinator to join the study.
+
+                <p
+                  className="
+                    pl-1
+                    font-[AmericanSansLight,Helvetica,Arial,sans-serif]
+                    text-[12px]
+                    font-normal
+                    leading-5
+                    text-black
+                  "
+                >
+                  Optional. Use it if one was provided by the research team.
                 </p>
               </div>
 
-              <div className="flex flex-col gap-2">
+              {/* Email */}
+              <div className="flex flex-col gap-2.5">
                 <label
                   htmlFor="email"
-                  className="f-mono text-[12px] uppercase tracking-[0.16em] text-black/70 select-none"
+                  className="
+                    font-[AmericanSansLight,Helvetica,Arial,sans-serif]
+                    text-[13px]
+                    font-normal
+                    leading-5
+                    tracking-[-0.005em]
+                    text-black
+                  "
                 >
-                  Email Address
+                  Email address
                 </label>
-                <div className="input-group relative">
-                  <svg
-                    className="input-icon pointer-events-none absolute left-3.5 top-1/2 h-[15px] w-[15px] -translate-y-1/2 fill-none stroke-black/40 transition-all duration-200"
-                    viewBox="0 0 24 24"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <rect x="2" y="4" width="20" height="16" rx="2.5" />
-                    <path d="m2 7 10 7 10-7" />
-                  </svg>
+
+                <div className="relative">
+                  <Mail
+                    aria-hidden="true"
+                    strokeWidth={1.5}
+                    className="
+                      pointer-events-none
+                      absolute
+                      left-4
+                      top-1/2
+                      h-4
+                      w-4
+                      -translate-y-1/2
+                      text-black
+                    "
+                  />
+
                   <input
                     id="email"
                     name="email"
@@ -488,29 +427,68 @@ export default function RegisterPage() {
                     placeholder="you@email.com"
                     required
                     disabled={loading}
-                    className="styled-input f-body w-full rounded-[10px] border border-black/[0.12] bg-white py-[13px] pl-[42px] pr-4 text-[13.5px] text-[#0a0a0f] outline-none transition-all duration-200 placeholder:text-black/40 focus:border-[#3d5a80] focus:bg-[#fefdfb] focus:shadow-[0_0_0_3.5px_rgba(61,90,128,0.12)] disabled:cursor-not-allowed disabled:opacity-40"
+                    autoComplete="email"
+                    className="
+                      auth-input
+                      h-[56px]
+                      w-full
+                      rounded-[10px]
+                      border
+                      border-[#86868b]
+                      bg-white
+                      pl-11
+                      pr-4
+                      font-[AmericanSansLight,Helvetica,Arial,sans-serif]
+                      text-[15px]
+                      font-normal
+                      tracking-[-0.005em]
+                      text-black
+                      outline-none
+                      transition-all
+                      duration-200
+                      placeholder:text-black/35
+                      focus:border-[#1473E6]
+                      focus:ring-[2px]
+                      focus:ring-[#1473E6]
+                      disabled:cursor-not-allowed
+                      disabled:opacity-50
+                    "
                   />
                 </div>
               </div>
 
-              <div className="flex flex-col gap-2">
+              {/* Password */}
+              <div className="flex flex-col gap-2.5">
                 <label
                   htmlFor="password"
-                  className="f-mono text-[12px] uppercase tracking-[0.16em] text-black/70 select-none"
+                  className="
+                    font-[AmericanSansLight,Helvetica,Arial,sans-serif]
+                    text-[13px]
+                    font-normal
+                    leading-5
+                    tracking-[-0.005em]
+                    text-black
+                  "
                 >
                   Password
                 </label>
-                <div className="input-group relative">
-                  <svg
-                    className="input-icon pointer-events-none absolute left-3.5 top-1/2 h-[15px] w-[15px] -translate-y-1/2 fill-none stroke-black/40 transition-all duration-200"
-                    viewBox="0 0 24 24"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <rect x="3" y="11" width="18" height="11" rx="2.5" />
-                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                  </svg>
+
+                <div className="relative">
+                  <LockKeyhole
+                    aria-hidden="true"
+                    strokeWidth={1.5}
+                    className="
+                      pointer-events-none
+                      absolute
+                      left-4
+                      top-1/2
+                      h-4
+                      w-4
+                      -translate-y-1/2
+                      text-black
+                    "
+                  />
+
                   <input
                     id="password"
                     name="password"
@@ -519,69 +497,130 @@ export default function RegisterPage() {
                     required
                     minLength={8}
                     disabled={loading}
-                    className="styled-input f-body w-full rounded-[10px] border border-black/[0.12] bg-white py-[13px] pl-[42px] pr-11 text-[13.5px] text-[#0a0a0f] outline-none transition-all duration-200 placeholder:text-black/40 focus:border-[#3d5a80] focus:bg-[#fefdfb] focus:shadow-[0_0_0_3.5px_rgba(61,90,128,0.12)] disabled:cursor-not-allowed disabled:opacity-40"
+                    autoComplete="new-password"
+                    className="
+                      auth-input
+                      h-[56px]
+                      w-full
+                      rounded-[10px]
+                      border
+                      border-[#86868b]
+                      bg-white
+                      pl-11
+                      pr-14
+                      font-[AmericanSansLight,Helvetica,Arial,sans-serif]
+                      text-[15px]
+                      font-normal
+                      tracking-[-0.005em]
+                      text-black
+                      outline-none
+                      transition-all
+                      duration-200
+                      placeholder:text-black/35
+                      focus:border-[#1473E6]
+                      focus:ring-[2px]
+                      focus:ring-[#1473E6]
+                      disabled:cursor-not-allowed
+                      disabled:opacity-50
+                    "
                   />
+
                   <button
                     type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 flex -translate-y-1/2 items-center justify-center p-1 text-black/40 transition-colors duration-200 hover:text-black/70"
-                    aria-label="Toggle password visibility"
-                    tabIndex={-1}
+                    onClick={() =>
+                      setShowPassword((current) => !current)
+                    }
+                    aria-label={
+                      showPassword ? "Hide password" : "Show password"
+                    }
+                    className="
+                      absolute
+                      right-3
+                      top-1/2
+                      flex
+                      h-8
+                      w-8
+                      -translate-y-1/2
+                      cursor-pointer
+                      items-center
+                      justify-center
+                      rounded-full
+                      border
+                      border-black/35
+                      bg-white
+                      text-black
+                      transition-all
+                      duration-200
+                      hover:border-black/60
+                      hover:bg-black/[0.025]
+                      focus-visible:outline-none
+                      focus-visible:ring-2
+                      focus-visible:ring-[#1473E6]
+                      focus-visible:ring-offset-2
+                    "
                   >
                     {showPassword ? (
-                      <svg
+                      <EyeOff
+                        aria-hidden="true"
+                        strokeWidth={1.5}
                         className="h-[15px] w-[15px]"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" />
-                        <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" />
-                        <path d="m14.12 14.12a3 3 0 1 1-4.24-4.24" />
-                        <line x1="1" y1="1" x2="23" y2="23" />
-                      </svg>
+                      />
                     ) : (
-                      <svg
+                      <Eye
+                        aria-hidden="true"
+                        strokeWidth={1.5}
                         className="h-[15px] w-[15px]"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                        <circle cx="12" cy="12" r="3" />
-                      </svg>
+                      />
                     )}
                   </button>
                 </div>
-                <p className="text-[12px] text-black font-light pl-1">
+
+                <p
+                  className="
+                    pl-1
+                    font-[AmericanSansLight,Helvetica,Arial,sans-serif]
+                    text-[12px]
+                    font-normal
+                    leading-5
+                    text-black
+                  "
+                >
                   Minimum 8 characters
                 </p>
               </div>
 
-              <div className="flex flex-col gap-2">
+              {/* Confirm Password */}
+              <div className="flex flex-col gap-2.5">
                 <label
                   htmlFor="confirmPassword"
-                  className="f-mono text-[12px] uppercase tracking-[0.16em] text-black/70 select-none"
+                  className="
+                    font-[AmericanSansLight,Helvetica,Arial,sans-serif]
+                    text-[13px]
+                    font-normal
+                    leading-5
+                    tracking-[-0.005em]
+                    text-black
+                  "
                 >
-                  Confirm Password
+                  Confirm password
                 </label>
-                <div className="input-group relative">
-                  <svg
-                    className="input-icon pointer-events-none absolute left-3.5 top-1/2 h-[15px] w-[15px] -translate-y-1/2 fill-none stroke-black/40 transition-all duration-200"
-                    viewBox="0 0 24 24"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <rect x="3" y="11" width="18" height="11" rx="2.5" />
-                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                  </svg>
+
+                <div className="relative">
+                  <LockKeyhole
+                    aria-hidden="true"
+                    strokeWidth={1.5}
+                    className="
+                      pointer-events-none
+                      absolute
+                      left-4
+                      top-1/2
+                      h-4
+                      w-4
+                      -translate-y-1/2
+                      text-black
+                    "
+                  />
+
                   <input
                     id="confirmPassword"
                     name="confirmPassword"
@@ -590,94 +629,175 @@ export default function RegisterPage() {
                     required
                     minLength={8}
                     disabled={loading}
-                    className="styled-input f-body w-full rounded-[10px] border border-black/[0.12] bg-white py-[13px] pl-[42px] pr-4 text-[13.5px] text-[#0a0a0f] outline-none transition-all duration-200 placeholder:text-black/40 focus:border-[#3d5a80] focus:bg-[#fefdfb] focus:shadow-[0_0_0_3.5px_rgba(61,90,128,0.12)] disabled:cursor-not-allowed disabled:opacity-40"
+                    autoComplete="new-password"
+                    className="
+                      auth-input
+                      h-[56px]
+                      w-full
+                      rounded-[10px]
+                      border
+                      border-[#86868b]
+                      bg-white
+                      pl-11
+                      pr-4
+                      font-[AmericanSansLight,Helvetica,Arial,sans-serif]
+                      text-[15px]
+                      font-normal
+                      tracking-[-0.005em]
+                      text-black
+                      outline-none
+                      transition-all
+                      duration-200
+                      placeholder:text-black/35
+                      focus:border-[#1473E6]
+                      focus:ring-[2px]
+                      focus:ring-[#1473E6]
+                      disabled:cursor-not-allowed
+                      disabled:opacity-50
+                    "
                   />
                 </div>
               </div>
 
+              {/* Continue */}
               <button
                 type="submit"
                 disabled={loading}
-                className="btn-shimmer relative mt-1 w-full cursor-pointer overflow-hidden rounded-[10px] border-none bg-blue-900 px-6 py-[14px] f-body text-[13px] font-semibold uppercase tracking-[0.06em] text-white shadow-[0_4px_16px_rgba(10,10,15,0.18),0_1px_3px_rgba(10,10,15,0.12)] transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:not-disabled:-translate-y-px hover:not-disabled:bg-blue-800 hover:not-disabled:shadow-[0_8px_28px_rgba(10,10,15,0.25),0_2px_6px_rgba(10,10,15,0.15)] active:not-disabled:translate-y-0 active:not-disabled:scale-[0.985] disabled:cursor-not-allowed disabled:opacity-40"
+                className="
+                  group
+                  mt-1
+                  flex
+                  h-[56px]
+                  w-full
+                  cursor-pointer
+                  items-center
+                  justify-between
+                  rounded-[10px]
+                  bg-[#173B7A]
+                  px-5
+                  font-[AmericanSansLight,Helvetica,Arial,sans-serif]
+                  text-[14px]
+                  font-normal
+                  tracking-[-0.005em]
+                  text-white
+                  transition-all
+                  duration-200
+                  hover:bg-[#122E60]
+                  active:scale-[0.995]
+                  disabled:cursor-not-allowed
+                  disabled:opacity-50
+                "
               >
-                <span className="relative z-10 flex items-center justify-center gap-2">
-                  {loading ? (
-                    <>
-                      <span className="spinner inline-block h-3.5 w-3.5 rounded-full border-[1.5px] border-white/20 border-t-white" />
-                      <span className="text-[11px] tracking-[0.12em]">Sending code...</span>
-                    </>
-                  ) : (
-                    <>
-                      Continue
-                      <svg
-                        width="13"
-                        height="13"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2.2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <path d="M5 12h14M12 5l7 7-7 7" />
-                      </svg>
-                    </>
-                  )}
-                </span>
+                {loading ? (
+                  <div className="flex w-full items-center justify-center gap-2.5">
+                    <span
+                      className="
+                        h-4
+                        w-4
+                        animate-spin
+                        rounded-full
+                        border-[1.5px]
+                        border-white/30
+                        border-t-white
+                      "
+                    />
+
+                    <span>Sending code...</span>
+                  </div>
+                ) : (
+                  <>
+                    <span>Continue</span>
+
+                    <span
+                      className="
+                        flex
+                        h-8
+                        w-8
+                        shrink-0
+                        items-center
+                        justify-center
+                        rounded-full
+                        border
+                        border-white/70
+                        bg-transparent
+                        text-white
+                        transition-all
+                        duration-200
+                        group-hover:border-white
+                        group-hover:bg-white/[0.08]
+                      "
+                    >
+                      <ArrowRight
+                        aria-hidden="true"
+                        strokeWidth={1.8}
+                        className="h-[15px] w-[15px]"
+                      />
+                    </span>
+                  </>
+                )}
               </button>
             </form>
 
-            <div className="mt-8 flex flex-col gap-5">
-              <p className="text-center text-[12.5px] font-light text-black/70">
-                Already have an account?{" "}
-                <Link
-                  href="/login"
-                  className="font-md cursor-pointer text-lg text-[#0a0a0f] no-underline border-b border-black/20 transition-all duration-200 hover:border-[#3d5a80] hover:text-[#3d5a80]"
-                >
-                  Sign in
-                </Link>
-              </p>
+            {/* Existing account */}
+            <p
+              className="
+                mt-8
+                text-center
+                font-[AmericanSansLight,Helvetica,Arial,sans-serif]
+                text-[13.5px]
+                font-normal
+                leading-5
+                text-black
+              "
+            >
+              Already have an account?{" "}
+              <Link
+                href="/login"
+                className="
+                  text-black
+                  underline
+                  decoration-black/25
+                  underline-offset-4
+                  transition
+                  hover:decoration-black
+                "
+              >
+                Sign in
+              </Link>
+            </p>
 
-              <div className="mt-1 flex items-center justify-center gap-5 border-t border-black/[0.08] pt-6">
-                {[
-                  {
-                    label: "Private",
-                    icon: (
-                      <svg className="h-[11px] w-[11px] stroke-[#3d5a80] opacity-70" viewBox="0 0 24 24" fill="none" strokeWidth="2.2" strokeLinecap="round">
-                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                      </svg>
-                    ),
-                  },
-                  {
-                    label: "Secure",
-                    icon: (
-                      <svg className="h-[11px] w-[11px] stroke-[#3d5a80] opacity-70" viewBox="0 0 24 24" fill="none" strokeWidth="2.2" strokeLinecap="round">
-                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                      </svg>
-                    ),
-                  },
-                  {
-                    label: "Encrypted",
-                    icon: (
-                      <svg className="h-[11px] w-[11px] stroke-[#3d5a80] opacity-70" viewBox="0 0 24 24" fill="none" strokeWidth="2.2" strokeLinecap="round">
-                        <rect x="3" y="11" width="18" height="11" rx="2" />
-                        <path d="M7 11V7a5 5 0 0110 0v4" />
-                      </svg>
-                    ),
-                  },
-                ].map((badge) => (
-                  <div key={badge.label} className="flex items-center gap-1.5">
-                    {badge.icon}
-                    <span className="f-mono text-[8.5px] uppercase tracking-[0.14em] text-black/50">
-                      {badge.label}
-                    </span>
-                  </div>
-                ))}
-              </div>
+            {/* Privacy */}
+            <div
+              className="
+                mt-8
+                flex
+                items-center
+                justify-center
+                gap-2
+                border-t
+                border-black/[0.08]
+                pt-6
+                text-center
+                font-[AmericanSansLight,Helvetica,Arial,sans-serif]
+                text-[11.5px]
+                font-normal
+                leading-5
+                text-black
+              "
+            >
+              <ShieldCheck
+                aria-hidden="true"
+                strokeWidth={1.5}
+                className="h-[13px] w-[13px] shrink-0 text-black"
+              />
+
+              <span>
+                Your information is handled securely and confidentially.
+              </span>
             </div>
           </div>
-        </div>
+        </section>
       </div>
-    </>
+    </main>
   )
 }

@@ -17,7 +17,7 @@ function ResetPasswordForm() {
     return (
       <>
         <style>{sharedStyles}</style>
-        <div className="f-body relative flex min-h-screen overflow-hidden bg-[#f5f2ec]">
+        <div className="f-body relative flex min-h-screen overflow-hidden bg-[#f5f2ec] font-[AmericanSansLight,Helvetica,Arial,sans-serif]">
           <div className="grain hidden lg:flex flex-1 relative overflow-hidden flex-col justify-between px-14 py-12 bg-[#0a0a0f] text-white">
             <div className="absolute inset-0 z-0 overflow-hidden">
               <div
@@ -146,7 +146,7 @@ function ResetPasswordForm() {
 
               <Link
                 href="/forgot-password"
-                className="btn-shimmer relative mt-1 flex w-full items-center justify-center gap-2 overflow-hidden rounded-[10px] border-none bg-[#0a0a0f] px-6 py-[14px] f-body text-[13px] font-semibold uppercase tracking-[0.06em] text-white shadow-[0_4px_16px_rgba(10,10,15,0.18),0_1px_3px_rgba(10,10,15,0.12)] transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-px hover:bg-[#1a1a24]"
+                className="btn-shimmer relative mt-1 flex w-full items-center justify-center gap-2 overflow-hidden rounded-[10px] border-none bg-[#0a0a0f] px-6 py-[14px] f-body text-[13px] font-normal uppercase tracking-[0.06em] text-white shadow-[0_4px_16px_rgba(10,10,15,0.18),0_1px_3px_rgba(10,10,15,0.12)] transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-px hover:bg-[#1a1a24]"
               >
                 Request New Link
               </Link>
@@ -172,7 +172,7 @@ function ResetPasswordForm() {
     return (
       <>
         <style>{sharedStyles}</style>
-        <div className="f-body relative flex min-h-screen overflow-hidden bg-[#f5f2ec]">
+        <div className="f-body relative flex min-h-screen overflow-hidden bg-[#f5f2ec] font-[AmericanSansLight,Helvetica,Arial,sans-serif]">
           <div className="grain hidden lg:flex flex-1 relative overflow-hidden flex-col justify-between px-14 py-12 bg-[#0a0a0f] text-white">
             <div className="absolute inset-0 z-0 overflow-hidden">
               <div
@@ -345,7 +345,7 @@ function ResetPasswordForm() {
     <>
       <style>{sharedStyles}</style>
 
-      <div className="f-body relative flex min-h-screen overflow-hidden bg-[#f5f2ec]">
+      <div className="f-body relative flex min-h-screen overflow-hidden bg-[#f5f2ec] font-[AmericanSansLight,Helvetica,Arial,sans-serif]">
         <div className="grain hidden lg:flex flex-1 relative overflow-hidden flex-col justify-between px-14 py-12 bg-[#0a0a0f] text-white">
           <div className="absolute inset-0 z-0 overflow-hidden">
             <div
@@ -509,7 +509,7 @@ function ResetPasswordForm() {
                   required
                   minLength={8}
                   disabled={loading}
-                  className="styled-input f-body w-full rounded-[10px] border border-black/[0.12] bg-[#f5f2ec] py-[13px] px-4 text-[13.5px] text-[#0a0a0f] outline-none transition-all duration-200 placeholder:text-black/40 focus:border-[#3d5a80] focus:bg-[#fefdfb] focus:shadow-[0_0_0_3.5px_rgba(61,90,128,0.12)] disabled:cursor-not-allowed disabled:opacity-40"
+                  className="auth-input styled-input f-body w-full rounded-[10px] border border-black/[0.12] bg-[#f5f2ec] py-[13px] px-4 text-[13.5px] text-[#0a0a0f] outline-none transition-all duration-200 placeholder:text-black/40 focus:border-[#3d5a80] focus:bg-[#fefdfb] focus:shadow-[0_0_0_3.5px_rgba(61,90,128,0.12)] disabled:cursor-not-allowed disabled:opacity-40"
                 />
                 <p className="text-[10.5px] text-black/35 font-light pl-1">Minimum 8 characters</p>
               </div>
@@ -526,7 +526,7 @@ function ResetPasswordForm() {
                   required
                   minLength={8}
                   disabled={loading}
-                  className="styled-input f-body w-full rounded-[10px] border border-black/[0.12] bg-[#f5f2ec] py-[13px] px-4 text-[13.5px] text-[#0a0a0f] outline-none transition-all duration-200 placeholder:text-black/40 focus:border-[#3d5a80] focus:bg-[#fefdfb] focus:shadow-[0_0_0_3.5px_rgba(61,90,128,0.12)] disabled:cursor-not-allowed disabled:opacity-40"
+                  className="auth-input styled-input f-body w-full rounded-[10px] border border-black/[0.12] bg-[#f5f2ec] py-[13px] px-4 text-[13.5px] text-[#0a0a0f] outline-none transition-all duration-200 placeholder:text-black/40 focus:border-[#3d5a80] focus:bg-[#fefdfb] focus:shadow-[0_0_0_3.5px_rgba(61,90,128,0.12)] disabled:cursor-not-allowed disabled:opacity-40"
                 />
               </div>
 
@@ -550,7 +550,7 @@ function ResetPasswordForm() {
               <button
                 type="submit"
                 disabled={loading}
-                className="btn-shimmer relative mt-1 w-full cursor-pointer overflow-hidden rounded-[10px] border-none bg-[#0a0a0f] px-6 py-[14px] f-body text-[13px] font-semibold uppercase tracking-[0.06em] text-white shadow-[0_4px_16px_rgba(10,10,15,0.18),0_1px_3px_rgba(10,10,15,0.12)] transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:not-disabled:-translate-y-px hover:not-disabled:bg-[#1a1a24] hover:not-disabled:shadow-[0_8px_28px_rgba(10,10,15,0.25),0_2px_6px_rgba(10,10,15,0.15)] active:not-disabled:translate-y-0 active:not-disabled:scale-[0.985] disabled:cursor-not-allowed disabled:opacity-40"
+                className="btn-shimmer relative mt-1 w-full cursor-pointer overflow-hidden rounded-[10px] border-none bg-[#0a0a0f] px-6 py-[14px] f-body text-[13px] font-normal uppercase tracking-[0.06em] text-white shadow-[0_4px_16px_rgba(10,10,15,0.18),0_1px_3px_rgba(10,10,15,0.12)] transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:not-disabled:-translate-y-px hover:not-disabled:bg-[#1a1a24] hover:not-disabled:shadow-[0_8px_28px_rgba(10,10,15,0.25),0_2px_6px_rgba(10,10,15,0.15)] active:not-disabled:translate-y-0 active:not-disabled:scale-[0.985] disabled:cursor-not-allowed disabled:opacity-40"
               >
                 <span className="relative z-10 flex items-center justify-center gap-2">
                   {loading ? (
@@ -617,7 +617,7 @@ export default function ResetPasswordPage() {
       fallback={
         <>
           <style>{sharedStyles}</style>
-          <div className="min-h-screen flex items-center justify-center bg-[#f5f2ec]">
+          <div className="min-h-screen flex items-center justify-center bg-[#f5f2ec] font-[AmericanSansLight,Helvetica,Arial,sans-serif]">
             <div className="text-sm text-black/50">Loading...</div>
           </div>
         </>
@@ -629,10 +629,11 @@ export default function ResetPasswordPage() {
 }
 
 const sharedStyles = `
-  @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;1,9..144,300;1,9..144,400&family=JetBrains+Mono:wght@300;400;500&family=Outfit:wght@300;400;500;600&display=swap');
-  .f-display { font-family: 'Fraunces', Georgia, serif; }
-  .f-mono    { font-family: 'JetBrains Mono', monospace; }
-  .f-body    { font-family: 'Outfit', system-ui, sans-serif; }
+  .f-display,
+  .f-mono,
+  .f-body {
+    font-family: AmericanSansLight, Helvetica, Arial, sans-serif;
+  }
 
   @keyframes meshDrift {
     0%   { transform: translate(0, 0) rotate(0deg); }

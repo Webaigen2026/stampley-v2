@@ -2,7 +2,17 @@
 
 import { useState } from "react"
 import Link from "next/link"
+import Image from "next/image"
+import {
+  ArrowLeft,
+  ArrowRight,
+  CircleAlert,
+  Mail,
+  ShieldCheck,
+} from "lucide-react"
+
 import { requestPasswordReset } from "@/actions/password-reset"
+import AuthBackgroundDecoration from "@/components/auth/AuthBackgroundDecoration"
 
 export default function ForgotPasswordPage() {
   const [submitted, setSubmitted] = useState(false)
@@ -11,6 +21,7 @@ export default function ForgotPasswordPage() {
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
+
     setLoading(true)
     setError("")
 
@@ -20,531 +31,684 @@ export default function ForgotPasswordPage() {
     if (result?.error) {
       setError(result.error)
       setLoading(false)
-    } else {
-      setSubmitted(true)
+      return
     }
+
+    setSubmitted(true)
+    setLoading(false)
   }
-
-  const sharedStyles = `
-    @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;1,9..144,300;1,9..144,400&family=JetBrains+Mono:wght@300;400;500&family=Outfit:wght@300;400;500;600&display=swap');
-
-    .f-display { font-family: 'Fraunces', Georgia, serif; }
-    .f-mono    { font-family: 'JetBrains Mono', monospace; }
-    .f-body    { font-family: 'Outfit', system-ui, sans-serif; }
-
-    @keyframes meshDrift {
-      0%   { transform: translate(0, 0) rotate(0deg); }
-      100% { transform: translate(30px, -20px) rotate(2deg); }
-    }
-    .mesh-drift { animation: meshDrift 25s ease-in-out infinite alternate; }
-
-    .grain::after {
-      content: '';
-      position: absolute; inset: 0;
-      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.06'/%3E%3C/svg%3E");
-      opacity: 0.7;
-      pointer-events: none;
-      z-index: 1;
-    }
-
-    .dot-pattern::before {
-      content: '';
-      position: absolute; inset: 0;
-      background-image: radial-gradient(circle, rgba(10,10,15,0.04) 1px, transparent 1px);
-      background-size: 24px 24px;
-      opacity: 0.5;
-      pointer-events: none;
-    }
-
-    @keyframes fadeDown {
-      from { opacity: 0; transform: translateY(-14px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-    @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(20px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-    @keyframes scaleIn {
-      from { opacity: 0; transform: scale(0.92); }
-      to   { opacity: 1; transform: scale(1); }
-    }
-
-    .anim-brand   { opacity: 0; animation: fadeDown 0.8s cubic-bezier(0.22,1,0.36,1) 0.1s forwards; }
-    .anim-hero    { opacity: 0; animation: fadeUp 1s cubic-bezier(0.22,1,0.36,1) 0.25s forwards; }
-    .anim-info    { opacity: 0; animation: fadeUp 0.9s cubic-bezier(0.22,1,0.36,1) 0.5s forwards; }
-    .anim-form    { opacity: 0; animation: fadeUp 0.8s cubic-bezier(0.22,1,0.36,1) 0.15s forwards; }
-    .anim-success { opacity: 0; animation: scaleIn 0.6s cubic-bezier(0.22,1,0.36,1) 0.1s forwards; }
-
-    .input-group:focus-within .input-icon {
-      stroke: #3d5a80;
-      transform: translateY(-50%) scale(1.06);
-    }
-
-    .styled-input:-webkit-autofill {
-      -webkit-box-shadow: 0 0 0 100px #f5f2ec inset !important;
-      -webkit-text-fill-color: #0a0a0f !important;
-    }
-    .styled-input:-webkit-autofill:focus {
-      -webkit-box-shadow: 0 0 0 100px #fefdfb inset !important;
-    }
-
-    .btn-shimmer::before {
-      content: '';
-      position: absolute; top: 0; left: -100%;
-      width: 60%; height: 100%;
-      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent);
-      transition: left 0.6s ease;
-    }
-    .btn-shimmer:hover:not(:disabled)::before { left: 120%; }
-
-    @keyframes spin { to { transform: rotate(360deg); } }
-    .spinner { animation: spin 0.7s linear infinite; }
-
-    @keyframes pulseRing {
-      0%   { transform: scale(0.95); opacity: 0.6; }
-      100% { transform: scale(1.15); opacity: 0; }
-    }
-    .pulse-ring::before {
-      content: '';
-      position: absolute; inset: -8px;
-      border-radius: 50%;
-      border: 1.5px solid rgba(61,90,128,0.3);
-      animation: pulseRing 2s ease-out infinite;
-    }
-
-    ::-webkit-scrollbar { width: 3px; }
-    ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.08); border-radius: 4px; }
-  `
 
   if (submitted) {
     return (
-      <>
-        <style>{sharedStyles}</style>
+      <main
+        className="
+          min-h-dvh
+          bg-white
+          font-[AmericanSansLight,Helvetica,Arial,sans-serif]
+          text-black
+        "
+      >
+        <div className="flex min-h-dvh flex-col lg:flex-row">
+          {/* ======================================================
+              IMAGE / EDITORIAL PANEL
+          ====================================================== */}
+          <section
+            className="
+              relative
+              h-[270px]
+              shrink-0
+              overflow-hidden
+              sm:h-[320px]
+              lg:h-dvh
+              lg:w-[55%]
+            "
+          >
+            <Image
+              src="/auth/woman3.png"
+              alt="A woman sitting thoughtfully near a bright window"
+              fill
+              priority
+              sizes="(min-width: 1024px) 55vw, 100vw"
+              className="
+                object-cover
+                object-[58%_30%]
+                lg:object-[60%_32%]
+              "
+            />
 
-        <div className="f-body relative flex min-h-screen overflow-hidden bg-[#f5f2ec]">
-          <div className="absolute left-6 top-6 z-20">
-            <a
-              href="/login"
-              className="flex items-center gap-2 px-3 py-3 rounded-full cursor-pointer hover:scale-105 transition text-[#0a0a0f] text-sm font-medium shadow border border-white/10 hover:border-white/20"
-              aria-label="Go to login"
+            {/* White overlays */}
+            <div
+              className="
+                pointer-events-none
+                absolute
+                inset-0
+                bg-gradient-to-r
+                from-white/90
+                via-white/25
+                to-transparent
+              "
+            />
+
+            <div
+              className="
+                pointer-events-none
+                absolute
+                inset-0
+                bg-gradient-to-t
+                from-white/90
+                via-white/10
+                to-transparent
+                lg:from-white/60
+              "
+            />
+
+            {/* Brand */}
+            <Link
+              href="/"
+              className="
+                absolute
+                left-5
+                top-5
+                z-10
+                flex
+                items-center
+                gap-3
+                text-black
+                sm:left-7
+                sm:top-7
+                lg:left-10
+                lg:top-9
+              "
             >
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="text-[#3d5a80]"
-                aria-hidden="true"
-              >
-                <path d="M15 18l-6-6 6-6" />
-              </svg>
-            </a>
-          </div>
-
-          <div className="grain hidden lg:flex flex-1 relative overflow-hidden flex-col justify-between px-14 py-18 bg-[#0a0a0f] text-white">
-            <div className="absolute inset-0 z-0 overflow-hidden">
-              <div
-                className="mesh-drift absolute"
-                style={{
-                  width: "140%",
-                  height: "140%",
-                  top: "-20%",
-                  left: "-20%",
-                  background: [
-                    "radial-gradient(ellipse 600px 500px at 20% 30%, rgba(61,90,128,0.35) 0%, transparent 70%)",
-                    "radial-gradient(ellipse 500px 600px at 80% 70%, rgba(157,120,85,0.2) 0%, transparent 70%)",
-                    "radial-gradient(ellipse 400px 400px at 50% 50%, rgba(61,90,128,0.15) 0%, transparent 70%)",
-                  ].join(", "),
-                }}
+              <Image
+                src="/images/stampleyLogo.png"
+                alt=""
+                width={30}
+                height={30}
+                className="h-[30px] w-auto"
               />
+
+              <span
+                className="
+                  font-[AmericanSansLight,Helvetica,Arial,sans-serif]
+                  text-[10px]
+                  uppercase
+                  tracking-[0.18em]
+                  text-blue-900
+                "
+              >
+                AIDES-T2D
+              </span>
+            </Link>
+
+            {/* Editorial copy */}
+            <div
+              className="
+                absolute
+                bottom-5
+                left-5
+                right-5
+                z-10
+                max-w-[520px]
+                sm:bottom-7
+                sm:left-7
+                lg:bottom-12
+                lg:left-10
+                lg:right-auto
+              "
+            >
+              <p
+                className="
+                  mb-3
+                  font-[AmericanSansLight,Helvetica,Arial,sans-serif]
+                  text-[10px]
+                  uppercase
+                  tracking-[0.17em]
+                  text-black
+                "
+              >
+                Account support
+              </p>
+
+              <h1
+                className="
+                  max-w-[20ch]
+                  font-[AmericanSansLight,Helvetica,Arial,sans-serif]
+                  text-[24px]
+                  font-normal
+                  leading-[0.95]
+                  tracking-[-0.04em]
+                  text-blue-900
+                  sm:text-[30px]
+                  lg:text-[36px]
+                  xl:text-[40px]
+                "
+              >
+                Check your inbox.
+              </h1>
+
+              <p
+                className="
+                  mt-4
+                  max-w-[38ch]
+                  font-[AmericanSansLight,Helvetica,Arial,sans-serif]
+                  text-[14px]
+                  font-normal
+                  leading-[1.6]
+                  tracking-[-0.01em]
+                  text-black
+                  lg:mt-5
+                  lg:text-[16px]
+                "
+              >
+                If an account exists for that email address, a secure reset
+                link has been sent.
+              </p>
             </div>
+          </section>
 
-            <div className="absolute inset-0 z-[1] opacity-[0.04] pointer-events-none">
-              <svg viewBox="0 0 800 900" fill="none" className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
-                <path d="M-50 200 C200 180, 400 260, 850 200" stroke="white" strokeWidth="0.8" />
-                <path d="M-50 280 C200 260, 450 340, 850 280" stroke="white" strokeWidth="0.6" />
-                <path d="M-50 360 C180 340, 420 400, 850 360" stroke="white" strokeWidth="0.5" />
-                <path d="M-50 440 C220 420, 380 480, 850 440" stroke="white" strokeWidth="0.4" />
-                <path d="M-50 520 C240 500, 400 560, 850 530" stroke="white" strokeWidth="0.5" />
-                <path d="M-50 600 C200 580, 440 640, 850 610" stroke="white" strokeWidth="0.6" />
-                <path d="M-50 680 C180 660, 460 720, 850 690" stroke="white" strokeWidth="0.4" />
-                <path d="M-50 760 C220 740, 400 800, 850 770" stroke="white" strokeWidth="0.3" />
-              </svg>
-            </div>
+          {/* ======================================================
+              SUCCESS PANEL
+          ====================================================== */}
+          <section
+            className="
+              relative
+              flex
+              flex-1
+              items-center
+              justify-center
+              overflow-hidden
+              bg-white
+              px-6
+              py-12
+              sm:px-10
+              lg:w-[45%]
+              lg:px-12
+              lg:py-16
+              xl:px-16
+            "
+          >
+            <AuthBackgroundDecoration />
 
-            <div className="relative z-[2] flex flex-col justify-between h-full">
-              <div className="anim-brand flex items-center gap-3.5">
-                <div className="h-10 w-10 rounded-full border border-white/10 bg-white/5 flex items-center justify-center">
-                  <span className="f-mono text-[10px] tracking-[0.2em] text-white/60">APP</span>
-                </div>
-                <span className="f-mono text-[10.5px] font-medium uppercase tracking-[0.2em] text-white/40 select-none">
-                  Stampley Portal
-                </span>
-              </div>
-
-              <div className="anim-hero max-w-[520px]">
-                <p className="f-mono mb-7 flex items-center gap-3 text-[9.5px] uppercase tracking-[0.28em] text-[#5b7ea1]">
-                  <span className="inline-block h-px w-7 bg-[#5b7ea1] opacity-50" />
-                  Account Recovery
-                </p>
-                <h1
-                  className="f-display mb-6 font-light leading-[1.08] text-white/[0.93] select-none"
-                  style={{ fontSize: "clamp(38px, 4.2vw, 62px)", letterSpacing: "-0.02em" }}
+            <div className="relative z-10 w-full max-w-[420px]">
+              {/* Logo + heading */}
+              <div className="flex items-center gap-3">
+                <Link
+                  href="/"
+                  className="inline-flex items-center"
+                  aria-label="Go to AIDES-T2D home"
                 >
-                  Regain access
-                  <br /> <em className="italic font-light text-white/30">to your Stampley portal.</em>
-                </h1>
-                <p className="max-w-[380px] text-sm font-light leading-[1.75] text-white/[0.32]">
-                  Enter your registered email and we&apos;ll send you a secure
-                  link to reset your password and restore access to your account.
-                </p>
-              </div>
-
-              <div className="anim-info max-w-[420px] flex flex-col gap-3">
-                <p className="f-mono mb-2 text-[9px] uppercase tracking-[0.22em] text-white/25 select-none">
-                  What happens next
-                </p>
-                {[
-                  {
-                    title: "Check your inbox",
-                    desc: "A reset link will arrive within a few minutes.",
-                    icon: (
-                      <svg className="h-[14px] w-[14px] stroke-[#5b7ea1]" viewBox="0 0 24 24" fill="none" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                        <rect x="2" y="4" width="20" height="16" rx="2.5" />
-                        <path d="m2 7 10 7 10-7" />
-                      </svg>
-                    ),
-                  },
-                  {
-                    title: "Link expires in 1 hour",
-                    desc: "For your security, reset links are single-use and time-limited.",
-                    icon: (
-                      <svg className="h-[14px] w-[14px] stroke-[#5b7ea1]" viewBox="0 0 24 24" fill="none" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                      </svg>
-                    ),
-                  },
-                  {
-                    title: "Can&apos;t find it?",
-                    desc: "Check your spam folder or contact your study coordinator.",
-                    icon: (
-                      <svg className="h-[14px] w-[14px] stroke-[#5b7ea1]" viewBox="0 0 24 24" fill="none" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                        <circle cx="12" cy="12" r="10" />
-                        <path d="M12 8v4m0 4h.01" />
-                      </svg>
-                    ),
-                  },
-                ].map((item) => (
-                  <div key={item.title} className="flex items-start gap-4 rounded-xl border border-white/[0.05] bg-white/[0.02] px-5 py-4">
-                    <div className="mt-[1px] shrink-0 flex h-[26px] w-[26px] items-center justify-center rounded-full border border-[#3d5a80]/30 bg-[#3d5a80]/[0.08]">
-                      {item.icon}
-                    </div>
-                    <div>
-                      <p className="text-[12px] font-medium text-white/60 mb-[2px]">{item.title}</p>
-                      <p className="text-[11px] font-light text-white/25 leading-[1.5]">{item.desc}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <div className="flex items-center gap-6">
-                {[
-                  { value: "<2min", label: "Avg. delivery" },
-                  { value: "1hr", label: "Link validity" },
-                  { value: "TLS", label: "Encrypted" },
-                ].map((stat, i) => (
-                  <div
-                    key={stat.label}
-                    className={`flex flex-col gap-[5px] px-8 ${i === 0 ? "pl-0" : "border-l border-white/[0.07]"}`}
-                  >
-                    <span className="f-display text-[26px] font-normal leading-none tracking-[-0.02em] text-white/[0.85]">
-                      {stat.value}
-                    </span>
-                    <span className="f-mono text-[9px] uppercase tracking-[0.16em] text-white/25">
-                      {stat.label}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="absolute bottom-11 right-12 z-[2] f-mono text-[8.5px] uppercase tracking-[0.2em] text-white/[0.08] select-none">
-              Secure · HIPAA Compliant
-            </div>
-          </div>
-
-          <div className="dot-pattern relative flex w-full items-center justify-center px-6 py-12 lg:w-[520px] lg:shrink-0 lg:bg-[#fefdfb] lg:px-14 lg:py-16 lg:shadow-[inset_1px_0_0_rgba(10,10,15,0.04),-32px_0_80px_rgba(10,10,15,0.04)]">
-            <div className="anim-form relative z-10 w-full max-w-[380px]">
-              <div className="anim-success flex flex-col items-center text-center">
-                <div className="relative mb-8">
-                  <div className="pulse-ring relative flex h-[72px] w-[72px] items-center justify-center rounded-full border border-[#3d5a80]/20 bg-[#3d5a80]/[0.06]">
-                    <svg className="h-[30px] w-[30px]" viewBox="0 0 24 24" fill="none" stroke="#3d5a80" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
-                      <rect x="2" y="4" width="20" height="16" rx="2.5" />
-                      <path d="m2 7 10 7 10-7" />
-                    </svg>
-                  </div>
-                </div>
-
-                <div className="f-mono mb-3 flex items-center gap-2 text-[9px] uppercase tracking-[0.24em] text-black/50 select-none">
-                  <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500/70" />
-                  Email Sent
-                </div>
+                  <Image
+                    src="/images/stampleyLogo.png"
+                    alt="AIDES-T2D"
+                    width={36}
+                    height={36}
+                    className="
+                      h-9
+                      w-auto
+                      transition-transform
+                      duration-200
+                      hover:scale-[1.03]
+                    "
+                  />
+                </Link>
 
                 <h2
-                  className="f-display mb-3 text-[34px] font-normal leading-[1.1] text-[#0a0a0f]"
-                  style={{ letterSpacing: "-0.02em" }}
+                  className="
+                    font-[AmericanSansLight,Helvetica,Arial,sans-serif]
+                    text-[19px]
+                    font-normal
+                    leading-[1.05]
+                    tracking-[-0.025em]
+                    text-blue-900
+                    sm:text-[22px]
+                    lg:text-[26px]
+                  "
                 >
-                  Check your email
+                  Check your email.
                 </h2>
+              </div>
 
-                <p className="text-[13px] font-light leading-[1.7] text-black/55 mb-6">
-                  If an account exists for that email address, we&apos;ve sent a password reset link.
-                  Check your inbox and follow the instructions.
+              <div className="mt-10">
+                <p
+                  className="
+                    font-[AmericanSansLight,Helvetica,Arial,sans-serif]
+                    text-[13px]
+                    font-normal
+                    leading-6
+                    text-black
+                  "
+                >
+                  If an account exists for that email address, we&apos;ve sent
+                  a password reset link. Follow the instructions in the email
+                  to continue.
                 </p>
+              </div>
 
-                <div className="mt-0 w-full flex items-start gap-2.5 rounded-xl border border-blue-100/80 bg-blue-50/60 px-4 py-3 text-[12px] leading-relaxed text-blue-800">
-                  <svg className="mt-[1px] h-3.5 w-3.5 shrink-0 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round">
-                    <circle cx="12" cy="12" r="10" />
-                    <path d="M12 8v4m0 4h.01" />
-                  </svg>
-                  <p className="text-[12px] font-light text-black/40 leading-[1.6]">
-                  Click the link in the email to set a new password.<br />
-                  It expires in 1 hour.
-                </p>
-                </div>
+              {/* Info panel */}
+              <div
+                className="
+                  mt-8
+                  rounded-[10px]
+                  border
+                  border-[#86868b]
+                  bg-white
+                  px-4
+                  py-4
+                "
+              >
+                <div className="flex items-start gap-3">
+                  <Mail
+                    aria-hidden="true"
+                    strokeWidth={1.5}
+                    className="mt-0.5 h-4 w-4 shrink-0 text-black"
+                  />
 
-
-                
-
-                <div className="mt-8 w-full border-t border-black/[0.08] pt-6">
-                  <Link
-                    href="/login"
-                    className="flex items-center justify-center gap-2 w-full rounded-[10px] border border-black/[0.1] bg-transparent py-[13px] f-body text-[12.5px] font-medium text-black/70 transition-all duration-200 hover:border-[#3d5a80] hover:text-[#3d5a80] hover:bg-[#3d5a80]/[0.03]"
+                  <p
+                    className="
+                      font-[AmericanSansLight,Helvetica,Arial,sans-serif]
+                      text-[13px]
+                      font-normal
+                      leading-5
+                      text-black
+                    "
                   >
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M19 12H5M12 19l-7-7 7-7" />
-                    </svg>
-                    Back to Sign In
-                  </Link>
+                    Click the reset link in the email to choose a new password.
+                    The link expires in 1 hour.
+                  </p>
                 </div>
               </div>
+
+              {/* Back to sign in */}
+              <Link
+                href="/login"
+                className="
+                  group
+                  mt-8
+                  flex
+                  h-[56px]
+                  w-full
+                  items-center
+                  justify-between
+                  rounded-[10px]
+                  border
+                  border-[#86868b]
+                  bg-white
+                  px-5
+                  font-[AmericanSansLight,Helvetica,Arial,sans-serif]
+                  text-[14px]
+                  font-normal
+                  tracking-[-0.005em]
+                  text-black
+                  transition-all
+                  duration-200
+                  hover:border-black
+                  hover:bg-black/[0.02]
+                  focus-visible:outline-none
+                  focus-visible:ring-2
+                  focus-visible:ring-[#1473E6]
+                  focus-visible:ring-offset-2
+                "
+              >
+                <span>Back to sign in</span>
+
+                <span
+                  className="
+                    flex
+                    h-8
+                    w-8
+                    shrink-0
+                    items-center
+                    justify-center
+                    rounded-full
+                    border
+                    border-black/35
+                    bg-white
+                    text-black
+                    transition-all
+                    duration-200
+                    group-hover:border-black/60
+                    group-hover:bg-black/[0.025]
+                  "
+                >
+                  <ArrowLeft
+                    aria-hidden="true"
+                    strokeWidth={1.8}
+                    className="h-[15px] w-[15px]"
+                  />
+                </span>
+              </Link>
+
+              {/* Privacy */}
+              <div
+                className="
+                  mt-8
+                  flex
+                  items-center
+                  justify-center
+                  gap-2
+                  border-t
+                  border-black/[0.08]
+                  pt-6
+                  text-center
+                  font-[AmericanSansLight,Helvetica,Arial,sans-serif]
+                  text-[11.5px]
+                  font-normal
+                  leading-5
+                  text-black
+                "
+              >
+                <ShieldCheck
+                  aria-hidden="true"
+                  strokeWidth={1.5}
+                  className="h-[13px] w-[13px] shrink-0 text-black"
+                />
+
+                <span>
+                  Your information is handled securely and confidentially.
+                </span>
+              </div>
             </div>
-          </div>
+          </section>
         </div>
-      </>
+      </main>
     )
   }
 
   return (
-    <>
-      <style>{sharedStyles}</style>
+    <main
+      className="
+        min-h-dvh
+        bg-white
+        font-[AmericanSansLight,Helvetica,Arial,sans-serif]
+        text-black
+      "
+    >
+      <div className="flex min-h-dvh flex-col lg:flex-row">
+        {/* ======================================================
+            IMAGE / EDITORIAL PANEL
+        ====================================================== */}
+        <section
+          className="
+            relative
+            h-[270px]
+            shrink-0
+            overflow-hidden
+            sm:h-[320px]
+            lg:h-dvh
+            lg:w-[55%]
+          "
+        >
+          <Image
+            src="/auth/woman3.png"
+            alt="A woman sitting thoughtfully near a bright window"
+            fill
+            priority
+            sizes="(min-width: 1024px) 55vw, 100vw"
+            className="
+              object-cover
+              object-[58%_30%]
+              lg:object-[60%_32%]
+            "
+          />
 
-      <div className="f-body relative flex min-h-screen overflow-hidden bg-[#f5f2ec]">
-        <div className="absolute left-6 top-6 z-20">
-          <a
-            href="/login"
-            className="flex items-center gap-2 px-3 py-3 rounded-full cursor-pointer hover:scale-105 transition text-[#0a0a0f] text-sm font-medium shadow border border-white/10 hover:border-white/20"
-            aria-label="Go to login"
+          {/* White overlays */}
+          <div
+            className="
+              pointer-events-none
+              absolute
+              inset-0
+              bg-gradient-to-r
+              from-white/90
+              via-white/25
+              to-transparent
+            "
+          />
+
+          <div
+            className="
+              pointer-events-none
+              absolute
+              inset-0
+              bg-gradient-to-t
+              from-white/90
+              via-white/10
+              to-transparent
+              lg:from-white/60
+            "
+          />
+
+          {/* Brand */}
+          <Link
+            href="/"
+            className="
+              absolute
+              left-5
+              top-5
+              z-10
+              flex
+              items-center
+              gap-3
+              text-black
+              sm:left-7
+              sm:top-7
+              lg:left-10
+              lg:top-9
+            "
           >
-            <svg
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="text-[#3d5a80]"
-              aria-hidden="true"
-            >
-              <path d="M15 18l-6-6 6-6" />
-            </svg>
-          </a>
-        </div>
-
-        <div className="grain hidden lg:flex flex-1 relative overflow-hidden flex-col justify-between px-14 py-18 bg-[#0a0a0f] text-white">
-          <div className="absolute inset-0 z-0 overflow-hidden">
-            <div
-              className="mesh-drift absolute"
-              style={{
-                width: "140%",
-                height: "140%",
-                top: "-20%",
-                left: "-20%",
-                background: [
-                  "radial-gradient(ellipse 600px 500px at 20% 30%, rgba(61,90,128,0.35) 0%, transparent 70%)",
-                  "radial-gradient(ellipse 500px 600px at 80% 70%, rgba(157,120,85,0.2) 0%, transparent 70%)",
-                  "radial-gradient(ellipse 400px 400px at 50% 50%, rgba(61,90,128,0.15) 0%, transparent 70%)",
-                ].join(", "),
-              }}
+            <Image
+              src="/images/stampleyLogo.png"
+              alt=""
+              width={30}
+              height={30}
+              className="h-[30px] w-auto"
             />
+
+            <span
+              className="
+                font-[AmericanSansLight,Helvetica,Arial,sans-serif]
+                text-[10px]
+                uppercase
+                tracking-[0.18em]
+                text-blue-900
+              "
+            >
+              AIDES-T2D
+            </span>
+          </Link>
+
+          {/* Editorial copy */}
+          <div
+            className="
+              absolute
+              bottom-5
+              left-5
+              right-5
+              z-10
+              max-w-[520px]
+              sm:bottom-7
+              sm:left-7
+              lg:bottom-12
+              lg:left-10
+              lg:right-auto
+            "
+          >
+            <p
+              className="
+                mb-3
+                font-[AmericanSansLight,Helvetica,Arial,sans-serif]
+                text-[10px]
+                uppercase
+                tracking-[0.17em]
+                text-black
+              "
+            >
+              Account support
+            </p>
+
+            <h1
+              className="
+                max-w-[20ch]
+                font-[AmericanSansLight,Helvetica,Arial,sans-serif]
+                text-[24px]
+                font-normal
+                leading-[0.95]
+                tracking-[-0.04em]
+                text-blue-900
+                sm:text-[30px]
+                lg:text-[36px]
+                xl:text-[40px]
+              "
+            >
+              It&apos;s okay to reset.
+            </h1>
+
+            <p
+              className="
+                mt-4
+                max-w-[38ch]
+                font-[AmericanSansLight,Helvetica,Arial,sans-serif]
+                text-[14px]
+                font-normal
+                leading-[1.6]
+                tracking-[-0.01em]
+                text-black
+                lg:mt-5
+                lg:text-[16px]
+              "
+            >
+              We&apos;ll help you get back into your account so you can
+              continue your AIDES-T2D journey.
+            </p>
           </div>
+        </section>
 
-          <div className="absolute inset-0 z-[1] opacity-[0.04] pointer-events-none">
-            <svg viewBox="0 0 800 900" fill="none" className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
-              <path d="M-50 200 C200 180, 400 260, 850 200" stroke="white" strokeWidth="0.8" />
-              <path d="M-50 280 C200 260, 450 340, 850 280" stroke="white" strokeWidth="0.6" />
-              <path d="M-50 360 C180 340, 420 400, 850 360" stroke="white" strokeWidth="0.5" />
-              <path d="M-50 440 C220 420, 380 480, 850 440" stroke="white" strokeWidth="0.4" />
-              <path d="M-50 520 C240 500, 400 560, 850 530" stroke="white" strokeWidth="0.5" />
-              <path d="M-50 600 C200 580, 440 640, 850 610" stroke="white" strokeWidth="0.6" />
-              <path d="M-50 680 C180 660, 460 720, 850 690" stroke="white" strokeWidth="0.4" />
-              <path d="M-50 760 C220 740, 400 800, 850 770" stroke="white" strokeWidth="0.3" />
-            </svg>
-          </div>
+        {/* ======================================================
+            FORM PANEL
+        ====================================================== */}
+        <section
+          className="
+            relative
+            flex
+            flex-1
+            items-center
+            justify-center
+            overflow-hidden
+            bg-white
+            px-6
+            py-12
+            sm:px-10
+            lg:w-[45%]
+            lg:px-12
+            lg:py-16
+            xl:px-16
+          "
+        >
+          <AuthBackgroundDecoration />
 
-          <div className="relative z-[2] flex flex-col justify-between h-full">
-            <div className="anim-brand flex items-center gap-3.5">
-              <div className="h-10 w-10 rounded-full border border-white/10 bg-white/5 flex items-center justify-center">
-                <span className="f-mono text-[10px] tracking-[0.2em] text-white/60">APP</span>
-              </div>
-              <span className="f-mono text-[10.5px] font-medium uppercase tracking-[0.2em] text-white/40 select-none">
-                Stampley Portal
-              </span>
-            </div>
-
-            <div className="anim-hero max-w-[520px]">
-              <p className="f-mono mb-7 flex items-center gap-3 text-[9.5px] uppercase tracking-[0.28em] text-[#5b7ea1]">
-                <span className="inline-block h-px w-7 bg-[#5b7ea1] opacity-50" />
-                Account Recovery
-              </p>
-              <h1
-                className="f-display mb-6 font-light leading-[1.08] text-white/[0.93] select-none"
-                style={{ fontSize: "clamp(38px, 4.2vw, 62px)", letterSpacing: "-0.02em" }}
+          <div className="relative z-10 w-full max-w-[420px]">
+            {/* Logo + heading */}
+            <div className="flex items-center gap-3">
+              <Link
+                href="/"
+                className="inline-flex items-center"
+                aria-label="Go to AIDES-T2D home"
               >
-                Regain access
-                <br /> <em className="italic font-light text-white/30">to your Stampley portal.</em>
-              </h1>
-              <p className="max-w-[380px] text-sm font-light leading-[1.75] text-white/[0.32]">
-                Enter your registered email and we&apos;ll send you a secure
-                link to reset your password and restore access to your account.
-              </p>
-            </div>
+                <Image
+                  src="/images/stampleyLogo.png"
+                  alt="AIDES-T2D"
+                  width={36}
+                  height={36}
+                  className="
+                    h-9
+                    w-auto
+                    transition-transform
+                    duration-200
+                    hover:scale-[1.03]
+                  "
+                />
+              </Link>
 
-            <div className="anim-info max-w-[420px] flex flex-col gap-3">
-              <p className="f-mono mb-2 text-[9px] uppercase tracking-[0.22em] text-white/25 select-none">
-                What happens next
-              </p>
-              {[
-                {
-                  title: "Check your inbox",
-                  desc: "A reset link will arrive within a few minutes.",
-                  icon: (
-                    <svg className="h-[14px] w-[14px] stroke-[#5b7ea1]" viewBox="0 0 24 24" fill="none" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                      <rect x="2" y="4" width="20" height="16" rx="2.5" />
-                      <path d="m2 7 10 7 10-7" />
-                    </svg>
-                  ),
-                },
-                {
-                  title: "Link expires in 1 hour",
-                  desc: "For your security, reset links are single-use and time-limited.",
-                  icon: (
-                    <svg className="h-[14px] w-[14px] stroke-[#5b7ea1]" viewBox="0 0 24 24" fill="none" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                    </svg>
-                  ),
-                },
-                {
-                  title: "Can&apos;t find it?",
-                  desc: "Check your spam folder or contact your study coordinator.",
-                  icon: (
-                    <svg className="h-[14px] w-[14px] stroke-[#5b7ea1]" viewBox="0 0 24 24" fill="none" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                      <circle cx="12" cy="12" r="10" />
-                      <path d="M12 8v4m0 4h.01" />
-                    </svg>
-                  ),
-                },
-              ].map((item) => (
-                <div key={item.title} className="flex items-start gap-4 rounded-xl border border-white/[0.05] bg-white/[0.02] px-5 py-4">
-                  <div className="mt-[1px] shrink-0 flex h-[26px] w-[26px] items-center justify-center rounded-full border border-[#3d5a80]/30 bg-[#3d5a80]/[0.08]">
-                    {item.icon}
-                  </div>
-                  <div>
-                    <p className="text-[12px] font-medium text-white/60 mb-[2px]">{item.title}</p>
-                    <p className="text-[11px] font-light text-white/25 leading-[1.5]">{item.desc}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <div className="flex items-center gap-6">
-              {[
-                { value: "<2min", label: "Avg. delivery" },
-                { value: "1hr", label: "Link validity" },
-                { value: "TLS", label: "Encrypted" },
-              ].map((stat, i) => (
-                <div
-                  key={stat.label}
-                  className={`flex flex-col gap-[5px] px-8 ${i === 0 ? "pl-0" : "border-l border-white/[0.07]"}`}
-                >
-                  <span className="f-display text-[26px] font-normal leading-none tracking-[-0.02em] text-white/[0.85]">
-                    {stat.value}
-                  </span>
-                  <span className="f-mono text-[9px] uppercase tracking-[0.16em] text-white/25">
-                    {stat.label}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="absolute bottom-11 right-12 z-[2] f-mono text-[8.5px] uppercase tracking-[0.2em] text-white/[0.08] select-none">
-            Secure · HIPAA Compliant
-          </div>
-        </div>
-
-        <div className="dot-pattern relative flex w-full items-center justify-center px-6 py-12 lg:w-[520px] lg:shrink-0 lg:bg-[#fefdfb] lg:px-14 lg:py-16 lg:shadow-[inset_1px_0_0_rgba(10,10,15,0.04),-32px_0_80px_rgba(10,10,15,0.04)]">
-          <div className="anim-form relative z-10 w-full max-w-[380px]">
-            <div className="mb-10">
-              <div className="f-mono mb-4 flex items-center gap-2 text-[9px] uppercase tracking-[0.24em] text-black/60 select-none">
-                <span className="inline-block h-2 w-2 rounded-[3px] border-[1.5px] border-[#3d5a80] opacity-50" />
-                Account Recovery
-              </div>
               <h2
-                className="f-display mb-2 text-[36px] font-normal leading-[1.1] text-[#0a0a0f]"
-                style={{ letterSpacing: "-0.02em" }}
+                className="
+                  font-[AmericanSansLight,Helvetica,Arial,sans-serif]
+                  text-[19px]
+                  font-normal
+                  leading-[1.05]
+                  tracking-[-0.025em]
+                  text-blue-900
+                  sm:text-[22px]
+                  lg:text-[26px]
+                "
               >
-                Reset password.
+                Forgot password?
               </h2>
-              <p className="text-[13px] font-light leading-[1.6] text-black/60">
-                Enter your email and we&apos;ll send you a link to choose a new password.
-              </p>
             </div>
 
+
+            {/* Error */}
             {error && (
-              <div className="mb-6 flex items-start gap-2.5 rounded-xl border border-red-100/80 bg-red-50/60 px-4 py-3 text-[12.5px] leading-relaxed text-[#9b2226]">
-                <svg className="mt-[1px] h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round">
-                  <circle cx="12" cy="12" r="10" />
-                  <line x1="12" y1="8" x2="12" y2="13" />
-                  <circle cx="12" cy="16.5" r="0.5" fill="currentColor" />
-                </svg>
+              <div
+                role="alert"
+                className="
+                  mt-7
+                  flex
+                  items-start
+                  gap-3
+                  px-4
+                  py-3.5
+                  font-[AmericanSansLight,Helvetica,Arial,sans-serif]
+                  text-[13px]
+                  leading-5
+                  text-red-800
+                "
+              >
+                <CircleAlert
+                  aria-hidden="true"
+                  strokeWidth={1.7}
+                  className="mt-0.5 h-4 w-4 shrink-0"
+                />
+
                 <span>{error}</span>
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-              <div className="flex flex-col gap-2">
-                <label htmlFor="email" className="f-mono text-[9.5px] uppercase tracking-[0.16em] text-black/70 select-none">
-                  Email Address
+            {/* Form */}
+            <form
+              onSubmit={handleSubmit}
+              className="mt-10 flex flex-col gap-6"
+            >
+              <div className="flex flex-col gap-2.5">
+                <label
+                  htmlFor="email"
+                  className="
+                    font-[AmericanSansLight,Helvetica,Arial,sans-serif]
+                    text-[13px]
+                    font-normal
+                    leading-5
+                    tracking-[-0.005em]
+                    text-black
+                  "
+                >
+                  Email address
                 </label>
-                <div className="input-group relative">
-                  <svg
-                    className="input-icon pointer-events-none absolute left-3.5 top-1/2 h-[15px] w-[15px] -translate-y-1/2 fill-none stroke-black/40 transition-all duration-200"
-                    viewBox="0 0 24 24"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <rect x="2" y="4" width="20" height="16" rx="2.5" />
-                    <path d="m2 7 10 7 10-7" />
-                  </svg>
+
+                <div className="relative">
+                  <Mail
+                    aria-hidden="true"
+                    strokeWidth={1.5}
+                    className="
+                      pointer-events-none
+                      absolute
+                      left-4
+                      top-1/2
+                      h-4
+                      w-4
+                      -translate-y-1/2
+                      text-black
+                    "
+                  />
+
                   <input
                     id="email"
                     name="email"
@@ -552,85 +716,175 @@ export default function ForgotPasswordPage() {
                     placeholder="you@email.com"
                     required
                     disabled={loading}
-                    className="styled-input f-body w-full rounded-[10px] border border-black/[0.12] bg-[#f5f2ec] py-[13px] pl-[42px] pr-4 text-[13.5px] text-[#0a0a0f] outline-none transition-all duration-200 placeholder:text-black/40 focus:border-[#3d5a80] focus:bg-[#fefdfb] focus:shadow-[0_0_0_3.5px_rgba(61,90,128,0.12)] disabled:cursor-not-allowed disabled:opacity-40"
+                    autoComplete="email"
+                    className="
+                      auth-input
+                      h-[56px]
+                      w-full
+                      rounded-[10px]
+                      border
+                      border-[#86868b]
+                      bg-white
+                      pl-11
+                      pr-4
+                      font-[AmericanSansLight,Helvetica,Arial,sans-serif]
+                      text-[15px]
+                      font-normal
+                      tracking-[-0.005em]
+                      text-black
+                      outline-none
+                      transition-all
+                      duration-200
+                      placeholder:text-black/35
+                      focus:border-[#1473E6]
+                      focus:ring-[2px]
+                      focus:ring-[#1473E6]
+                      disabled:cursor-not-allowed
+                      disabled:opacity-50
+                    "
                   />
                 </div>
               </div>
 
+              {/* Primary action */}
               <button
                 type="submit"
                 disabled={loading}
-                className="btn-shimmer relative mt-1 w-full cursor-pointer overflow-hidden rounded-[10px] border-none bg-[#0a0a0f] px-6 py-[14px] f-body text-[13px] font-semibold uppercase tracking-[0.06em] text-white shadow-[0_4px_16px_rgba(10,10,15,0.18),0_1px_3px_rgba(10,10,15,0.12)] transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:not-disabled:-translate-y-px hover:not-disabled:bg-[#1a1a24] hover:not-disabled:shadow-[0_8px_28px_rgba(10,10,15,0.25),0_2px_6px_rgba(10,10,15,0.15)] active:not-disabled:translate-y-0 active:not-disabled:scale-[0.985] disabled:cursor-not-allowed disabled:opacity-40"
+                className="
+                  group
+                  mt-1
+                  flex
+                  h-[56px]
+                  w-full
+                  cursor-pointer
+                  items-center
+                  justify-between
+                  rounded-[10px]
+                  bg-[#173B7A]
+                  px-5
+                  font-[AmericanSansLight,Helvetica,Arial,sans-serif]
+                  text-[14px]
+                  font-normal
+                  tracking-[-0.005em]
+                  text-white
+                  transition-all
+                  duration-200
+                  hover:bg-[#122E60]
+                  active:scale-[0.995]
+                  disabled:cursor-not-allowed
+                  disabled:opacity-50
+                "
               >
-                <span className="relative z-10 flex items-center justify-center gap-2">
-                  {loading ? (
-                    <>
-                      <span className="spinner inline-block h-3.5 w-3.5 rounded-full border-[1.5px] border-white/20 border-t-white" />
-                      <span className="text-[11px] tracking-[0.12em]">Sending...</span>
-                    </>
-                  ) : (
-                    <>
-                      Send Reset Link
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M5 12h14M12 5l7 7-7 7" />
-                      </svg>
-                    </>
-                  )}
-                </span>
+                {loading ? (
+                  <div className="flex w-full items-center justify-center gap-2.5">
+                    <span
+                      className="
+                        h-4
+                        w-4
+                        animate-spin
+                        rounded-full
+                        border-[1.5px]
+                        border-white/30
+                        border-t-white
+                      "
+                    />
+
+                    <span>Sending...</span>
+                  </div>
+                ) : (
+                  <>
+                    <span>Send reset link</span>
+
+                    <span
+                      className="
+                        flex
+                        h-8
+                        w-8
+                        shrink-0
+                        items-center
+                        justify-center
+                        rounded-full
+                        border
+                        border-white/70
+                        bg-transparent
+                        text-white
+                        transition-all
+                        duration-200
+                        group-hover:border-white
+                        group-hover:bg-white/[0.08]
+                      "
+                    >
+                      <ArrowRight
+                        aria-hidden="true"
+                        strokeWidth={1.8}
+                        className="h-[15px] w-[15px]"
+                      />
+                    </span>
+                  </>
+                )}
               </button>
             </form>
 
-            <div className="mt-8 flex flex-col gap-5">
-              <p className="text-center text-[12.5px] font-light text-black/70">
-                Remembered it?{" "}
-                <Link
-                  href="/login"
-                  className="font-medium text-[#0a0a0f] no-underline border-b border-black/20 transition-all duration-200 hover:border-[#3d5a80] hover:text-[#3d5a80]"
-                >
-                  Back to Sign In
-                </Link>
-              </p>
+            {/* Back to login */}
+            <Link
+              href="/login"
+              className="
+                mt-8
+                inline-flex
+                items-center
+                gap-2
+                font-[AmericanSansLight,Helvetica,Arial,sans-serif]
+                text-[13.5px]
+                font-normal
+                text-black
+                underline
+                decoration-black/25
+                underline-offset-4
+                transition
+                hover:decoration-black
+              "
+            >
+              <ArrowLeft
+                aria-hidden="true"
+                strokeWidth={1.8}
+                className="h-4 w-4"
+              />
 
-              <div className="mt-1 flex items-center justify-center gap-5 border-t border-black/[0.08] pt-6">
-                {[
-                  {
-                    label: "SOC 2",
-                    icon: (
-                      <svg className="h-[11px] w-[11px] stroke-[#3d5a80] opacity-70" viewBox="0 0 24 24" fill="none" strokeWidth="2.2" strokeLinecap="round">
-                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                      </svg>
-                    ),
-                  },
-                  {
-                    label: "HIPAA",
-                    icon: (
-                      <svg className="h-[11px] w-[11px] stroke-[#3d5a80] opacity-70" viewBox="0 0 24 24" fill="none" strokeWidth="2.2" strokeLinecap="round">
-                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                      </svg>
-                    ),
-                  },
-                  {
-                    label: "256-bit SSL",
-                    icon: (
-                      <svg className="h-[11px] w-[11px] stroke-[#3d5a80] opacity-70" viewBox="0 0 24 24" fill="none" strokeWidth="2.2" strokeLinecap="round">
-                        <rect x="3" y="11" width="18" height="11" rx="2" />
-                        <path d="M7 11V7a5 5 0 0110 0v4" />
-                      </svg>
-                    ),
-                  },
-                ].map((badge) => (
-                  <div key={badge.label} className="flex items-center gap-1.5">
-                    {badge.icon}
-                    <span className="f-mono text-[8.5px] uppercase tracking-[0.14em] text-black/50">
-                      {badge.label}
-                    </span>
-                  </div>
-                ))}
-              </div>
+              <span>Back to sign in</span>
+            </Link>
+
+            {/* Privacy */}
+            <div
+              className="
+                mt-8
+                flex
+                items-center
+                justify-center
+                gap-2
+                border-t
+                border-black/[0.08]
+                pt-6
+                text-center
+                font-[AmericanSansLight,Helvetica,Arial,sans-serif]
+                text-[11.5px]
+                font-normal
+                leading-5
+                text-black
+              "
+            >
+              <ShieldCheck
+                aria-hidden="true"
+                strokeWidth={1.5}
+                className="h-[13px] w-[13px] shrink-0 text-black"
+              />
+
+              <span>
+                Your information is handled securely and confidentially.
+              </span>
             </div>
           </div>
-        </div>
+        </section>
       </div>
-    </>
+    </main>
   )
 }
