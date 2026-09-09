@@ -48,7 +48,7 @@ export default function DiabetesInfoSection() {
   return (
     <section
       ref={sectionRef}
-      className="relative overflow-hidden bg-white px-6 py-20 md:px-12 lg:px-24"
+      className="relative overflow-hidden bg-white px-6 py-20 md:px-12 lg:px-24 -mt-20 "
     >
       <div className="mx-auto max-w-7xl">
         {/* Topic Cards */}
@@ -86,7 +86,7 @@ export default function DiabetesInfoSection() {
         </div>
 
         {/* Main Content */}
-        <div className="grid items-center gap-16 lg:grid-cols-[1.05fr_0.95fr]">
+        <div className="grid items-center gap-16 lg:grid-cols-[1.05fr_0.95fr] pt-20">
           {/* Video */}
           <div
             className={`relative transition-all duration-700 ease-out ${

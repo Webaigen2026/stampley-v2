@@ -15,10 +15,9 @@ export default function HeroSection() {
     >
       <div
         className="
-          mx-auto
           grid
           min-h-[680px]
-          max-w-[1440px]
+          w-full
           grid-cols-1
           pb-[90px]
           lg:grid-cols-[0.94fr_1.06fr]
@@ -36,12 +35,9 @@ export default function HeroSection() {
             items-center
             overflow-hidden
             bg-white
-            px-6
+            pl-20
             py-16
-            sm:px-10
-            lg:px-14
             lg:py-20
-            xl:px-20
           "
         >
           {/* Soft blue ambient wash */}
@@ -223,75 +219,97 @@ export default function HeroSection() {
               <div
                 className="
                   group
-                  flex
-                  min-h-[92px]
-                  items-center
-                  gap-4
-                  rounded-[12px]
-                  border
-                  border-[#86868b]
-                  bg-white/95
-                  px-4
-                  py-3.5
-                  backdrop-blur-sm
-                  transition-all
-                  duration-300
-                  hover:border-black/45
-                  hover:shadow-[0_10px_30px_rgba(0,0,0,0.055)]
+                  relative
+                  overflow-hidden
+                  rounded-[14px]
+                  p-[1px]
                 "
               >
+                {/* Moving blue light */}
+                <div
+                  aria-hidden="true"
+                  className="
+                    pointer-events-none
+                    absolute
+                    inset-[-140%]
+                    animate-[spin_4.5s_linear_infinite]
+                    bg-[conic-gradient(from_0deg,transparent_0deg,transparent_245deg,rgba(37,99,235,0.08)_280deg,rgba(37,99,235,0.55)_315deg,rgba(96,165,250,1)_336deg,rgba(37,99,235,0.55)_348deg,transparent_360deg)]
+                  "
+                />
+
+                {/* Card surface */}
                 <div
                   className="
                     relative
+                    z-10
                     flex
-                    h-[58px]
-                    w-[58px]
-                    shrink-0
+                    min-h-[92px]
                     items-center
-                    justify-center
+                    gap-4
+                    rounded-[13px]
+                    bg-white/95
+                    px-4
+                    py-3.5
+                    shadow-[0_6px_24px_rgba(30,64,175,0.05)]
+                    backdrop-blur-sm
+                    transition-all
+                    duration-300
+                    group-hover:shadow-[0_10px_32px_rgba(30,64,175,0.10)]
                   "
                 >
-                  <Image
-                    src="/hero/time.png"
-                    alt=""
-                    width={58}
-                    height={58}
-                    aria-hidden="true"
+                  <div
                     className="
-                      h-[54px]
-                      w-[54px]
-                      object-contain
-                      transition-transform
-                      duration-300
-                      group-hover:scale-[1.04]
-                    "
-                  />
-                </div>
-
-                <div className="min-w-0">
-                  <p
-                    className="
-                      text-[14px]
-                      font-normal
-                      leading-5
-                      tracking-[-0.01em]
-                      text-black
+                      relative
+                      flex
+                      h-[58px]
+                      w-[58px]
+                      shrink-0
+                      items-center
+                      justify-center
                     "
                   >
-                    15–20 minutes
-                  </p>
+                    <Image
+                      src="/hero/time.png"
+                      alt=""
+                      width={58}
+                      height={58}
+                      aria-hidden="true"
+                      className="
+                        h-[54px]
+                        w-[54px]
+                        object-contain
+                        transition-transform
+                        duration-300
+                        group-hover:scale-[1.04]
+                      "
+                    />
+                  </div>
 
-                  <p
-                    className="
-                      mt-0.5
-                      text-[11.5px]
-                      font-normal
-                      leading-4
-                      text-black/50
-                    "
-                  >
-                    Approximately per session
-                  </p>
+                  <div className="min-w-0">
+                    <p
+                      className="
+                        text-[14px]
+                        font-normal
+                        leading-5
+                        tracking-[-0.01em]
+                        text-black
+                      "
+                    >
+                      15–20 minutes
+                    </p>
+
+                    <p
+                      className="
+                        mt-0.5
+                        text-[11.5px]
+                        font-normal
+                        leading-4
+                        text-black/50
+                      "
+                    >
+                      Approximately per session
+                    </p>
+                  </div>
                 </div>
               </div>
 
@@ -299,75 +317,97 @@ export default function HeroSection() {
               <div
                 className="
                   group
-                  flex
-                  min-h-[92px]
-                  items-center
-                  gap-4
-                  rounded-[12px]
-                  border
-                  border-[#86868b]
-                  bg-white/95
-                  px-4
-                  py-3.5
-                  backdrop-blur-sm
-                  transition-all
-                  duration-300
-                  hover:border-black/45
-                  hover:shadow-[0_10px_30px_rgba(0,0,0,0.055)]
+                  relative
+                  overflow-hidden
+                  rounded-[14px]
+                  p-[1px]
                 "
               >
+                {/* Moving blue light */}
+                <div
+                  aria-hidden="true"
+                  className="
+                    pointer-events-none
+                    absolute
+                    inset-[-140%]
+                    animate-[spin_4.5s_linear_infinite]
+                    bg-[conic-gradient(from_180deg,transparent_0deg,transparent_245deg,rgba(37,99,235,0.08)_280deg,rgba(37,99,235,0.55)_315deg,rgba(96,165,250,1)_336deg,rgba(37,99,235,0.55)_348deg,transparent_360deg)]
+                  "
+                />
+
+                {/* Card surface */}
                 <div
                   className="
                     relative
+                    z-10
                     flex
-                    h-[58px]
-                    w-[70px]
-                    shrink-0
+                    min-h-[92px]
                     items-center
-                    justify-center
+                    gap-4
+                    rounded-[13px]
+                    bg-white/95
+                    px-4
+                    py-3.5
+                    shadow-[0_6px_24px_rgba(30,64,175,0.05)]
+                    backdrop-blur-sm
+                    transition-all
+                    duration-300
+                    group-hover:shadow-[0_10px_32px_rgba(30,64,175,0.10)]
                   "
                 >
-                  <Image
-                    src="/hero/hardware.png"
-                    alt=""
-                    width={70}
-                    height={58}
-                    aria-hidden="true"
+                  <div
                     className="
-                      h-[54px]
-                      w-[68px]
-                      object-contain
-                      transition-transform
-                      duration-300
-                      group-hover:scale-[1.04]
-                    "
-                  />
-                </div>
-
-                <div className="min-w-0">
-                  <p
-                    className="
-                      text-[14px]
-                      font-normal
-                      leading-5
-                      tracking-[-0.01em]
-                      text-black
+                      relative
+                      flex
+                      h-[58px]
+                      w-[70px]
+                      shrink-0
+                      items-center
+                      justify-center
                     "
                   >
-                    Participate anywhere
-                  </p>
+                    <Image
+                      src="/hero/hardware.png"
+                      alt=""
+                      width={70}
+                      height={58}
+                      aria-hidden="true"
+                      className="
+                        h-[54px]
+                        w-[68px]
+                        object-contain
+                        transition-transform
+                        duration-300
+                        group-hover:scale-[1.04]
+                      "
+                    />
+                  </div>
 
-                  <p
-                    className="
-                      mt-0.5
-                      text-[11.5px]
-                      font-normal
-                      leading-4
-                      text-black/50
-                    "
-                  >
-                    Phone, tablet, or computer
-                  </p>
+                  <div className="min-w-0">
+                    <p
+                      className="
+                        text-[14px]
+                        font-normal
+                        leading-5
+                        tracking-[-0.01em]
+                        text-black
+                      "
+                    >
+                      Participate anywhere
+                    </p>
+
+                    <p
+                      className="
+                        mt-0.5
+                        text-[11.5px]
+                        font-normal
+                        leading-4
+                        text-black/50
+                      "
+                    >
+                      Phone, tablet, or computer
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
@@ -572,48 +612,41 @@ export default function HeroSection() {
       {/* =====================================================
           BOTTOM S-CURVE — ENTIRE HERO
       ====================================================== */}
-    {/* =====================================================
-    BOTTOM S-CURVE — ENTIRE HERO
-====================================================== */}
-{/* =====================================================
-    BOTTOM S-CURVE — ENTIRE HERO
-====================================================== */}
-
-<div
-  aria-hidden="true"
-  className="
-    pointer-events-none
-    absolute
-    inset-x-0
-    bottom-[40px]
-    z-40
-    h-[300px]
-    sm:bottom-[50px]
-    sm:h-[340px]
-    lg:bottom-[70px]
-    lg:h-[270px]
-  "
->
-  <svg
-    viewBox="0 0 1440 120"
-    preserveAspectRatio="none"
-    className="block h-full w-full"
-  >
-    <path
-      d="
-        M0 110
-        C170 78 310 62 445 68
-        C590 74 665 92 795 94
-        C935 96 1045 66 1170 54
-        C1275 44 1355 47 1440 58
-        L1440 120
-        L0 120
-        Z
-      "
-      fill="white"
-    />
-  </svg>
-</div>
+      <div
+        aria-hidden="true"
+        className="
+          pointer-events-none
+          absolute
+          inset-x-0
+          bottom-[40px]
+          z-40
+          h-[300px]
+          sm:bottom-[50px]
+          sm:h-[340px]
+          lg:bottom-[70px]
+          lg:h-[270px]
+        "
+      >
+        <svg
+          viewBox="0 0 1440 120"
+          preserveAspectRatio="none"
+          className="block h-full w-full"
+        >
+          <path
+            d="
+              M0 110
+              C170 78 310 62 445 68
+              C590 74 665 92 795 94
+              C935 96 1045 66 1170 54
+              C1275 44 1355 47 1440 58
+              L1440 120
+              L0 120
+              Z
+            "
+            fill="white"
+          />
+        </svg>
+      </div>
     </section>
   )
 }
