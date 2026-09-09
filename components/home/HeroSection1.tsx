@@ -1,11 +1,6 @@
 import Image from "next/image"
 import Link from "next/link"
-import {
-  ArrowRight,
-  Clock3,
-  Laptop,
-  ShieldCheck,
-} from "lucide-react"
+import { ArrowRight } from "lucide-react"
 
 export default function HeroSection() {
   return (
@@ -14,7 +9,7 @@ export default function HeroSection() {
         relative
         overflow-hidden
         bg-white
-        font-[AmericanSansLight,Helvetica,Arial,sans-serif]
+        font-['Outfit',system-ui,sans-serif]
         text-black
       "
     >
@@ -25,7 +20,9 @@ export default function HeroSection() {
           min-h-[680px]
           max-w-[1440px]
           grid-cols-1
+          pb-[90px]
           lg:grid-cols-[0.94fr_1.06fr]
+          lg:pb-[115px]
         "
       >
         {/* =====================================================
@@ -134,41 +131,10 @@ export default function HeroSection() {
 
           {/* Content */}
           <div className="relative z-10 w-full max-w-[570px]">
-            {/* Eyebrow */}
-            {/* <div
-              className="
-                mb-5
-                flex
-                items-center
-                gap-3
-              "
-            >
-              <span
-                className="
-                  h-[6px]
-                  w-[6px]
-                  rounded-full
-                  bg-blue-900
-                "
-              />
-
-              <span
-                className="
-                  text-[10px]
-                  font-normal
-                  uppercase
-                  tracking-[0.16em]
-                  text-black/50
-                "
-              >
-                AIDES-T2D Study
-              </span>
-            </div> */}
-
             {/* Heading */}
             <h1
               className="
-                max-w-[12ch]
+                whitespace-nowrap
                 text-[30px]
                 font-normal
                 leading-[1.08]
@@ -241,7 +207,9 @@ export default function HeroSection() {
               </p>
             </div>
 
-            {/* Study facts */}
+            {/* =================================================
+                STUDY FACTS
+            ================================================== */}
             <div
               className="
                 mt-9
@@ -251,11 +219,14 @@ export default function HeroSection() {
                 sm:grid-cols-2
               "
             >
+              {/* Time */}
               <div
                 className="
+                  group
                   flex
+                  min-h-[92px]
                   items-center
-                  gap-3
+                  gap-4
                   rounded-[12px]
                   border
                   border-[#86868b]
@@ -263,39 +234,47 @@ export default function HeroSection() {
                   px-4
                   py-3.5
                   backdrop-blur-sm
+                  transition-all
+                  duration-300
+                  hover:border-black/45
+                  hover:shadow-[0_10px_30px_rgba(0,0,0,0.055)]
                 "
               >
                 <div
                   className="
+                    relative
                     flex
-                    h-9
-                    w-9
+                    h-[58px]
+                    w-[58px]
                     shrink-0
                     items-center
                     justify-center
-                    rounded-full
-                    border
-                    border-black/10
-                    bg-black/[0.025]
                   "
                 >
-                  <Clock3
+                  <Image
+                    src="/hero/time.png"
+                    alt=""
+                    width={58}
+                    height={58}
                     aria-hidden="true"
-                    strokeWidth={1.5}
                     className="
-                      h-[17px]
-                      w-[17px]
-                      text-black/75
+                      h-[54px]
+                      w-[54px]
+                      object-contain
+                      transition-transform
+                      duration-300
+                      group-hover:scale-[1.04]
                     "
                   />
                 </div>
 
-                <div>
+                <div className="min-w-0">
                   <p
                     className="
-                      text-[13px]
+                      text-[14px]
                       font-normal
                       leading-5
+                      tracking-[-0.01em]
                       text-black
                     "
                   >
@@ -304,7 +283,9 @@ export default function HeroSection() {
 
                   <p
                     className="
-                      text-[11px]
+                      mt-0.5
+                      text-[11.5px]
+                      font-normal
                       leading-4
                       text-black/50
                     "
@@ -314,11 +295,14 @@ export default function HeroSection() {
                 </div>
               </div>
 
+              {/* Hardware */}
               <div
                 className="
+                  group
                   flex
+                  min-h-[92px]
                   items-center
-                  gap-3
+                  gap-4
                   rounded-[12px]
                   border
                   border-[#86868b]
@@ -326,39 +310,47 @@ export default function HeroSection() {
                   px-4
                   py-3.5
                   backdrop-blur-sm
+                  transition-all
+                  duration-300
+                  hover:border-black/45
+                  hover:shadow-[0_10px_30px_rgba(0,0,0,0.055)]
                 "
               >
                 <div
                   className="
+                    relative
                     flex
-                    h-9
-                    w-9
+                    h-[58px]
+                    w-[70px]
                     shrink-0
                     items-center
                     justify-center
-                    rounded-full
-                    border
-                    border-black/10
-                    bg-black/[0.025]
                   "
                 >
-                  <Laptop
+                  <Image
+                    src="/hero/hardware.png"
+                    alt=""
+                    width={70}
+                    height={58}
                     aria-hidden="true"
-                    strokeWidth={1.5}
                     className="
-                      h-[17px]
-                      w-[17px]
-                      text-black/75
+                      h-[54px]
+                      w-[68px]
+                      object-contain
+                      transition-transform
+                      duration-300
+                      group-hover:scale-[1.04]
                     "
                   />
                 </div>
 
-                <div>
+                <div className="min-w-0">
                   <p
                     className="
-                      text-[13px]
+                      text-[14px]
                       font-normal
                       leading-5
+                      tracking-[-0.01em]
                       text-black
                     "
                   >
@@ -367,7 +359,9 @@ export default function HeroSection() {
 
                   <p
                     className="
-                      text-[11px]
+                      mt-0.5
+                      text-[11.5px]
+                      font-normal
                       leading-4
                       text-black/50
                     "
@@ -440,36 +434,6 @@ export default function HeroSection() {
                   />
                 </span>
               </Link>
-
-              {/* <div
-                className="
-                  flex
-                  items-center
-                  gap-2.5
-                "
-              >
-                <ShieldCheck
-                  aria-hidden="true"
-                  strokeWidth={1.5}
-                  className="
-                    h-4
-                    w-4
-                    shrink-0
-                    text-black/60
-                  "
-                />
-
-                <span
-                  className="
-                    max-w-[210px]
-                    text-[11px]
-                    leading-[1.55]
-                    text-black/55
-                  "
-                >
-                  Secure access for enrolled study participants.
-                </span>
-              </div> */}
             </div>
           </div>
         </div>
@@ -524,7 +488,7 @@ export default function HeroSection() {
             "
           />
 
-          {/* Subtle lower depth */}
+          {/* Subtle lower photo depth */}
           <div
             aria-hidden="true"
             className="
@@ -562,7 +526,7 @@ export default function HeroSection() {
           <div
             className="
               absolute
-              bottom-6
+              bottom-[110px]
               left-5
               z-10
               rounded-[12px]
@@ -573,9 +537,8 @@ export default function HeroSection() {
               py-3
               shadow-[0_8px_30px_rgba(0,0,0,0.08)]
               backdrop-blur-md
-              sm:bottom-7
               sm:left-7
-              lg:bottom-8
+              lg:bottom-[135px]
               lg:left-8
             "
           >
@@ -607,82 +570,50 @@ export default function HeroSection() {
       </div>
 
       {/* =====================================================
-          BOTTOM UTILITY LINKS
+          BOTTOM S-CURVE — ENTIRE HERO
       ====================================================== */}
-      <div
-        className="
-          relative
-          z-30
-          border-t
-          border-black/[0.08]
-          bg-white
-        "
-      >
-        <div
-          className="
-            mx-auto
-            flex
-            max-w-[1440px]
-            flex-col
-            gap-4
-            px-6
-            py-5
-            sm:flex-row
-            sm:items-center
-            sm:justify-between
-            sm:px-10
-            lg:px-14
-            xl:px-20
-          "
-        >
-          {/* <p
-            className="
-              text-[11.5px]
-              leading-5
-              text-black
-            "
-          >
-            Questions about the study or your participation? Contact the
-            AIDES-T2D research team.
-          </p> */}
+    {/* =====================================================
+    BOTTOM S-CURVE — ENTIRE HERO
+====================================================== */}
+{/* =====================================================
+    BOTTOM S-CURVE — ENTIRE HERO
+====================================================== */}
 
-          {/* <div
-            className="
-              flex
-              items-center
-              gap-5
-              text-[11.5px]
-              text-black
-            "
-          >
-            <Link
-              href="/privacy"
-              className="
-                underline
-                decoration-black/25
-                underline-offset-4
-                transition
-                hover:decoration-black
-              "
-            >
-              Privacy Policy
-            </Link>
-
-            <Link
-              href="/terms"
-              className="
-                underline
-                decoration-black/25
-                underline-offset-4
-                transition
-                hover:decoration-black
-              "
-            >
-              Terms of Use
-            </Link>
-          </div> */}
-        </div>
-      </div>
+<div
+  aria-hidden="true"
+  className="
+    pointer-events-none
+    absolute
+    inset-x-0
+    bottom-[40px]
+    z-40
+    h-[300px]
+    sm:bottom-[50px]
+    sm:h-[340px]
+    lg:bottom-[70px]
+    lg:h-[270px]
+  "
+>
+  <svg
+    viewBox="0 0 1440 120"
+    preserveAspectRatio="none"
+    className="block h-full w-full"
+  >
+    <path
+      d="
+        M0 110
+        C170 78 310 62 445 68
+        C590 74 665 92 795 94
+        C935 96 1045 66 1170 54
+        C1275 44 1355 47 1440 58
+        L1440 120
+        L0 120
+        Z
+      "
+      fill="white"
+    />
+  </svg>
+</div>
     </section>
   )
 }
