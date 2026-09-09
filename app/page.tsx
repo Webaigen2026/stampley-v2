@@ -1,5 +1,5 @@
 
-import HeroSection from "@/components/home/HeroSection"
+import HeroSection from "@/components/home/HeroSection1"
 import DiabetesNumbersSection from "@/components/home/DiabetesNumbersSection"
 import HowItWorksSection from "@/components/home/HowItWorksSection"
 import StudyDetailsSection from "@/components/home/StudyDetailsSection"
@@ -27,7 +27,7 @@ export default function HomePage() {
       `}</style>
       <TopNav />
       <MainHeader />
-      <MenuBar />
+      {/* <MenuBar /> */}
       <HeroSection />
 
       <section id="about" className="scroll-mt-32">
