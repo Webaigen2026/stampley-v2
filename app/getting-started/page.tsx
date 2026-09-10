@@ -233,25 +233,25 @@ export default async function GettingStartedPage() {
         <button
           type="submit"
           className="
-            group
-            inline-flex
-            h-10
-            items-center
-            gap-2.5
-            rounded-full
-            px-3
-            text-sm
-            font-medium
-            text-slate-500
-            transition-all
-            duration-200
-            hover:bg-[#F8FAFC]
-            hover:text-[#173B7A]
-            focus-visible:outline-none
-            focus-visible:ring-2
-            focus-visible:ring-[#1473E6]/25
-            focus-visible:ring-offset-2
-            sm:px-4
+          group
+          inline-flex
+          h-10
+          items-center
+          gap-2.5
+         
+          px-3
+          text-sm
+          font-medium
+          text-slate-500
+          transition-all
+          duration-200
+          hover:bg-[#F8FAFC]
+          hover:text-[#173B7A]
+          focus-visible:outline-none
+          focus-visible:ring-2
+          focus-visible:ring-[#1473E6]/25
+          focus-visible:ring-offset-2
+          sm:px-4
           "
         >
           <span className="hidden sm:inline">
@@ -328,7 +328,7 @@ export default async function GettingStartedPage() {
             lg:px-10
           "
         >
-          <p>AIDES-T2D Research Study</p>
+          <p>AIDES-T2D</p>
 
           <p>University of Massachusetts Boston</p>
 
