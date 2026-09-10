@@ -212,19 +212,20 @@ export default function GettingStartedView() {
               className="
                 mt-5
                 max-w-[11ch]
-                text-4xl
+                text-2xl
                 font-light
-                leading-[1.02]
-                tracking-[-0.045em]
+                leading-[1.12]
+                tracking-[-0.035em]
                 text-[#0B2857]
-                sm:text-5xl
-                md:text-6xl
-                lg:text-[64px]
-                xl:text-[70px]
+                sm:text-3xl
+                md:text-4xl
+                lg:text-[38px]
+                xl:text-[44px]
               "
             >
               Before you begin.
             </motion.h1>
+       
 
             <motion.p
               variants={fadeUp}
