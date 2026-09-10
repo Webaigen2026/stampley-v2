@@ -1,12 +1,4 @@
-import {
-    CalendarCheck2,
-    CheckCircle2,
-    ClipboardCheck,
-  } from "lucide-react"
-  
-  import RecordRow from "./RecordRow"
-  
-  type Props = {
+type Props = {
     checkedInToday: boolean
     studyComplete: boolean
     postSurveyCompleted: boolean
@@ -18,50 +10,68 @@ import {
     postSurveyCompleted,
   }: Props) {
     return (
-      <section className="rounded-[18px] border border-[#dfe8f3] bg-white p-6 md:p-8">
-        <h2 className="text-[18px] font-medium text-[#0b2857]">
+      <div
+        className="
+          flex
+          flex-wrap
+          items-center
+          gap-x-4
+          gap-y-2
+          py-2
+          text-[12px]
+        "
+      >
+        <span className="font-medium text-[#0b2857]">
           Study Record
-        </h2>
+        </span>
   
-        <p className="mt-1 text-[12px] text-[#8391a3]">
-          Your completed study milestones
-        </p>
+        <span className="text-[#cbd5e1]">•</span>
   
-        <div className="mt-5 divide-y divide-[#e8eef5]">
-          <RecordRow
-            icon={<CheckCircle2 size={18} />}
-            title="Pre-Survey"
-            status="Completed"
-          />
+        <span className="inline-flex items-center gap-1.5 text-[#52657d]">
+          Pre-Survey
+          <span className="text-[#16805f]">✓</span>
+        </span>
   
-          <RecordRow
-            icon={<ClipboardCheck size={18} />}
-            title="DDS-17"
-            status="Completed"
-          />
+        <span className="text-[#cbd5e1]">•</span>
   
-          <RecordRow
-            icon={<CalendarCheck2 size={18} />}
-            title="Daily Check-In"
-            status={
+        <span className="inline-flex items-center gap-1.5 text-[#52657d]">
+          DDS-17
+          <span className="text-[#16805f]">✓</span>
+        </span>
+  
+        <span className="text-[#cbd5e1]">•</span>
+  
+        <span className="inline-flex items-center gap-1.5 text-[#52657d]">
+          Today
+          <span
+            className={
               checkedInToday
-                ? "Completed today"
-                : "Pending today"
+                ? "text-[#16805f]"
+                : "text-[#b27a20]"
             }
-          />
+          >
+            {checkedInToday ? "✓" : "Pending"}
+          </span>
+        </span>
   
-          {studyComplete && (
-            <RecordRow
-              icon={<CheckCircle2 size={18} />}
-              title="Post-Study Survey"
-              status={
-                postSurveyCompleted
-                  ? "Completed"
-                  : "Pending"
-              }
-            />
-          )}
-        </div>
-      </section>
+        {studyComplete && (
+          <>
+            <span className="text-[#cbd5e1]">•</span>
+  
+            <span className="inline-flex items-center gap-1.5 text-[#52657d]">
+              Post-Survey
+              <span
+                className={
+                  postSurveyCompleted
+                    ? "text-[#16805f]"
+                    : "text-[#b27a20]"
+                }
+              >
+                {postSurveyCompleted ? "✓" : "Pending"}
+              </span>
+            </span>
+          </>
+        )}
+      </div>
     )
   }

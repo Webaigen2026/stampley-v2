@@ -29,6 +29,7 @@ import QuickActionsCard from "@/components/dashboard/QuickActionsCard"
 import StampleySupportCard from "@/components/dashboard/StampleySupportCard"
 
 import AdminDashboardCard from "@/components/dashboard/AdminDashboardCard"
+import DashboardReveal from "@/components/dashboard/DashboardReveal"
 
 const DOMAIN_META: Record<
   string,
@@ -189,9 +190,11 @@ export default async function DashboardPage() {
               today={today}
               formattedName={formattedName}
             />
-  <DashboardWelcome
+            <DashboardReveal>
+              <DashboardWelcome
                 formattedName={formattedName}
               />
+            </DashboardReveal>
             <div
               className="
                 mx-auto
@@ -232,77 +235,89 @@ export default async function DashboardPage() {
                   >
                     {/* LEFT */}
                     <div className="space-y-6">
-                      <TodayCheckinCard
-                        checkedInToday={
-                          checkedInToday
-                        }
-                        studyComplete={
-                          studyComplete
-                        }
-                        postSurveyCompleted={
-                          postSurveyCompleted
-                        }
-                      />
+                      <DashboardReveal delay={80}>
+                        <TodayCheckinCard
+                          checkedInToday={
+                            checkedInToday
+                          }
+                          studyComplete={
+                            studyComplete
+                          }
+                          postSurveyCompleted={
+                            postSurveyCompleted
+                          }
+                        />
+                      </DashboardReveal>
 
-                      <StudyProgressCard
-                        completedCheckins={
-                          completedCheckins
-                        }
-                        activeStudyWeek={
-                          activeStudyWeek
-                        }
-                        thisWeekCompleted={
-                          thisWeekCompleted
-                        }
-                        checkinPct={
-                          checkinPct
-                        }
-                      />
+                      <DashboardReveal delay={140}>
+                        <StudyProgressCard
+                          completedCheckins={
+                            completedCheckins
+                          }
+                          activeStudyWeek={
+                            activeStudyWeek
+                          }
+                          thisWeekCompleted={
+                            thisWeekCompleted
+                          }
+                          checkinPct={
+                            checkinPct
+                          }
+                        />
+                      </DashboardReveal>
 
-                      <StudyRecordCard
-                        checkedInToday={
-                          checkedInToday
-                        }
-                        studyComplete={
-                          studyComplete
-                        }
-                        postSurveyCompleted={
-                          postSurveyCompleted
-                        }
-                      />
+                      <DashboardReveal delay={180}>
+                        <StudyRecordCard
+                          checkedInToday={
+                            checkedInToday
+                          }
+                          studyComplete={
+                            studyComplete
+                          }
+                          postSurveyCompleted={
+                            postSurveyCompleted
+                          }
+                        />
+                      </DashboardReveal>
                     </div>
 
                     {/* RIGHT */}
                     <div className="space-y-6">
-                      <SupportFocusCard
-                        activeStudyWeek={
-                          activeStudyWeek
-                        }
-                        domainMeta={
-                          domainMeta
-                        }
-                      />
+                      <DashboardReveal delay={110}>
+                        <SupportFocusCard
+                          activeStudyWeek={
+                            activeStudyWeek
+                          }
+                          domainMeta={
+                            domainMeta
+                          }
+                        />
+                      </DashboardReveal>
 
-                      <QuickActionsCard
-                        checkedInToday={
-                          checkedInToday
-                        }
-                        studyComplete={
-                          studyComplete
-                        }
-                        postSurveyCompleted={
-                          postSurveyCompleted
-                        }
-                      />
+                      <DashboardReveal delay={160}>
+                        <QuickActionsCard
+                          checkedInToday={
+                            checkedInToday
+                          }
+                          studyComplete={
+                            studyComplete
+                          }
+                          postSurveyCompleted={
+                            postSurveyCompleted
+                          }
+                        />
+                      </DashboardReveal>
 
-                      <StampleySupportCard
-                        checkedInToday={
-                          checkedInToday
-                        }
-                        studyComplete={
-                          studyComplete
-                        }
-                      />
+                      <DashboardReveal delay={210}>
+                        <StampleySupportCard
+                          checkedInToday={
+                            checkedInToday
+                          }
+                          studyComplete={
+                            studyComplete
+                          }
+                        />
+                      </DashboardReveal>
                     </div>
                   </section>
                 </>
@@ -310,7 +325,9 @@ export default async function DashboardPage() {
 
               {session.user.role ===
                 "ADMIN" && (
-                <AdminDashboardCard />
+                <DashboardReveal delay={80}>
+                  <AdminDashboardCard />
+                </DashboardReveal>
               )}
             </div>
           </div>

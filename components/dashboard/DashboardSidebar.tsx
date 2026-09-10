@@ -140,51 +140,70 @@ export default function DashboardSidebar() {
         </div>
       </nav>
 
-  {/* Participant message */}
+{/* Participant message */}
 <div className="px-4 pb-5">
   <div
     className="
       group
       overflow-hidden
-      border
-      border-[#dfe8f2]
+      rounded-[14px]
       bg-white
+      shadow-[0_8px_26px_rgba(15,45,80,0.08)]
     "
   >
     {/* Image */}
     <div
       className="
         relative
-        h-[145px]
+        h-[140px]
         overflow-hidden
-        bg-[#eef3f7]
+        bg-[#eef4f8]
         bg-cover
-        bg-center
         bg-no-repeat
+        transition-transform
+        duration-500
       "
       style={{
         backgroundImage: "url('/dashboard/women.png')",
         backgroundPosition: "62% center",
       }}
     >
-      {/* Very subtle image treatment */}
-      <div className="absolute inset-0 bg-black/[0.02]" />
+      {/* Subtle image treatment */}
+      <div className="absolute inset-0 bg-[#0b2857]/[0.02]" />
 
-    
+      {/* Soft transition into content */}
+      <div
+        className="
+          absolute
+          inset-x-0
+          bottom-0
+          h-12
+          bg-gradient-to-t
+          from-white
+          to-transparent
+        "
+      />
     </div>
 
     {/* Content */}
-    <div className="px-4 pb-5 pt-4">
-      {/* Small accent */}
-      <div className="mb-3 h-[2px] w-7 bg-[#1473E6]" />
+    <div className="px-4 pb-5 pt-3">
+      <div
+        className="
+          mb-3
+          h-[3px]
+          w-8
+          rounded-full
+          bg-[#1473E6]
+        "
+      />
 
       <p
         className="
           text-[15px]
           font-medium
           leading-[1.35]
-          tracking-[-0.01em]
-          text-black
+          tracking-[-0.015em]
+          text-[#0b2857]
         "
       >
         Your participation matters.
@@ -193,10 +212,10 @@ export default function DashboardSidebar() {
       <p
         className="
           mt-2
-          text-[12px]
+          text-[11.5px]
           font-normal
-          leading-[1.6]
-          text-black/70
+          leading-[1.65]
+          text-[#66778d]
         "
       >
         Your input helps us better understand diabetes support and emotional
@@ -207,7 +226,7 @@ export default function DashboardSidebar() {
 
   {/* Sign out */}
   <form
-    className="mt-3"
+    className="mt-4"
     action={async () => {
       "use server"
 
@@ -224,28 +243,45 @@ export default function DashboardSidebar() {
         w-full
         items-center
         justify-between
-        border-t
-        border-[#e5e7eb]
-        px-1
-        py-3
+        rounded-[9px]
+        px-3
+        py-2.5
         text-[12px]
         font-normal
-        text-black
-        transition-colors
-        hover:text-[#1473E6]
+        text-[#52657d]
+        transition-all
+        duration-200
+        hover:bg-[#f3f7fb]
+        hover:text-[#0b4178]
+        focus-visible:outline-none
+        focus-visible:ring-2
+        focus-visible:ring-[#1473E6]/30
       "
     >
       <span>Sign out</span>
 
-      <LogOut
-        size={15}
-        strokeWidth={1.6}
+      <span
         className="
-          text-black/55
-          transition-colors
-          group-hover:text-[#1473E6]
+          flex
+          h-7
+          w-7
+          items-center
+          justify-center
+          rounded-full
+          bg-[#f1f5f9]
+          text-[#64748b]
+          transition-all
+          duration-200
+          group-hover:bg-white
+          group-hover:text-[#0b4178]
+          group-hover:shadow-sm
         "
-      />
+      >
+        <LogOut
+          size={14}
+          strokeWidth={1.6}
+        />
+      </span>
     </button>
   </form>
 </div>
