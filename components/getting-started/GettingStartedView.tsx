@@ -1,3 +1,4 @@
+import Image from "next/image"
 import Link from "next/link"
 import {
   ArrowRight,
@@ -70,7 +71,7 @@ export default function GettingStartedView() {
       `}</style>
 
       <section className="gs-fade">
-        <div className="grid items-center gap-12 lg:grid-cols-[minmax(0,1.05fr)_minmax(280px,0.75fr)] lg:gap-16">
+        <div className="grid items-center gap-10 sm:gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(420px,0.8fr)] lg:gap-16">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.35em] text-cyan-700">
               Getting started
@@ -86,13 +87,15 @@ export default function GettingStartedView() {
             </p>
           </div>
 
-          <div
-            aria-hidden="true"
-            className="relative mx-auto hidden h-[280px] w-full max-w-[360px] lg:block"
-          >
-            <div className="absolute left-[18%] top-[12%] h-[220px] w-[220px] rounded-full bg-[#eef6ff]" />
-            <div className="absolute bottom-[18%] right-[10%] h-[92px] w-[92px] rounded-full bg-[#f2b134]/35" />
-            <div className="absolute right-[28%] top-[8%] h-[18px] w-[18px] rounded-full bg-[#1473E6]/25" />
+          <div className="relative mx-auto aspect-[4/3] w-full max-w-[360px] sm:max-w-[420px] lg:mx-0 lg:max-w-[520px]">
+            <Image
+              src="/pre-survey/womanBeforePresurvey.png"
+              alt="Participant preparing to begin the AIDES-T2D study"
+              fill
+              priority
+              sizes="(min-width: 1024px) 42vw, 100vw"
+              className="object-contain"
+            />
           </div>
         </div>
       </section>
