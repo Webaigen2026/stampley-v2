@@ -41,7 +41,6 @@ export default function StudyProgressCard({
         overflow-hidden
         rounded-[16px]
         bg-white
-        font-[Univers,'Helvetica_Neue',Helvetica,Arial,sans-serif]
         shadow-[0_12px_40px_rgba(15,45,80,0.09)]
       "
     >
@@ -66,11 +65,10 @@ export default function StudyProgressCard({
         <div>
           <h2
             className="
-              text-[28px]
-              font-medium
-              leading-none
-              tracking-[-0.03em]
-              text-[#0b2857]
+              text-2xl
+              font-light
+              tracking-tight
+              text-slate-950
             "
           >
             Your Progress
@@ -79,8 +77,9 @@ export default function StudyProgressCard({
           <p
             className="
               mt-2
-              text-[14px]
-              text-[#61738c]
+              text-sm
+              font-normal
+              text-slate-500
             "
           >
             Week {activeStudyWeek} of 4
@@ -90,9 +89,9 @@ export default function StudyProgressCard({
         <div className="md:text-right">
           <p
             className="
-              text-[14px]
+              text-sm
               font-medium
-              text-[#244875]
+              text-slate-950
             "
           >
             {completedCheckins} /{" "}
@@ -102,8 +101,9 @@ export default function StudyProgressCard({
           <p
             className="
               mt-1
-              text-[11px]
-              text-[#8a98aa]
+              text-xs
+              font-normal
+              text-slate-500
             "
           >
             Overall study completion
@@ -148,10 +148,10 @@ export default function StudyProgressCard({
             <div>
               <h3
                 className="
-                  text-[22px]
-                  font-medium
-                  tracking-[-0.02em]
-                  text-[#0b2857]
+                  text-xl
+                  font-light
+                  tracking-tight
+                  text-slate-950
                 "
               >
                 This week
@@ -160,9 +160,10 @@ export default function StudyProgressCard({
               <p
                 className="
                   mt-1
-                  text-[13px]
-                  leading-5
-                  text-[#536984]
+                  text-sm
+                  font-normal
+                  leading-relaxed
+                  text-slate-600
                 "
               >
                 Complete at least five study
@@ -173,9 +174,9 @@ export default function StudyProgressCard({
             <div className="sm:text-right">
               <p
                 className="
-                  text-[14px]
-                  font-semibold
-                  text-[#0b4178]
+                  text-base
+                  font-medium
+                  text-slate-950
                 "
               >
                 {thisWeekCompleted}/5
@@ -184,8 +185,9 @@ export default function StudyProgressCard({
               <p
                 className="
                   mt-1
-                  text-[10px]
-                  text-[#7f8ea2]
+                  text-xs
+                  font-normal
+                  text-slate-500
                 "
               >
                 {remainingThisWeek === 0
@@ -279,7 +281,7 @@ export default function StudyProgressCard({
                             strokeWidth={2.2}
                           />
                         ) : (
-                          <span className="text-[14px] font-medium">
+                          <span className="text-sm font-medium">
                             {sessionNumber}
                           </span>
                         )}
@@ -288,9 +290,9 @@ export default function StudyProgressCard({
                       <span
                         className="
                           mt-3
-                          text-[11px]
-                          font-medium
-                          text-[#35506f]
+                          text-xs
+                          font-normal
+                          text-slate-500
                         "
                       >
                         Session {sessionNumber}
@@ -322,11 +324,11 @@ export default function StudyProgressCard({
           <div>
             <p
               className="
-                text-[10px]
+                text-xs
                 font-medium
                 uppercase
-                tracking-[0.14em]
-                text-[#8391a4]
+                tracking-[0.16em]
+                text-slate-500
               "
             >
               Weekly activity
@@ -344,10 +346,10 @@ export default function StudyProgressCard({
               <div>
                 <p
                   className="
-                    text-[24px]
-                    font-medium
-                    tracking-[-0.03em]
-                    text-[#0b2857]
+                    text-3xl
+                    font-light
+                    tracking-tight
+                    text-slate-950
                   "
                 >
                   {checkinPct}%
@@ -356,8 +358,9 @@ export default function StudyProgressCard({
                 <p
                   className="
                     mt-1
-                    text-[11px]
-                    text-[#8190a3]
+                    text-xs
+                    font-normal
+                    text-slate-500
                   "
                 >
                   overall completion
@@ -366,8 +369,9 @@ export default function StudyProgressCard({
 
               <p
                 className="
-                  text-[11px]
-                  text-[#8190a3]
+                  text-xs
+                  font-normal
+                  text-slate-500
                 "
               >
                 Goal: 5 / week
@@ -403,8 +407,9 @@ export default function StudyProgressCard({
                 absolute
                 right-0
                 top-[-17px]
-                text-[9px]
-                text-[#8a98aa]
+                text-xs
+                font-normal
+                text-slate-500
               "
             >
               5 sessions
@@ -498,9 +503,9 @@ export default function StudyProgressCard({
                               absolute
                               left-1/2
                               -translate-x-1/2
-                              text-[10px]
+                              text-xs
                               font-medium
-                              text-[#33516f]
+                              text-slate-950
                             "
                             style={{
                               bottom: `calc(${height}% + 6px)`,
@@ -534,7 +539,7 @@ export default function StudyProgressCard({
               >
                 <p
                   className={`
-                    text-[10px]
+                    text-xs
                     font-medium
                     ${
                       week === activeStudyWeek

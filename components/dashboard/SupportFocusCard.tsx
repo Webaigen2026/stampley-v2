@@ -43,11 +43,10 @@ type Props = {
             <h2
               className="
                 mt-2
-                whitespace-nowrap
-                text-[20px]
-                font-medium
-                tracking-[-0.02em]
-                text-[#0b2857]
+                text-2xl
+                font-light
+                tracking-tight
+                text-slate-950
               "
             >
               Your Support Focus
@@ -56,8 +55,9 @@ type Props = {
             <p
               className="
                 mt-1
-                text-[12px]
-                text-[#8a98ab]
+                text-sm
+                font-normal
+                text-slate-500
               "
             >
               Week {activeStudyWeek}
@@ -84,11 +84,10 @@ type Props = {
               <h3
                 className="
                   mt-4
-                  text-[17px]
-                  font-medium
-                  leading-[1.35]
-                  tracking-[-0.015em]
-                  text-[#173f91]
+                  text-xl
+                  font-light
+                  tracking-tight
+                  text-slate-950
                 "
               >
                 {domainMeta.label}
@@ -98,9 +97,10 @@ type Props = {
                 className="
                   mt-3
                   max-w-[200px]
-                  text-[12.5px]
-                  leading-6
-                  text-[#60738d]
+                  text-sm
+                  font-normal
+                  leading-relaxed
+                  text-slate-600
                 "
               >
                 {domainMeta.description}
@@ -125,9 +125,9 @@ type Props = {
               <p
                 className="
                   mt-4
-                  text-[14px]
+                  text-base
                   font-medium
-                  text-[#3f5572]
+                  text-slate-950
                 "
               >
                 No weekly focus selected yet.
@@ -137,9 +137,10 @@ type Props = {
                 className="
                   mt-3
                   max-w-[300px]
-                  text-[12.5px]
-                  leading-6
-                  text-[#7a8a9f]
+                  text-sm
+                  font-normal
+                  leading-relaxed
+                  text-slate-600
                 "
               >
                 Your focus will be selected during Step 4 of your next check-in.

@@ -20,7 +20,6 @@ export default function TodayCheckinCard({
         overflow-hidden
         rounded-[22px]
         bg-[#0b4178]
-        font-[Univers,'Helvetica_Neue',Helvetica,Arial,sans-serif]
         text-white
       "
     >
@@ -86,10 +85,10 @@ export default function TodayCheckinCard({
         <div className="relative z-10">
           <p
             className="
-              text-[10px]
-              font-medium
+              text-xs
+              font-bold
               uppercase
-              tracking-[0.2em]
+              tracking-[0.35em]
               text-white/60
             "
           >
@@ -99,12 +98,10 @@ export default function TodayCheckinCard({
           <h2
             className="
               mt-3
-              text-[28px]
-              font-normal
-              leading-[1.15]
-              tracking-[-0.025em]
+              text-3xl
+              font-light
+              tracking-tight
               text-white
-              md:text-[30px]
             "
           >
             {studyComplete
@@ -118,9 +115,9 @@ export default function TodayCheckinCard({
             className="
               mt-4
               max-w-[600px]
-              text-[14px]
+              text-base
               font-normal
-              leading-6
+              leading-relaxed
               text-white/70
             "
           >
@@ -147,8 +144,8 @@ export default function TodayCheckinCard({
           border-white/20
           bg-white/[0.08]
           px-5
-          text-[12px]
-          font-medium
+          text-sm
+          font-normal
           tracking-[0.01em]
           text-white
           backdrop-blur-sm
@@ -185,8 +182,8 @@ export default function TodayCheckinCard({
           bg-white
           pl-6
           pr-2
-          text-[13px]
-          font-medium
+          text-sm
+          font-normal
           tracking-[-0.01em]
           text-[#0b4178]
           shadow-[0_8px_24px_rgba(0,0,0,0.12)]
@@ -246,8 +243,8 @@ export default function TodayCheckinCard({
         bg-white
         pl-6
         pr-2
-        text-[13px]
-        font-medium
+        text-sm
+        font-normal
         tracking-[-0.01em]
         text-[#0b4178]
         shadow-[0_8px_24px_rgba(0,0,0,0.12)]

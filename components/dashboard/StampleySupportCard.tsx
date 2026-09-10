@@ -70,10 +70,10 @@ export default function StampleySupportCard({
             <h2
               className="
                 mt-0.5
-                text-[19px]
-                font-medium
-                tracking-[-0.02em]
-                text-[#0b2857]
+                text-xl
+                font-light
+                tracking-tight
+                text-slate-950
               "
             >
               Stampley
@@ -86,10 +86,10 @@ export default function StampleySupportCard({
           className="
             mt-5
             max-w-[360px]
-            text-[12px]
+            text-sm
             font-normal
-            leading-[1.7]
-            text-[#64758d]
+            leading-relaxed
+            text-slate-600
           "
         >
           Stampley is part of your study check-in and provides

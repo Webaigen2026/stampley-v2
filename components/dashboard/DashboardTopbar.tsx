@@ -33,7 +33,7 @@ export default function DashboardTopbar({
           />
         </div>
 
-        <p className="hidden text-[12px] text-[#718096] lg:block">
+        <p className="hidden text-sm font-normal text-slate-500 lg:block">
           {today}
         </p>
 
@@ -66,7 +66,7 @@ export default function DashboardTopbar({
               justify-center
               rounded-full
               bg-[#dfeeff]
-              text-[13px]
+              text-sm
               font-medium
               text-blue-900
             "

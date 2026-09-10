@@ -18,12 +18,12 @@ export default function RecordRow({
           {icon}
         </span>
 
-        <p className="text-[13px] font-medium text-[#294563]">
+        <p className="text-sm font-medium text-slate-950">
           {title}
         </p>
       </div>
 
-      <span className="text-[11px] font-medium text-[#74869c]">
+      <span className="text-xs font-normal text-slate-500">
         {status}
       </span>
     </div>

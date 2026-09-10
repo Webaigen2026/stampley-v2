@@ -22,7 +22,6 @@ export default function QuickActionsCard({
         rounded-[14px]
         bg-white
         p-5
-        font-[Univers,'Helvetica_Neue',Helvetica,Arial,sans-serif]
         shadow-[0_8px_30px_rgba(15,45,80,0.08)]
       "
     >
@@ -30,11 +29,11 @@ export default function QuickActionsCard({
       <div className="mb-4">
         <p
           className="
-            text-[9px]
+            text-xs
             font-medium
             uppercase
             tracking-[0.16em]
-            text-[#7a8b9f]
+            text-slate-500
           "
         >
           Shortcuts
@@ -43,10 +42,10 @@ export default function QuickActionsCard({
         <h2
           className="
             mt-1.5
-            text-[18px]
-            font-medium
-            tracking-[-0.02em]
-            text-[#0b2857]
+            text-xl
+            font-light
+            tracking-tight
+            text-slate-950
           "
         >
           Quick Actions
@@ -175,7 +174,7 @@ function QuickAction({
         <span
           className="
             truncate
-            text-[12.5px]
+            text-sm
             font-medium
             text-[#263f5d]
             transition-colors

@@ -22,7 +22,6 @@ type Props = {
         
           px-6
           py-5
-          font-[Univers,'Helvetica_Neue',Helvetica,Arial,sans-serif]
           ${className}
         `}
       >
@@ -31,11 +30,10 @@ type Props = {
           <div className="relative z-10 min-w-0">
             <p
               className="
-                text-[31px]
-                font-normal
-                leading-none
-                tracking-[-0.035em]
-                text-[#082b68]
+                text-3xl
+                font-light
+                tracking-tight
+                text-slate-950
               "
             >
               {value}
@@ -44,10 +42,10 @@ type Props = {
             <p
               className="
                 mt-3
-                text-[13px]
+                text-sm
                 font-normal
-                leading-5
-                text-black/60
+                leading-relaxed
+                text-slate-600
               "
             >
               {label}

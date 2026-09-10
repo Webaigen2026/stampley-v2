@@ -38,15 +38,15 @@ type DonutProgressProps = {
           />
   
           <div className="relative z-10 text-center">
-            <p className="font-display text-[40px] font-light text-white">
+            <p className="text-3xl font-light tracking-tight text-white">
               {Math.round(safePercent)}%
             </p>
   
-            <p className="mt-1 text-[10px] uppercase tracking-[0.18em] text-white/60">
+            <p className="mt-1 text-xs font-medium uppercase tracking-[0.16em] text-white/60">
               {label}
             </p>
   
-            <p className="mt-2 text-xs text-white/55">
+            <p className="mt-2 text-xs font-normal text-white/55">
               {completed} / {total} check-ins
             </p>
           </div>

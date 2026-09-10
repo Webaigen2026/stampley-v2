@@ -18,30 +18,30 @@ type Props = {
           gap-x-4
           gap-y-2
           py-2
-          text-[12px]
+          text-xs
         "
       >
-        <span className="font-medium text-[#0b2857]">
+        <span className="text-sm font-medium text-slate-950">
           Study Record
         </span>
   
         <span className="text-[#cbd5e1]">•</span>
   
-        <span className="inline-flex items-center gap-1.5 text-[#52657d]">
+        <span className="inline-flex items-center gap-1.5 text-xs font-normal text-slate-500">
           Pre-Survey
           <span className="text-[#16805f]">✓</span>
         </span>
   
         <span className="text-[#cbd5e1]">•</span>
   
-        <span className="inline-flex items-center gap-1.5 text-[#52657d]">
+        <span className="inline-flex items-center gap-1.5 text-xs font-normal text-slate-500">
           DDS-17
           <span className="text-[#16805f]">✓</span>
         </span>
   
         <span className="text-[#cbd5e1]">•</span>
   
-        <span className="inline-flex items-center gap-1.5 text-[#52657d]">
+        <span className="inline-flex items-center gap-1.5 text-xs font-normal text-slate-500">
           Today
           <span
             className={
@@ -58,7 +58,7 @@ type Props = {
           <>
             <span className="text-[#cbd5e1]">•</span>
   
-            <span className="inline-flex items-center gap-1.5 text-[#52657d]">
+            <span className="inline-flex items-center gap-1.5 text-xs font-normal text-slate-500">
               Post-Survey
               <span
                 className={

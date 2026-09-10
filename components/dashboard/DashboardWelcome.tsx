@@ -13,7 +13,6 @@ export default function DashboardWelcome({
         relative
         overflow-hidden
         bg-white
-        font-[Univers,'Helvetica_Neue',Helvetica,Arial,sans-serif]
       "
     >
       {/* Stampley brand accent */}
@@ -37,31 +36,34 @@ export default function DashboardWelcome({
         >
          
 
+          <p className="text-xs font-bold uppercase tracking-[0.35em] text-cyan-700">
+            Participant Dashboard
+          </p>
+
           <h1
             className="
-              mt-3
-              max-w-[600px]
-              text-[34px]
-              font-normal
-              leading-[1.08]
-              tracking-[-0.035em]
-              text-[#0a285f]
-              sm:text-[40px]
-              lg:text-[42px]
+              my-6
+              max-w-[400px]
+              text-2xl
+              font-light
+              tracking-tight
+              text-slate-950
+              md:text-3xl
             "
           >
             Welcome back
             {formattedName ? `, ${formattedName}` : ""}.
           </h1>
 
+     
+
           <p
             className="
               mt-4
               max-w-[570px]
-              text-[14px]
-              font-normal
-              leading-6
-              text-black/60
+              text-lg
+              leading-relaxed
+              text-slate-600
             "
           >
             Thank you for being part of the AIDES-T2D study. Your participation
@@ -77,11 +79,11 @@ export default function DashboardWelcome({
 
             <span
               className="
-                text-[10px]
+                text-xs
                 font-medium
                 uppercase
-                tracking-[0.14em]
-                text-[#0a285f]/60
+                tracking-[0.16em]
+                text-slate-500
               "
             >
               AIDES-T2D Research Study
