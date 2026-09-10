@@ -71,7 +71,7 @@ export default async function DashboardPage() {
   }
 
   if (session.user.role === "PARTICIPANT") {
-    await redirectIfOnboardingIncomplete()
+    await redirectIfOnboardingIncomplete("/getting-started")
   }
 
   const [todayCheckin, progress] = await Promise.all([

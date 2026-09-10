@@ -3,10 +3,19 @@ import { prisma } from "@/lib/prisma"
 import { redirect } from "next/navigation"
 import { STUDY_TOTAL_CHECKINS } from "@/lib/check-in-utils"
 
-export async function redirectIfOnboardingIncomplete() {
+export type MissingPreSurveyPath = "/survey/pre-survey" | "/getting-started"
+
+/**
+ * Next required onboarding route for the current user, or null if complete
+ * / not a participant. Check-in keeps sending missing pre-survey to
+ * /survey/pre-survey. Dashboard may send that case to /getting-started.
+ */
+export async function getOnboardingRedirectPath(
+  missingPreSurveyPath: MissingPreSurveyPath = "/survey/pre-survey"
+): Promise<string | null> {
   const session = await auth()
-  if (!session?.user?.id) redirect("/login")
-  if (session.user.role !== "PARTICIPANT") return
+  if (!session?.user?.id) return "/login"
+  if (session.user.role !== "PARTICIPANT") return null
 
   const preSurvey = await prisma.preSurveyResponse.findUnique({
     where: { userId: session.user.id },
@@ -14,7 +23,7 @@ export async function redirectIfOnboardingIncomplete() {
   })
 
   if (!preSurvey) {
-    redirect("/survey/pre-survey")
+    return missingPreSurveyPath
   }
 
   const dds = await prisma.ddsResponse.findUnique({
@@ -23,12 +32,21 @@ export async function redirectIfOnboardingIncomplete() {
   })
 
   if (!dds) {
-    redirect("/survey/dds")
+    return "/survey/dds"
   }
 
   if (!dds.confirmedDomain) {
-    redirect("/survey/dds/results")
+    return "/survey/dds/results"
   }
+
+  return null
+}
+
+export async function redirectIfOnboardingIncomplete(
+  missingPreSurveyPath: MissingPreSurveyPath = "/survey/pre-survey"
+) {
+  const nextPath = await getOnboardingRedirectPath(missingPreSurveyPath)
+  if (nextPath) redirect(nextPath)
 }
 
 export async function redirectIfAlreadyCheckedInToday() {

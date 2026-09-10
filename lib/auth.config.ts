@@ -28,7 +28,11 @@ export const baseAuthConfig = {
       const isLoggedIn = !!auth?.user;
       const role = auth?.user?.role as AuthRole | undefined;
 
-      if (pathname.startsWith("/dashboard") || pathname.startsWith("/check-in")) {
+      if (
+        pathname.startsWith("/dashboard") ||
+        pathname.startsWith("/check-in") ||
+        pathname.startsWith("/getting-started")
+      ) {
         return isLoggedIn;
       }
 
