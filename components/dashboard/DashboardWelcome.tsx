@@ -35,17 +35,7 @@ export default function DashboardWelcome({
             lg:px-10
           "
         >
-          <p
-            className="
-              text-[10px]
-              font-medium
-              uppercase
-              tracking-[0.17em]
-              text-[#0a285f]/55
-            "
-          >
-            Participant Dashboard
-          </p>
+         
 
           <h1
             className="

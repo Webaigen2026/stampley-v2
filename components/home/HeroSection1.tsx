@@ -4,10 +4,13 @@ import { useEffect, useRef, useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { ArrowRight } from "lucide-react"
+import { useSession } from "next-auth/react"
 
 export default function HeroSection() {
   const sectionRef = useRef<HTMLElement>(null)
   const [inView, setInView] = useState(false)
+  const { status } = useSession()
+  const isAuthenticated = status === "authenticated"
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -277,18 +280,27 @@ export default function HeroSection() {
               >
                 Complete at least five study sessions each week.
               </p>
-
               <p
-                className="
-                  mt-3
-                  max-w-[500px]
-                  text-[14px]
-                  font-normal
-                  leading-[1.7]
-                  text-black/70
-                  sm:text-[15px]
-                "
-              >
+              className={`
+                mt-7
+                max-w-[530px]
+                text-[16px]
+                font-normal
+                leading-[1.8]
+                tracking-[-0.01em]
+                text-black/75
+                transition-all
+                delay-100
+                duration-700
+                ease-out
+                sm:text-[17px]
+                ${
+                  inView
+                    ? "translate-x-0 opacity-100"
+                    : "-translate-x-12 opacity-0"
+                }
+              `}
+            >
                 A session includes a brief check-in and a conversation with
                 Stampley.
               </p>
@@ -398,15 +410,20 @@ export default function HeroSection() {
                     </p>
 
                     <p
-                      className="
-                        mt-0.5
-                        text-[11.5px]
-                        font-normal
-                        leading-4
-                        text-black/50
-                      "
-                    >
-                      Approximately per session
+              className={`
+              
+                text-[16px]
+                font-normal
+                leading-[1.8]
+                tracking-[-0.01em]
+                text-black/75
+                transition-all
+               
+                sm:text-[17px]
+               
+              `}
+            >
+                       per session
                     </p>
                   </div>
                 </div>
@@ -432,16 +449,17 @@ export default function HeroSection() {
                 `}
               >
                 {/* Moving blue light */}
-                <div
-                  aria-hidden="true"
-                  className="
-                    pointer-events-none
-                    absolute
-                    inset-[-140%]
-                    animate-[spin_4.5s_linear_infinite]
-                    bg-[conic-gradient(from_180deg,transparent_0deg,transparent_245deg,rgba(37,99,235,0.08)_280deg,rgba(37,99,235,0.55)_315deg,rgba(96,165,250,1)_336deg,rgba(37,99,235,0.55)_348deg,transparent_360deg)]
-                  "
-                />
+               {/* Moving Stampley orange light */}
+<div
+  aria-hidden="true"
+  className="
+    pointer-events-none
+    absolute
+    inset-[-140%]
+    animate-[spin_4.5s_linear_infinite]
+    bg-[conic-gradient(from_180deg,transparent_0deg,transparent_245deg,rgba(242,177,52,0.08)_280deg,rgba(242,177,52,0.55)_315deg,rgba(255,196,76,1)_336deg,rgba(242,177,52,0.55)_348deg,transparent_360deg)]
+  "
+/>
 
                 <div
                   className="
@@ -491,15 +509,20 @@ export default function HeroSection() {
                   </div>
 
                   <div className="min-w-0">
-                    <p
-                      className="
-                        text-[14px]
-                        font-normal
-                        leading-5
-                        tracking-[-0.01em]
-                        text-black
-                      "
-                    >
+                  <p
+              className={`
+              
+                text-[16px]
+                font-normal
+                leading-[1.8]
+                tracking-[-0.01em]
+                text-black/75
+                transition-all
+               
+                sm:text-[17px]
+               
+              `}
+            >
                       Participate anywhere
                     </p>
 
@@ -540,7 +563,7 @@ export default function HeroSection() {
               `}
             >
               <Link
-                href="/register"
+                href={isAuthenticated ? "/dashboard" : "/register"}
                 className="
                   group
                   flex
@@ -565,7 +588,13 @@ export default function HeroSection() {
                   sm:w-[220px]
                 "
               >
-                <span>Register</span>
+                <span>
+                  {status === "loading"
+                    ? "\u00A0"
+                    : isAuthenticated
+                      ? "Dashboard"
+                      : "Register"}
+                </span>
 
                 <span
                   className="
@@ -757,52 +786,112 @@ export default function HeroSection() {
         </div>
       </div>
 
-      {/* =====================================================
-          BOTTOM S-CURVE — ENTIRE HERO
-      ====================================================== */}
-      <div
-        aria-hidden="true"
-        className={`
-          pointer-events-none
-          absolute
-          inset-x-0
-          bottom-[40px]
-          z-40
-          h-[300px]
-          transition-all
-          duration-[1200ms]
-          ease-out
-          sm:bottom-[50px]
-          sm:h-[340px]
-          lg:bottom-[70px]
-          lg:h-[270px]
-          ${
-            inView
-              ? "translate-y-0 opacity-100"
-              : "translate-y-16 opacity-0"
-          }
-        `}
-      >
-        <svg
-          viewBox="0 0 1440 120"
-          preserveAspectRatio="none"
-          className="block h-full w-full"
-        >
-          <path
-            d="
-              M0 110
-              C170 78 310 62 445 68
-              C590 74 665 92 795 94
-              C935 96 1045 66 1170 54
-              C1275 44 1355 47 1440 58
-              L1440 120
-              L0 120
-              Z
-            "
-            fill="white"
-          />
-        </svg>
-      </div>
+{/* =====================================================
+    BOTTOM ORANGE CURVE — BEHIND WHITE CURVE — TURNED UP
+====================================================== */}
+<div
+  aria-hidden="true"
+  className={`
+    pointer-events-none
+    absolute
+    inset-x-0
+    bottom-[60px]
+    z-30
+    transition-all
+    duration-[1200ms]
+    ease-out
+    ${
+      inView
+        ? "translate-y-0 opacity-100"
+        : "translate-y-16 opacity-0"
+    }
+  `}
+  style={{
+    height: '265px', // a bit smaller default (LEFT)
+    // Responsive overrides for right side (greater height)
+  }}
+>
+  <svg
+    viewBox="0 0 1440 134"
+    preserveAspectRatio="none"
+    className="block h-full w-full -scale-y-100"
+  >
+    <path
+      d="
+        M0 0
+        L1440 0
+        L1440 74
+        C1355 90 1275 100 1170 82
+        C1045 60 935 28 795 35
+        C665 41 590 58 445 60
+        C310 61 170 37 0 8
+        Z
+      "
+      fill="#F2B134"
+    />
+  </svg>
+  <style jsx>{`
+    @media (min-width: 1024px) {
+      div[aria-hidden="true"].pointer-events-none.z-30 {
+        height: 245px !important; /* right (lg) a bit higher */
+        bottom: 90px !important;
+      }
+    }
+    @media (min-width: 640px) and (max-width: 1023px) {
+      div[aria-hidden="true"].pointer-events-none.z-30 {
+        height: 320px !important;
+        bottom: 70px !important;
+      }
+    }
+  `}</style>
+</div>
+
+{/* =====================================================
+    BOTTOM S-CURVE — ORIGINAL — DO NOT MODIFY
+====================================================== */}
+<div
+  aria-hidden="true"
+  className={`
+    pointer-events-none
+    absolute
+    inset-x-0
+    bottom-[40px]
+    z-40
+    h-[300px]
+    transition-all
+    duration-[1200ms]
+    ease-out
+    sm:bottom-[50px]
+    sm:h-[340px]
+    lg:bottom-[70px]
+    lg:h-[270px]
+    ${
+      inView
+        ? "translate-y-0 opacity-100"
+        : "translate-y-16 opacity-0"
+    }
+  `}
+>
+  <svg
+    viewBox="0 0 1440 120"
+    preserveAspectRatio="none"
+    className="block h-full w-full"
+  >
+    <path
+      d="
+        M0 110
+        C170 78 310 62 445 68
+        C590 74 665 92 795 94
+        C935 96 1045 66 1170 54
+        C1275 44 1355 47 1440 58
+        L1440 120
+        L0 120
+        Z
+      "
+      fill="white"
+    />
+  </svg>
+</div>
     </section>
   )
 }

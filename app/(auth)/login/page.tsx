@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+
 import { signIn } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
@@ -43,7 +44,7 @@ export default function LoginPage() {
       className="
         min-h-dvh
         bg-white
-        font-[AmericanSansLight,Helvetica,Arial,sans-serif]
+        font-['Outfit',system-ui,sans-serif]
         text-black
       "
     >
@@ -75,8 +76,9 @@ export default function LoginPage() {
             "
           />
 
-          {/* Neutral white overlays for black typography */}
+          {/* Neutral white overlays */}
           <div
+            aria-hidden="true"
             className="
               pointer-events-none
               absolute
@@ -89,6 +91,7 @@ export default function LoginPage() {
           />
 
           <div
+            aria-hidden="true"
             className="
               pointer-events-none
               absolute
@@ -124,21 +127,24 @@ export default function LoginPage() {
               height={30}
               className="h-[30px] w-auto"
             />
-
+{/* 
             <span
               className="
-                font-[AmericanSansLight,Helvetica,Arial,sans-serif]
                 text-[10px]
+                font-normal
                 uppercase
                 tracking-[0.18em]
                 text-blue-900
               "
             >
               AIDES-T2D
-            </span>
+            </span> */}
           </Link>
 
-          {/* Editorial copy */}
+          {/* =====================================================
+              EDITORIAL COPY
+              Matches DiabetesVideoFeature typography
+          ====================================================== */}
           <div
             className="
               absolute
@@ -146,7 +152,7 @@ export default function LoginPage() {
               left-5
               right-5
               z-10
-              max-w-[520px]
+              max-w-[560px]
               sm:bottom-7
               sm:left-7
               lg:bottom-12
@@ -154,48 +160,42 @@ export default function LoginPage() {
               lg:right-auto
             "
           >
+            {/* Same as "The Good Fight" */}
             <p
               className="
-                mb-3
-                font-[AmericanSansLight,Helvetica,Arial,sans-serif]
-                text-[10px]
+                mb-5
+                text-xs
+                font-bold
                 uppercase
-                tracking-[0.17em]
-                text-black
+                tracking-[0.35em]
+                text-cyan-700
               "
             >
               Everyday support
             </p>
 
+            {/* Same as "It All Matters" */}
             <h1
               className="
-                max-w-[20ch]
-                font-[AmericanSansLight,Helvetica,Arial,sans-serif]
-                text-[24px]
-                font-normal
-                leading-[0.95]
-                tracking-[-0.04em]
-                text-blue-900
-                sm:text-[30px]
-                lg:text-[36px]
-                xl:text-[40px]
+                mb-5
+                max-w-[13ch]
+                text-4xl
+                font-light
+                tracking-tight
+                text-slate-950
+                md:text-5xl
               "
             >
               Support that meets you where you are.
             </h1>
 
+            {/* Same as DiabetesVideoFeature body copy */}
             <p
               className="
-                mt-4
-                max-w-[36ch]
-                font-[AmericanSansLight,Helvetica,Arial,sans-serif]
-                text-[14px]
-                font-normal
-                leading-[1.6]
-                tracking-[-0.01em]
-                text-black/65
-                lg:mt-5
-                lg:text-[16px]
+                max-w-[34ch]
+                text-lg
+                leading-relaxed
+                text-slate-600
               "
             >
               A private space to reflect, check in, and move forward one day
@@ -229,60 +229,70 @@ export default function LoginPage() {
 
           <div className="relative z-10 w-full max-w-[420px]">
             {/* Logo */}
-            <div className="flex items-center gap-3">
-              <Link
-                href="/"
-                className="inline-flex items-center"
-                aria-label="Go to AIDES-T2D home"
-              >
-                <Image
-                  src="/images/stampleyLogo.png"
-                  alt="AIDES-T2D"
-                  width={36}
-                  height={36}
-                  className="
-                    h-9
-                    w-auto
-                    transition-transform
-                    duration-200
-                    hover:scale-[1.03]
-                  "
-                />
-              </Link>
-              <h2
+            <Link
+              href="/"
+              className="inline-flex items-center"
+              aria-label="Go to AIDES-T2D home"
+            >
+              <Image
+                src="/images/stampleyLogo.png"
+                alt="AIDES-T2D"
+                width={40}
+                height={40}
                 className="
-                  font-[AmericanSansLight,Helvetica,Arial,sans-serif]
-                  text-[19px]
-                  font-normal
-                  leading-[1.05]
-                  tracking-[-0.025em]
-                  text-blue-900
-                  sm:text-[22px]
-                  lg:text-[26px]
+                  h-10
+                  w-auto
+                  transition-transform
+                  duration-200
+                  hover:scale-[1.03]
                 "
-              >
-                Sign in.
-              </h2>
-            </div>
-      
+              />
+            </Link>
 
-            {/* Header */}
-            <div className="mt-10">
-              {/* <p
-                className="
-                  font-[AmericanSansLight,Helvetica,Arial,sans-serif]
-                  text-[10px]
-                  font-normal
-                  uppercase
-                  tracking-[0.17em]
-                  text-black
-                "
-              >
-                Welcome back
-              </p> */}
+            {/* =====================================================
+                LOGIN INTRO
+                Same typography system as DiabetesVideoFeature
+            ====================================================== */}
 
-              
-            </div>
+            {/* Same eyebrow typography */}
+            <p
+              className="
+                mb-5
+                mt-8
+                text-xs
+                font-bold
+                uppercase
+                tracking-[0.35em]
+                text-cyan-700
+              "
+            >
+              Welcome back
+            </p>
+
+            {/* Same major heading typography */}
+            <h1
+              className="
+                text-4xl
+                font-light
+                tracking-tight
+                text-slate-950
+                md:text-5xl
+              "
+            >
+              Sign in.
+            </h1>
+
+            {/* Same descriptive typography */}
+            <p
+              className="
+                mt-5
+                text-lg
+                leading-relaxed
+                text-slate-600
+              "
+            >
+              Continue your AIDES-T2D study participation.
+            </p>
 
             {/* Error */}
             {error && (
@@ -293,10 +303,12 @@ export default function LoginPage() {
                   flex
                   items-start
                   gap-3
+                  rounded-[8px]
+                  bg-red-50
                   px-4
                   py-3.5
-                  font-[AmericanSansLight,Helvetica,Arial,sans-serif]
-                  text-[13px]
+                  text-sm
+                  font-normal
                   leading-5
                   text-red-800
                 "
@@ -320,7 +332,9 @@ export default function LoginPage() {
               </div>
             )}
 
-            {/* Form */}
+            {/* =====================================================
+                FORM
+            ====================================================== */}
             <form
               onSubmit={handleSubmit}
               className="mt-10 flex flex-col gap-6"
@@ -330,12 +344,9 @@ export default function LoginPage() {
                 <label
                   htmlFor="email"
                   className="
-                    font-[AmericanSansLight,Helvetica,Arial,sans-serif]
-                    text-[13px]
+                    text-sm
                     font-normal
-                    leading-5
-                    tracking-[-0.005em]
-                    text-black
+                    text-slate-950
                   "
                 >
                   Email address
@@ -358,10 +369,17 @@ export default function LoginPage() {
                       h-4
                       w-4
                       -translate-y-1/2
-                      text-black
+                      text-slate-700
                     "
                   >
-                    <rect x="3" y="5" width="18" height="14" rx="2.5" />
+                    <rect
+                      x="3"
+                      y="5"
+                      width="18"
+                      height="14"
+                      rx="2.5"
+                    />
+
                     <path d="m4 8 8 6 8-6" />
                   </svg>
 
@@ -385,15 +403,13 @@ export default function LoginPage() {
                       bg-white
                       pl-11
                       pr-4
-                      font-[AmericanSansLight,Helvetica,Arial,sans-serif]
-                      text-[15px]
+                      text-base
                       font-normal
-                      tracking-[-0.005em]
-                      text-black
+                      text-slate-950
                       outline-none
                       transition-all
                       duration-200
-                      placeholder:text-black/35
+                      placeholder:text-slate-400
                       focus:border-[#1473E6]
                       focus:ring-[2px]
                       focus:ring-[#1473E6]
@@ -410,12 +426,9 @@ export default function LoginPage() {
                   <label
                     htmlFor="password"
                     className="
-                      font-[AmericanSansLight,Helvetica,Arial,sans-serif]
-                      text-[13px]
+                      text-sm
                       font-normal
-                      leading-5
-                      tracking-[-0.005em]
-                      text-black
+                      text-slate-950
                     "
                   >
                     Password
@@ -424,11 +437,11 @@ export default function LoginPage() {
                   <Link
                     href="/forgot-password"
                     className="
-                      font-[AmericanSansLight,Helvetica,Arial,sans-serif]
-                      text-[12.5px]
+                      text-sm
                       font-normal
-                      text-black
+                      text-slate-700
                       transition-colors
+                      duration-200
                       hover:text-[#173B7A]
                     "
                   >
@@ -453,10 +466,17 @@ export default function LoginPage() {
                       h-4
                       w-4
                       -translate-y-1/2
-                      text-black
+                      text-slate-700
                     "
                   >
-                    <rect x="4" y="11" width="16" height="10" rx="2.2" />
+                    <rect
+                      x="4"
+                      y="11"
+                      width="16"
+                      height="10"
+                      rx="2.2"
+                    />
+
                     <path d="M8 11V8a4 4 0 0 1 8 0v3" />
                   </svg>
 
@@ -480,15 +500,13 @@ export default function LoginPage() {
                       bg-white
                       pl-11
                       pr-14
-                      font-[AmericanSansLight,Helvetica,Arial,sans-serif]
-                      text-[15px]
+                      text-base
                       font-normal
-                      tracking-[-0.005em]
-                      text-black
+                      text-slate-950
                       outline-none
                       transition-all
                       duration-200
-                      placeholder:text-black/35
+                      placeholder:text-slate-400
                       focus:border-[#1473E6]
                       focus:ring-[2px]
                       focus:ring-[#1473E6]
@@ -497,14 +515,16 @@ export default function LoginPage() {
                     "
                   />
 
-                  {/* Circular password visibility control */}
+                  {/* Password visibility */}
                   <button
                     type="button"
                     onClick={() =>
                       setShowPassword((current) => !current)
                     }
                     aria-label={
-                      showPassword ? "Hide password" : "Show password"
+                      showPassword
+                        ? "Hide password"
+                        : "Show password"
                     }
                     className="
                       absolute
@@ -547,7 +567,12 @@ export default function LoginPage() {
                         <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" />
                         <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" />
                         <path d="m14.12 14.12a3 3 0 1 1-4.24-4.24" />
-                        <line x1="1" y1="1" x2="23" y2="23" />
+                        <line
+                          x1="1"
+                          y1="1"
+                          x2="23"
+                          y2="23"
+                        />
                       </svg>
                     ) : (
                       <svg
@@ -562,7 +587,11 @@ export default function LoginPage() {
                         aria-hidden="true"
                       >
                         <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                        <circle cx="12" cy="12" r="3" />
+                        <circle
+                          cx="12"
+                          cy="12"
+                          r="3"
+                        />
                       </svg>
                     )}
                   </button>
@@ -585,10 +614,8 @@ export default function LoginPage() {
                   rounded-[10px]
                   bg-[#173B7A]
                   px-5
-                  font-[AmericanSansLight,Helvetica,Arial,sans-serif]
-                  text-[14px]
+                  text-sm
                   font-normal
-                  tracking-[-0.005em]
                   text-white
                   transition-all
                   duration-200
@@ -618,7 +645,6 @@ export default function LoginPage() {
                   <>
                     <span>Sign in</span>
 
-                    {/* Circular arrow control */}
                     <span
                       className="
                         flex
@@ -663,23 +689,25 @@ export default function LoginPage() {
               className="
                 mt-8
                 text-center
-                font-[AmericanSansLight,Helvetica,Arial,sans-serif]
-                text-[13.5px]
+                text-sm
                 font-normal
                 leading-5
-                text-black
+                text-slate-700
               "
             >
               New to AIDES-T2D?{" "}
+
               <Link
                 href="/register"
                 className="
-                  text-black
+                  font-bold
+                  text-blue-900
                   underline
-                  decoration-black/25
+                  decoration-blue-400/40
                   underline-offset-4
                   transition
-                  hover:decoration-black
+                  hover:decoration-blue-700
+                  text-base
                 "
               >
                 Create an account
@@ -698,11 +726,10 @@ export default function LoginPage() {
                 border-black/[0.08]
                 pt-6
                 text-center
-                font-[AmericanSansLight,Helvetica,Arial,sans-serif]
-                text-[11.5px]
+                text-xs
                 font-normal
                 leading-5
-                text-black
+                text-slate-600
               "
             >
               <svg

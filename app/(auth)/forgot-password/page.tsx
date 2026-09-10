@@ -44,7 +44,7 @@ export default function ForgotPasswordPage() {
         className="
           min-h-dvh
           bg-white
-          font-[AmericanSansLight,Helvetica,Arial,sans-serif]
+          font-['Outfit',system-ui,sans-serif]
           text-black
         "
       >
@@ -128,17 +128,7 @@ export default function ForgotPasswordPage() {
                 className="h-[30px] w-auto"
               />
 
-              <span
-                className="
-                  font-[AmericanSansLight,Helvetica,Arial,sans-serif]
-                  text-[10px]
-                  uppercase
-                  tracking-[0.18em]
-                  text-blue-900
-                "
-              >
-                AIDES-T2D
-              </span>
+             
             </Link>
 
             {/* Editorial copy */}
@@ -157,50 +147,15 @@ export default function ForgotPasswordPage() {
                 lg:right-auto
               "
             >
-              <p
-                className="
-                  mb-3
-                  font-[AmericanSansLight,Helvetica,Arial,sans-serif]
-                  text-[10px]
-                  uppercase
-                  tracking-[0.17em]
-                  text-black
-                "
-              >
+              <p className="mb-5 text-xs font-bold uppercase tracking-[0.35em] text-cyan-700">
                 Account support
               </p>
 
-              <h1
-                className="
-                  max-w-[20ch]
-                  font-[AmericanSansLight,Helvetica,Arial,sans-serif]
-                  text-[24px]
-                  font-normal
-                  leading-[0.95]
-                  tracking-[-0.04em]
-                  text-blue-900
-                  sm:text-[30px]
-                  lg:text-[36px]
-                  xl:text-[40px]
-                "
-              >
+              <h1 className="max-w-[20ch] text-4xl font-light tracking-tight text-slate-950 md:text-5xl">
                 Check your inbox.
               </h1>
 
-              <p
-                className="
-                  mt-4
-                  max-w-[38ch]
-                  font-[AmericanSansLight,Helvetica,Arial,sans-serif]
-                  text-[14px]
-                  font-normal
-                  leading-[1.6]
-                  tracking-[-0.01em]
-                  text-black
-                  lg:mt-5
-                  lg:text-[16px]
-                "
-              >
+              <p className="mt-5 max-w-[38ch] text-lg leading-relaxed text-slate-600">
                 If an account exists for that email address, a secure reset
                 link has been sent.
               </p>
@@ -232,58 +187,39 @@ export default function ForgotPasswordPage() {
 
             <div className="relative z-10 w-full max-w-[420px]">
               {/* Logo + heading */}
-              <div className="flex items-center gap-3">
-                <Link
-                  href="/"
-                  className="inline-flex items-center"
-                  aria-label="Go to AIDES-T2D home"
-                >
-                  <Image
-                    src="/images/stampleyLogo.png"
-                    alt="AIDES-T2D"
-                    width={36}
-                    height={36}
-                    className="
-                      h-9
-                      w-auto
-                      transition-transform
-                      duration-200
-                      hover:scale-[1.03]
-                    "
-                  />
-                </Link>
-
-                <h2
+              <Link
+                href="/"
+                className="inline-flex items-center"
+                aria-label="Go to AIDES-T2D home"
+              >
+                <Image
+                  src="/images/stampleyLogo.png"
+                  alt="AIDES-T2D"
+                  width={36}
+                  height={36}
                   className="
-                    font-[AmericanSansLight,Helvetica,Arial,sans-serif]
-                    text-[19px]
-                    font-normal
-                    leading-[1.05]
-                    tracking-[-0.025em]
-                    text-blue-900
-                    sm:text-[22px]
-                    lg:text-[26px]
+                    h-9
+                    w-auto
+                    transition-transform
+                    duration-200
+                    hover:scale-[1.03]
                   "
-                >
-                  Check your email.
-                </h2>
-              </div>
+                />
+              </Link>
 
-              <div className="mt-10">
-                <p
-                  className="
-                    font-[AmericanSansLight,Helvetica,Arial,sans-serif]
-                    text-[13px]
-                    font-normal
-                    leading-6
-                    text-black
-                  "
-                >
-                  If an account exists for that email address, we&apos;ve sent
-                  a password reset link. Follow the instructions in the email
-                  to continue.
-                </p>
-              </div>
+              <p className="mt-8 text-xs font-bold uppercase tracking-[0.35em] text-cyan-700">
+                Account support
+              </p>
+
+              <h2 className="mt-5 text-4xl font-light tracking-tight text-slate-950 md:text-5xl">
+                Check your email.
+              </h2>
+
+              <p className="mt-5 text-lg leading-relaxed text-slate-600">
+                If an account exists for that email address, we&apos;ve sent
+                a password reset link. Follow the instructions in the email
+                to continue.
+              </p>
 
               {/* Info panel */}
               <div
@@ -306,7 +242,6 @@ export default function ForgotPasswordPage() {
 
                   <p
                     className="
-                      font-[AmericanSansLight,Helvetica,Arial,sans-serif]
                       text-[13px]
                       font-normal
                       leading-5
@@ -335,7 +270,6 @@ export default function ForgotPasswordPage() {
                   border-[#86868b]
                   bg-white
                   px-5
-                  font-[AmericanSansLight,Helvetica,Arial,sans-serif]
                   text-[14px]
                   font-normal
                   tracking-[-0.005em]
@@ -391,7 +325,6 @@ export default function ForgotPasswordPage() {
                   border-black/[0.08]
                   pt-6
                   text-center
-                  font-[AmericanSansLight,Helvetica,Arial,sans-serif]
                   text-[11.5px]
                   font-normal
                   leading-5
@@ -420,7 +353,7 @@ export default function ForgotPasswordPage() {
       className="
         min-h-dvh
         bg-white
-        font-[AmericanSansLight,Helvetica,Arial,sans-serif]
+        font-['Outfit',system-ui,sans-serif]
         text-black
       "
     >
@@ -506,7 +439,6 @@ export default function ForgotPasswordPage() {
 
             <span
               className="
-                font-[AmericanSansLight,Helvetica,Arial,sans-serif]
                 text-[10px]
                 uppercase
                 tracking-[0.18em]
@@ -533,50 +465,15 @@ export default function ForgotPasswordPage() {
               lg:right-auto
             "
           >
-            <p
-              className="
-                mb-3
-                font-[AmericanSansLight,Helvetica,Arial,sans-serif]
-                text-[10px]
-                uppercase
-                tracking-[0.17em]
-                text-black
-              "
-            >
+            <p className="mb-5 text-xs font-bold uppercase tracking-[0.35em] text-cyan-700">
               Account support
             </p>
 
-            <h1
-              className="
-                max-w-[20ch]
-                font-[AmericanSansLight,Helvetica,Arial,sans-serif]
-                text-[24px]
-                font-normal
-                leading-[0.95]
-                tracking-[-0.04em]
-                text-blue-900
-                sm:text-[30px]
-                lg:text-[36px]
-                xl:text-[40px]
-              "
-            >
+            <h1 className="max-w-[20ch] text-4xl font-light tracking-tight text-slate-950 md:text-5xl">
               It&apos;s okay to reset.
             </h1>
 
-            <p
-              className="
-                mt-4
-                max-w-[38ch]
-                font-[AmericanSansLight,Helvetica,Arial,sans-serif]
-                text-[14px]
-                font-normal
-                leading-[1.6]
-                tracking-[-0.01em]
-                text-black
-                lg:mt-5
-                lg:text-[16px]
-              "
-            >
+            <p className="mt-5 max-w-[38ch] text-lg leading-relaxed text-slate-600">
               We&apos;ll help you get back into your account so you can
               continue your AIDES-T2D journey.
             </p>
@@ -607,43 +504,15 @@ export default function ForgotPasswordPage() {
           <AuthBackgroundDecoration />
 
           <div className="relative z-10 w-full max-w-[420px]">
-            {/* Logo + heading */}
-            <div className="flex items-center gap-3">
-              <Link
-                href="/"
-                className="inline-flex items-center"
-                aria-label="Go to AIDES-T2D home"
-              >
-                <Image
-                  src="/images/stampleyLogo.png"
-                  alt="AIDES-T2D"
-                  width={36}
-                  height={36}
-                  className="
-                    h-9
-                    w-auto
-                    transition-transform
-                    duration-200
-                    hover:scale-[1.03]
-                  "
-                />
-              </Link>
+           
 
-              <h2
-                className="
-                  font-[AmericanSansLight,Helvetica,Arial,sans-serif]
-                  text-[19px]
-                  font-normal
-                  leading-[1.05]
-                  tracking-[-0.025em]
-                  text-blue-900
-                  sm:text-[22px]
-                  lg:text-[26px]
-                "
-              >
-                Forgot password?
-              </h2>
-            </div>
+            <p className="mt-8 text-xs font-bold uppercase tracking-[0.35em] text-cyan-700">
+              Account support
+            </p>
+
+            <h2 className="mt-5 text-4xl font-light tracking-tight text-slate-950 md:text-5xl">
+              Forgot password?
+            </h2>
 
 
             {/* Error */}
@@ -657,7 +526,6 @@ export default function ForgotPasswordPage() {
                   gap-3
                   px-4
                   py-3.5
-                  font-[AmericanSansLight,Helvetica,Arial,sans-serif]
                   text-[13px]
                   leading-5
                   text-red-800
@@ -681,14 +549,7 @@ export default function ForgotPasswordPage() {
               <div className="flex flex-col gap-2.5">
                 <label
                   htmlFor="email"
-                  className="
-                    font-[AmericanSansLight,Helvetica,Arial,sans-serif]
-                    text-[13px]
-                    font-normal
-                    leading-5
-                    tracking-[-0.005em]
-                    text-black
-                  "
+                  className="text-sm font-normal text-slate-950"
                 >
                   Email address
                 </label>
@@ -727,15 +588,13 @@ export default function ForgotPasswordPage() {
                       bg-white
                       pl-11
                       pr-4
-                      font-[AmericanSansLight,Helvetica,Arial,sans-serif]
-                      text-[15px]
+                      text-base
                       font-normal
-                      tracking-[-0.005em]
-                      text-black
+                      text-slate-950
                       outline-none
                       transition-all
                       duration-200
-                      placeholder:text-black/35
+                      placeholder:text-slate-400
                       focus:border-[#1473E6]
                       focus:ring-[2px]
                       focus:ring-[#1473E6]
@@ -762,7 +621,6 @@ export default function ForgotPasswordPage() {
                   rounded-[10px]
                   bg-[#173B7A]
                   px-5
-                  font-[AmericanSansLight,Helvetica,Arial,sans-serif]
                   text-[14px]
                   font-normal
                   tracking-[-0.005em]
@@ -833,8 +691,7 @@ export default function ForgotPasswordPage() {
                 inline-flex
                 items-center
                 gap-2
-                font-[AmericanSansLight,Helvetica,Arial,sans-serif]
-                text-[13.5px]
+                text-sm
                 font-normal
                 text-black
                 underline
@@ -865,7 +722,6 @@ export default function ForgotPasswordPage() {
                 border-black/[0.08]
                 pt-6
                 text-center
-                font-[AmericanSansLight,Helvetica,Arial,sans-serif]
                 text-[11.5px]
                 font-normal
                 leading-5

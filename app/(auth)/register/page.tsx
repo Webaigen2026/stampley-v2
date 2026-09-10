@@ -58,7 +58,7 @@ export default function RegisterPage() {
       className="
         min-h-dvh
         bg-white
-        font-[AmericanSansLight,Helvetica,Arial,sans-serif]
+        font-['Outfit',system-ui,sans-serif]
         text-black
       "
     >
@@ -144,17 +144,7 @@ export default function RegisterPage() {
               className="h-[30px] w-auto"
             />
 
-            <span
-              className="
-                font-[AmericanSansLight,Helvetica,Arial,sans-serif]
-                text-[10px]
-                uppercase
-                tracking-[0.18em]
-                text-blue-900
-              "
-            >
-              AIDES-T2D
-            </span>
+           
           </Link>
 
           {/* Editorial copy */}
@@ -173,50 +163,15 @@ export default function RegisterPage() {
               lg:right-auto
             "
           >
-            <p
-              className="
-                mb-3
-                font-[AmericanSansLight,Helvetica,Arial,sans-serif]
-                text-[10px]
-                uppercase
-                tracking-[0.17em]
-                text-black
-              "
-            >
+            <p className="mb-5 text-xs font-bold uppercase tracking-[0.35em] text-cyan-700">
               Your next step
             </p>
 
-            <h1
-              className="
-                max-w-[20ch]
-                font-[AmericanSansLight,Helvetica,Arial,sans-serif]
-                text-[24px]
-                font-normal
-                leading-[0.95]
-                tracking-[-0.04em]
-                text-blue-900
-                sm:text-[30px]
-                lg:text-[36px]
-                xl:text-[40px]
-              "
-            >
+            <h1 className="max-w-[20ch] text-4xl font-light tracking-tight text-slate-950 md:text-5xl">
               Your next step starts here.
             </h1>
 
-            <p
-              className="
-                mt-4
-                max-w-[38ch]
-                font-[AmericanSansLight,Helvetica,Arial,sans-serif]
-                text-[14px]
-                font-normal
-                leading-[1.6]
-                tracking-[-0.01em]
-                text-black
-                lg:mt-5
-                lg:text-[16px]
-              "
-            >
+            <p className="mt-5 max-w-[38ch] text-lg leading-relaxed text-slate-600">
               Create your account, verify your email, and continue your
               AIDES-T2D experience.
             </p>
@@ -268,6 +223,18 @@ export default function RegisterPage() {
               />
             </Link>
 
+            <p className="mt-8 mb-5 text-xs font-bold uppercase tracking-[0.35em] text-cyan-700">
+              Create your account
+            </p>
+
+            <h2 className="text-4xl font-light tracking-tight text-slate-950 md:text-5xl">
+              Register.
+            </h2>
+
+            <p className="mt-5 text-lg leading-relaxed text-slate-600">
+              Join the AIDES-T2D study and begin your participation.
+            </p>
+
             {/* Error */}
             {error && (
               <div
@@ -283,7 +250,6 @@ export default function RegisterPage() {
                   bg-red-50
                   px-4
                   py-3.5
-                  font-[AmericanSansLight,Helvetica,Arial,sans-serif]
                   text-[13px]
                   leading-5
                   text-black
@@ -309,12 +275,9 @@ export default function RegisterPage() {
                 <label
                   htmlFor="studyId"
                   className="
-                    font-[AmericanSansLight,Helvetica,Arial,sans-serif]
-                    text-[13px]
+                    text-sm
                     font-normal
-                    leading-5
-                    tracking-[-0.005em]
-                    text-black
+                    text-slate-950
                   "
                 >
                   Study ID <span className="text-black">(optional)</span>
@@ -353,18 +316,17 @@ export default function RegisterPage() {
                       bg-white
                       pl-11
                       pr-4
-                      font-[AmericanSansLight,Helvetica,Arial,sans-serif]
-                      text-[15px]
+                      text-base
                       font-normal
                       uppercase
                       tracking-[0.04em]
-                      text-black
+                      text-slate-950
                       outline-none
                       transition-all
                       duration-200
                       placeholder:normal-case
                       placeholder:tracking-normal
-                      placeholder:text-black/35
+                      placeholder:text-slate-400
                       focus:border-[#1473E6]
                       focus:ring-[2px]
                       focus:ring-[#1473E6]
@@ -377,7 +339,6 @@ export default function RegisterPage() {
                 <p
                   className="
                     pl-1
-                    font-[AmericanSansLight,Helvetica,Arial,sans-serif]
                     text-[12px]
                     font-normal
                     leading-5
@@ -393,12 +354,9 @@ export default function RegisterPage() {
                 <label
                   htmlFor="email"
                   className="
-                    font-[AmericanSansLight,Helvetica,Arial,sans-serif]
-                    text-[13px]
+                    text-sm
                     font-normal
-                    leading-5
-                    tracking-[-0.005em]
-                    text-black
+                    text-slate-950
                   "
                 >
                   Email address
@@ -438,15 +396,13 @@ export default function RegisterPage() {
                       bg-white
                       pl-11
                       pr-4
-                      font-[AmericanSansLight,Helvetica,Arial,sans-serif]
-                      text-[15px]
+                      text-base
                       font-normal
-                      tracking-[-0.005em]
-                      text-black
+                      text-slate-950
                       outline-none
                       transition-all
                       duration-200
-                      placeholder:text-black/35
+                      placeholder:text-slate-400
                       focus:border-[#1473E6]
                       focus:ring-[2px]
                       focus:ring-[#1473E6]
@@ -462,12 +418,9 @@ export default function RegisterPage() {
                 <label
                   htmlFor="password"
                   className="
-                    font-[AmericanSansLight,Helvetica,Arial,sans-serif]
-                    text-[13px]
+                    text-sm
                     font-normal
-                    leading-5
-                    tracking-[-0.005em]
-                    text-black
+                    text-slate-950
                   "
                 >
                   Password
@@ -508,15 +461,13 @@ export default function RegisterPage() {
                       bg-white
                       pl-11
                       pr-14
-                      font-[AmericanSansLight,Helvetica,Arial,sans-serif]
-                      text-[15px]
+                      text-base
                       font-normal
-                      tracking-[-0.005em]
-                      text-black
+                      text-slate-950
                       outline-none
                       transition-all
                       duration-200
-                      placeholder:text-black/35
+                      placeholder:text-slate-400
                       focus:border-[#1473E6]
                       focus:ring-[2px]
                       focus:ring-[#1473E6]
@@ -578,7 +529,6 @@ export default function RegisterPage() {
                 <p
                   className="
                     pl-1
-                    font-[AmericanSansLight,Helvetica,Arial,sans-serif]
                     text-[12px]
                     font-normal
                     leading-5
@@ -594,12 +544,9 @@ export default function RegisterPage() {
                 <label
                   htmlFor="confirmPassword"
                   className="
-                    font-[AmericanSansLight,Helvetica,Arial,sans-serif]
-                    text-[13px]
+                    text-sm
                     font-normal
-                    leading-5
-                    tracking-[-0.005em]
-                    text-black
+                    text-slate-950
                   "
                 >
                   Confirm password
@@ -640,15 +587,13 @@ export default function RegisterPage() {
                       bg-white
                       pl-11
                       pr-4
-                      font-[AmericanSansLight,Helvetica,Arial,sans-serif]
-                      text-[15px]
+                      text-base
                       font-normal
-                      tracking-[-0.005em]
-                      text-black
+                      text-slate-950
                       outline-none
                       transition-all
                       duration-200
-                      placeholder:text-black/35
+                      placeholder:text-slate-400
                       focus:border-[#1473E6]
                       focus:ring-[2px]
                       focus:ring-[#1473E6]
@@ -675,7 +620,6 @@ export default function RegisterPage() {
                   rounded-[10px]
                   bg-[#173B7A]
                   px-5
-                  font-[AmericanSansLight,Helvetica,Arial,sans-serif]
                   text-[14px]
                   font-normal
                   tracking-[-0.005em]
@@ -743,8 +687,7 @@ export default function RegisterPage() {
               className="
                 mt-8
                 text-center
-                font-[AmericanSansLight,Helvetica,Arial,sans-serif]
-                text-[13.5px]
+                text-sm
                 font-normal
                 leading-5
                 text-black
@@ -754,16 +697,20 @@ export default function RegisterPage() {
               <Link
                 href="/login"
                 className="
-                  text-black
+                  font-bold
+                  text-blue-900
                   underline
-                  decoration-black/25
+                  decoration-blue-400/40
                   underline-offset-4
                   transition
-                  hover:decoration-black
+                  hover:decoration-blue-700
+                  text-base
                 "
               >
                 Sign in
               </Link>
+         
+         
             </p>
 
             {/* Privacy */}
@@ -778,7 +725,6 @@ export default function RegisterPage() {
                 border-black/[0.08]
                 pt-6
                 text-center
-                font-[AmericanSansLight,Helvetica,Arial,sans-serif]
                 text-[11.5px]
                 font-normal
                 leading-5

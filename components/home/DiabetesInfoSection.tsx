@@ -18,7 +18,8 @@ const steps = [
   {
     icon: UserPlus,
     label: "Create\nAccount",
-    tooltip: "Create your secure participant account to begin the study.",
+    tooltip:
+      "Create your secure participant account to begin the study.",
   },
   {
     icon: MailCheck,
@@ -35,7 +36,8 @@ const steps = [
   {
     icon: ListChecks,
     label: "DDS\nSurvey",
-    tooltip: "Complete the Diabetes Distress Scale assessment.",
+    tooltip:
+      "Complete the Diabetes Distress Scale assessment.",
   },
   {
     icon: CalendarCheck2,
@@ -94,6 +96,63 @@ export default function DiabetesInfoSection() {
     >
       <div className="mx-auto max-w-7xl">
         {/* =====================================================
+            PARTICIPANT JOURNEY INTRO
+        ====================================================== */}
+        <div
+          className={`
+            mx-auto
+            mb-12
+            max-w-3xl
+            text-center
+            transition-all
+            duration-700
+            ease-out
+            ${
+              inView
+                ? "translate-y-0 opacity-100"
+                : "translate-y-6 opacity-0"
+            }
+          `}
+        >
+        
+
+          {/* Main title */}
+         
+          <h1
+              className={`
+                whitespace-nowrap
+                mb-10
+                text-[30px]
+                font-normal
+                leading-[1.08]
+                tracking-[-0.03em]
+                text-blue-900
+                transition-all
+                duration-700
+                ease-out
+                sm:text-[34px]
+                lg:text-[38px]
+                xl:text-[42px]
+                ${
+                  inView
+                    ? "translate-x-0 opacity-100"
+                    : "-translate-x-12 opacity-0"
+                }
+              `}
+            >
+            Your study journey, step by step
+          </h1>
+
+          {/* Description */}
+          <p className="mx-auto max-w-2xl text-lg leading-relaxed text-slate-600">
+            From creating your account to completing your final survey,
+            here&apos;s what participation in AIDES-T2D looks like. Most study
+            activities are completed online, and you&apos;ll move through each
+            step in order.
+          </p>
+        </div>
+
+        {/* =====================================================
             PARTICIPANT JOURNEY
         ====================================================== */}
         <div
@@ -142,7 +201,9 @@ export default function DiabetesInfoSection() {
                 }
               `}
               style={{
-                transitionDelay: inView ? `${index * 90}ms` : "0ms",
+                transitionDelay: inView
+                  ? `${index * 90}ms`
+                  : "0ms",
               }}
             >
               {/* Step number */}
@@ -339,7 +400,6 @@ export default function DiabetesInfoSection() {
       >
         Learn More
       </a>
- 
     </section>
   )
 }

@@ -152,7 +152,7 @@ export function RegisterVerifyForm({ email }: { email: string }) {
         bg-white
         px-6
         py-12
-        font-[AmericanSansLight,Helvetica,Arial,sans-serif]
+        font-['Outfit',system-ui,sans-serif]
         text-black
         sm:px-10
       "
@@ -161,55 +161,37 @@ export function RegisterVerifyForm({ email }: { email: string }) {
 
       <div className="relative z-10 w-full max-w-[460px]">
         {/* Brand / page title */}
-        <div className="flex items-center gap-3">
-          <Link
-            href="/"
-            className="inline-flex items-center"
-            aria-label="Go to AIDES-T2D home"
-          >
-            <Image
-              src="/images/stampleyLogo.png"
-              alt="AIDES-T2D"
-              width={36}
-              height={36}
-              className="
-                h-9
-                w-auto
-                transition-transform
-                duration-200
-                hover:scale-[1.03]
-              "
-            />
-          </Link>
-
-          <h1
+        <Link
+          href="/"
+          className="inline-flex items-center"
+          aria-label="Go to AIDES-T2D home"
+        >
+          <Image
+            src="/images/stampleyLogo.png"
+            alt="AIDES-T2D"
+            width={36}
+            height={36}
             className="
-              font-[AmericanSansLight,Helvetica,Arial,sans-serif]
-              text-[19px]
-              font-normal
-              leading-[1.05]
-              tracking-[-0.025em]
-              text-blue-900
-              sm:text-[22px]
-              lg:text-[26px]
+              h-9
+              w-auto
+              transition-transform
+              duration-200
+              hover:scale-[1.03]
             "
-          >
-            Verify your email.
-          </h1>
-        </div>
+          />
+        </Link>
+
+        <p className="mt-8 text-xs font-bold uppercase tracking-[0.35em] text-cyan-700">
+          Email verification
+        </p>
+
+        <h1 className="mt-5 text-4xl font-light tracking-tight text-slate-950 md:text-5xl">
+          Verify your email.
+        </h1>
 
         {/* Supporting copy */}
-        <div className="mt-10">
-          <p
-            className="
-              max-w-[40ch]
-              font-[AmericanSansLight,Helvetica,Arial,sans-serif]
-              text-[13px]
-              font-normal
-              leading-6
-              text-black
-            "
-          >
+        <div className="mt-5">
+          <p className="max-w-[40ch] text-lg leading-relaxed text-slate-600">
             We sent a 6-digit verification code to:
           </p>
 
@@ -237,7 +219,6 @@ export function RegisterVerifyForm({ email }: { email: string }) {
               className="
                 max-w-[280px]
                 truncate
-                font-[AmericanSansLight,Helvetica,Arial,sans-serif]
                 text-[13px]
                 font-normal
                 text-black
@@ -263,7 +244,6 @@ export function RegisterVerifyForm({ email }: { email: string }) {
               bg-red-50
               px-4
               py-3.5
-              font-[AmericanSansLight,Helvetica,Arial,sans-serif]
               text-[13px]
               leading-5
               text-black
@@ -293,7 +273,6 @@ export function RegisterVerifyForm({ email }: { email: string }) {
               bg-white
               px-4
               py-3.5
-              font-[AmericanSansLight,Helvetica,Arial,sans-serif]
               text-[13px]
               leading-5
               text-black
@@ -316,16 +295,7 @@ export function RegisterVerifyForm({ email }: { email: string }) {
           {/* Verification code */}
           <div>
             <label
-              className="
-                mb-2.5
-                block
-                font-[AmericanSansLight,Helvetica,Arial,sans-serif]
-                text-[13px]
-                font-normal
-                leading-5
-                tracking-[-0.005em]
-                text-black
-              "
+              className="mb-2.5 block text-sm font-normal text-slate-950"
             >
               Verification code
             </label>
@@ -361,10 +331,9 @@ export function RegisterVerifyForm({ email }: { email: string }) {
                     border-[#86868b]
                     bg-white
                     text-center
-                    font-[AmericanSansLight,Helvetica,Arial,sans-serif]
-                    text-[20px]
+                    text-base
                     font-normal
-                    text-black
+                    text-slate-950
                     outline-none
                     transition-all
                     duration-200
@@ -373,7 +342,6 @@ export function RegisterVerifyForm({ email }: { email: string }) {
                     focus:ring-[#1473E6]
                     disabled:cursor-not-allowed
                     disabled:opacity-50
-                    sm:text-[22px]
                   "
                 />
               ))}
@@ -382,7 +350,6 @@ export function RegisterVerifyForm({ email }: { email: string }) {
             <p
               className="
                 mt-3
-                font-[AmericanSansLight,Helvetica,Arial,sans-serif]
                 text-[12px]
                 font-normal
                 leading-5
@@ -410,7 +377,6 @@ export function RegisterVerifyForm({ email }: { email: string }) {
               rounded-[10px]
               bg-[#173B7A]
               px-5
-              font-[AmericanSansLight,Helvetica,Arial,sans-serif]
               text-[14px]
               font-normal
               tracking-[-0.005em]
@@ -488,8 +454,7 @@ export function RegisterVerifyForm({ email }: { email: string }) {
         >
           <span
             className="
-              font-[AmericanSansLight,Helvetica,Arial,sans-serif]
-              text-[13px]
+              text-sm
               font-normal
               text-black
             "
@@ -509,8 +474,7 @@ export function RegisterVerifyForm({ email }: { email: string }) {
               border-0
               bg-transparent
               p-0
-              font-[AmericanSansLight,Helvetica,Arial,sans-serif]
-              text-[13px]
+              text-sm
               font-normal
               text-black
               underline
@@ -542,8 +506,7 @@ export function RegisterVerifyForm({ email }: { email: string }) {
             inline-flex
             items-center
             gap-2
-            font-[AmericanSansLight,Helvetica,Arial,sans-serif]
-            text-[13px]
+            text-sm
             font-normal
             text-black
             underline
@@ -574,7 +537,6 @@ export function RegisterVerifyForm({ email }: { email: string }) {
             border-black/[0.08]
             pt-6
             text-center
-            font-[AmericanSansLight,Helvetica,Arial,sans-serif]
             text-[11.5px]
             font-normal
             leading-5
