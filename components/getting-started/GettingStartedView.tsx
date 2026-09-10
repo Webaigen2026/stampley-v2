@@ -89,22 +89,50 @@ export default function GettingStartedView() {
       `}</style>
 
       {/* =====================================================
-          HERO
+          HERO — FULL WIDTH
       ====================================================== */}
-      <section className="gs-fade">
+      <section
+        className="
+          gs-fade
+          relative
+          left-1/2
+          w-screen
+          -translate-x-1/2
+          overflow-hidden
+          bg-white
+        "
+      >
         <div
           className="
+            mx-auto
             grid
+            w-full
+            max-w-[1600px]
             items-center
             gap-12
-            lg:min-h-[500px]
-            lg:grid-cols-[minmax(0,0.88fr)_minmax(520px,1.12fr)]
-            lg:gap-8
-            xl:min-h-[540px]
+            px-5
+            sm:px-8
+            lg:min-h-[540px]
+            lg:grid-cols-[minmax(0,0.88fr)_minmax(560px,1.12fr)]
+            lg:gap-10
+            lg:px-12
+            xl:min-h-[580px]
+            xl:px-16
+            2xl:px-20
           "
         >
-          {/* Left content */}
-          <div className="relative z-20 py-8 sm:py-10 lg:py-14">
+          {/* =================================================
+              LEFT CONTENT
+          ================================================== */}
+          <div
+            className="
+              relative
+              z-20
+              py-10
+              sm:py-12
+              lg:py-16
+            "
+          >
             <p
               className="
                 text-xs
@@ -120,23 +148,20 @@ export default function GettingStartedView() {
             <h1
               className="
                 mt-5
-                text-3xl
+                max-w-[11ch]
+                text-4xl
                 font-light
-                leading-[1.1]
-                tracking-[-0.02em]
+                leading-[1.02]
+                tracking-[-0.045em]
                 text-[#0B2857]
-                sm:text-4xl
-                lg:text-5xl
-                xl:text-5xl
-                max-w-full
-                whitespace-nowrap
-                overflow-x-auto
+                sm:text-5xl
+                md:text-6xl
+                lg:text-[64px]
+                xl:text-[70px]
               "
             >
               Before you begin.
             </h1>
-       
-       
 
             <p
               className="
@@ -214,7 +239,15 @@ export default function GettingStartedView() {
           {/* =================================================
               DESKTOP IMAGE COMPOSITION
           ================================================== */}
-          <div className="relative hidden min-h-[500px] lg:block xl:min-h-[540px]">
+          <div
+            className="
+              relative
+              hidden
+              min-h-[540px]
+              lg:block
+              xl:min-h-[580px]
+            "
+          >
             {/* Soft blue accent */}
             <div
               aria-hidden="true"
@@ -226,20 +259,20 @@ export default function GettingStartedView() {
                 w-[190px]
                 rounded-full
                 bg-[#E4F0FF]
-                xl:h-[210px]
-                xl:w-[210px]
+                xl:h-[220px]
+                xl:w-[220px]
               "
             />
 
-            {/* Main photograph */}
+            {/* Main organic image */}
             <div
               className="
                 absolute
                 bottom-0
-                left-[5%]
+                left-[4%]
                 top-0
                 z-10
-                w-[78%]
+                w-[79%]
                 overflow-hidden
                 rounded-[46%_54%_47%_53%/42%_42%_58%_58%]
               "
@@ -259,10 +292,10 @@ export default function GettingStartedView() {
               aria-hidden="true"
               className="
                 absolute
-                right-[-62px]
-                top-[112px]
-                h-[250px]
-                w-[250px]
+                right-[-55px]
+                top-[110px]
+                h-[270px]
+                w-[270px]
                 rotate-[9deg]
                 rounded-full
                 border-[2px]
@@ -270,6 +303,8 @@ export default function GettingStartedView() {
                 border-b-transparent
                 border-l-transparent
                 opacity-90
+                xl:h-[300px]
+                xl:w-[300px]
               "
             />
 
@@ -278,9 +313,9 @@ export default function GettingStartedView() {
               className="
                 absolute
                 right-[0]
-                top-[80%]
+                top-[62%]
                 z-20
-                w-[150px]
+                w-[165px]
               "
             >
               <p
@@ -291,7 +326,7 @@ export default function GettingStartedView() {
                   leading-[1.02]
                   tracking-[-0.025em]
                   text-[#173B7A]
-                  xl:text-[30px]
+                  xl:text-[31px]
                 "
               >
                 Small steps.
@@ -305,7 +340,12 @@ export default function GettingStartedView() {
 
               <div
                 aria-hidden="true"
-                className="mt-5 h-[2px] w-10 bg-[#F2B134]"
+                className="
+                  mt-5
+                  h-[2px]
+                  w-10
+                  bg-[#F2B134]
+                "
               />
             </div>
           </div>
@@ -313,7 +353,16 @@ export default function GettingStartedView() {
           {/* =================================================
               MOBILE / TABLET IMAGE
           ================================================== */}
-          <div className="relative mx-auto w-full max-w-[520px] lg:hidden">
+          <div
+            className="
+              relative
+              mx-auto
+              w-full
+              max-w-[520px]
+              pb-6
+              lg:hidden
+            "
+          >
             <div
               aria-hidden="true"
               className="
@@ -367,7 +416,13 @@ export default function GettingStartedView() {
 
               <div
                 aria-hidden="true"
-                className="mx-auto mt-4 h-[2px] w-10 bg-[#F2B134]"
+                className="
+                  mx-auto
+                  mt-4
+                  h-[2px]
+                  w-10
+                  bg-[#F2B134]
+                "
               />
             </div>
           </div>
@@ -375,18 +430,42 @@ export default function GettingStartedView() {
       </section>
 
       {/* =====================================================
-          STUDY JOURNEY
+          STUDY JOURNEY — FULL WIDTH
       ====================================================== */}
-      <section className="gs-fade gs-delay-1 mt-14 lg:mt-20">
-        <div className="relative">
+      <section
+        className="
+          gs-fade
+          gs-delay-1
+          relative
+          left-1/2
+          mt-14
+          w-screen
+          -translate-x-1/2
+          bg-white
+          lg:mt-16
+        "
+      >
+        <div
+          className="
+            relative
+            mx-auto
+            w-full
+            max-w-[1600px]
+            px-5
+            sm:px-8
+            lg:px-12
+            xl:px-16
+            2xl:px-20
+          "
+        >
           {/* Desktop connector */}
           <div
             aria-hidden="true"
             className="
               pointer-events-none
               absolute
-              left-[6%]
-              right-[6%]
+              left-[8%]
+              right-[8%]
               top-[56px]
               hidden
               h-px
@@ -405,13 +484,17 @@ export default function GettingStartedView() {
               sm:gap-x-10
               sm:gap-y-14
               lg:grid-cols-4
-              lg:gap-8
+              lg:gap-10
             "
           >
             {STEPS.map((step, index) => (
               <li
                 key={step.number}
-                className={`gs-fade gs-delay-${index + 2} relative`}
+                className={`
+                  gs-fade
+                  gs-delay-${index + 2}
+                  relative
+                `}
               >
                 {/* Step photograph */}
                 <div
@@ -419,12 +502,12 @@ export default function GettingStartedView() {
                     relative
                     z-10
                     mb-6
-                    h-[112px]
-                    w-[112px]
+                    h-[116px]
+                    w-[116px]
                     overflow-hidden
                     rounded-full
                     bg-white
-                    ring-[6px]
+                    ring-[7px]
                     ring-white
                   "
                 >
@@ -432,11 +515,12 @@ export default function GettingStartedView() {
                     src={step.imageSrc}
                     alt={step.imageAlt}
                     fill
-                    sizes="112px"
+                    sizes="116px"
                     className="object-cover"
                   />
                 </div>
 
+                {/* Step number */}
                 <p
                   className="
                     text-xs
@@ -448,6 +532,7 @@ export default function GettingStartedView() {
                   {step.number}
                 </p>
 
+                {/* Step title */}
                 <h2
                   className="
                     mt-3
@@ -460,6 +545,7 @@ export default function GettingStartedView() {
                   {step.title}
                 </h2>
 
+                {/* Step description */}
                 <p
                   className="
                     mt-3
@@ -479,66 +565,87 @@ export default function GettingStartedView() {
       </section>
 
       {/* =====================================================
-          BEFORE YOU CONTINUE
+          BEFORE YOU CONTINUE — FULL WIDTH SECTION
       ====================================================== */}
-      <section className="gs-fade gs-delay-5 mt-16">
+      <section
+        className="
+          gs-fade
+          gs-delay-5
+          relative
+          left-1/2
+          mt-16
+          w-screen
+          -translate-x-1/2
+        "
+      >
         <div
           className="
-            flex
-            gap-4
-            rounded-[12px]
-            bg-[#EEF6FF]
+            mx-auto
+            w-full
+            max-w-[1600px]
             px-5
-            py-6
-            sm:px-7
-            sm:py-7
+            sm:px-8
+            lg:px-12
+            xl:px-16
+            2xl:px-20
           "
         >
           <div
             className="
               flex
-              h-9
-              w-9
-              shrink-0
-              items-center
-              justify-center
-              rounded-full
-              bg-white
-              text-[#1473E6]
+              gap-4
+              rounded-[12px]
+              bg-[#EEF6FF]
+              px-5
+              py-6
+              sm:px-7
+              sm:py-7
             "
           >
-            <Info
-              aria-hidden="true"
-              strokeWidth={1.7}
-              className="h-[18px] w-[18px]"
-            />
-          </div>
-
-          <div>
-            <h2 className="text-base font-medium text-slate-950">
-              Before you continue
-            </h2>
-
-            <p
+            <div
               className="
-                mt-2
-                max-w-[100ch]
-                text-sm
-                font-normal
-                leading-relaxed
-                text-slate-600
+                flex
+                h-9
+                w-9
+                shrink-0
+                items-center
+                justify-center
+                rounded-full
+                bg-white
+                text-[#1473E6]
               "
             >
-              You will have a chance to review the study information before
-              deciding whether you consent to participate. Your participation
-              is completely voluntary, and you can stop at any time without
-              penalty.
-            </p>
+              <Info
+                aria-hidden="true"
+                strokeWidth={1.7}
+                className="h-[18px] w-[18px]"
+              />
+            </div>
+
+            <div>
+              <h2 className="text-base font-medium text-slate-950">
+                Before you continue
+              </h2>
+
+              <p
+                className="
+                  mt-2
+                  max-w-[100ch]
+                  text-sm
+                  font-normal
+                  leading-relaxed
+                  text-slate-600
+                "
+              >
+                You will have a chance to review the study information before
+                deciding whether you consent to participate. Your participation
+                is completely voluntary, and you can stop at any time without
+                penalty.
+              </p>
+            </div>
           </div>
         </div>
       </section>
-
-   
     </>
   )
 }
