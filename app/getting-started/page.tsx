@@ -50,223 +50,243 @@ export default async function GettingStartedPage() {
         text-black
       "
     >
-      {/* =====================================================
-          HEADER
-      ====================================================== */}
-      <header
+   {/* =====================================================
+    HEADER
+====================================================== */}
+<header
+  className="
+    sticky
+    top-0
+    z-50
+    border-b
+    border-slate-100/80
+    bg-white/95
+    backdrop-blur-xl
+  "
+>
+  <div
+    className="
+      mx-auto
+      flex
+      h-[78px]
+      max-w-[1320px]
+      items-center
+      justify-between
+      px-5
+      sm:px-8
+      lg:px-10
+    "
+  >
+    {/* =================================================
+        BRAND
+    ================================================== */}
+    <Link
+      href="/"
+      className="
+        group
+        inline-flex
+        items-center
+        gap-5
+        rounded-[10px]
+        focus-visible:outline-none
+        focus-visible:ring-2
+        focus-visible:ring-[#1473E6]/25
+        focus-visible:ring-offset-4
+      "
+    >
+      <Image
+        src="/images/stampleyLogo.png"
+        alt="AIDES-T2D"
+        width={156}
+        height={52}
+        priority
         className="
-          sticky
-          top-0
-          z-50
-          border-b
-          border-slate-100
-          bg-white/95
-          backdrop-blur-md
+          h-auto
+          w-[142px]
+          transition-opacity
+          duration-200
+          group-hover:opacity-90
+        "
+      />
+
+      <div
+        className="
+          hidden
+          min-w-0
+          border-l
+          border-slate-200
+          pl-5
+          sm:block
         "
       >
-        <div
+        <p
           className="
-            mx-auto
-            flex
-            h-[76px]
-            max-w-[1320px]
-            items-center
-            justify-between
-            px-5
-            sm:px-8
-            lg:px-10
+            text-[10px]
+            font-bold
+            uppercase
+            tracking-[0.24em]
+            text-cyan-700
           "
         >
-          {/* Brand */}
-          <Link
-            href="/"
-            className="
-              group
-              inline-flex
-              items-center
-              gap-4
-              focus-visible:outline-none
-            "
-          >
-            <Image
-              src="/images/stampleyLogo.png"
-              alt="AIDES-T2D"
-              width={156}
-              height={52}
-              priority
-              className="
-                h-auto
-                w-[138px]
-                transition-opacity
-                duration-200
-                group-hover:opacity-90
-              "
-            />
+          AIDES-T2D Research Study
+        </p>
 
-            <div
-              className="
-                hidden
-                border-l
-                border-slate-200
-                pl-4
-                sm:block
-              "
-            >
-              <p
-                className="
-                  text-[10px]
-                  font-bold
-                  uppercase
-                  tracking-[0.22em]
-                  text-cyan-700
-                "
-              >
-                Research Study
-              </p>
+        <p
+          className="
+            mt-1.5
+            text-xs
+            font-normal
+            leading-none
+            text-slate-400
+          "
+        >
+          Participant onboarding
+        </p>
+      </div>
+    </Link>
 
-              <p
-                className="
-                  mt-1
-                  text-xs
-                  font-normal
-                  text-slate-500
-                "
-              >
-                Participant onboarding
-              </p>
-            </div>
-          </Link>
-
-          {/* Participant actions */}
+    {/* =================================================
+        PARTICIPANT ACTIONS
+    ================================================== */}
+    <div
+      className="
+        flex
+        items-center
+        gap-2
+        sm:gap-3
+      "
+    >
+      {formattedName ? (
+        <div
+          className="
+            hidden
+            items-center
+            gap-3
+            rounded-full
+            bg-[#F8FAFC]
+            px-2.5
+            py-2
+            ring-1
+            ring-slate-100
+            sm:flex
+          "
+        >
+          {/* Avatar */}
           <div
             className="
               flex
+              h-9
+              w-9
               items-center
-              gap-2
-              sm:gap-3
+              justify-center
+              rounded-full
+              bg-[#EAF3FF]
+              text-sm
+              font-semibold
+              uppercase
+              text-[#173B7A]
             "
           >
-            {formattedName ? (
-              <div
-                className="
-                  hidden
-                  items-center
-                  gap-3
-                  rounded-full
-                  bg-[#F6F9FC]
-                  px-3
-                  py-2
-                  sm:flex
-                "
-              >
-                <div
-                  className="
-                    flex
-                    h-8
-                    w-8
-                    items-center
-                    justify-center
-                    rounded-full
-                    bg-[#E8F2FF]
-                    text-xs
-                    font-semibold
-                    uppercase
-                    text-[#173B7A]
-                  "
-                >
-                  {formattedName.charAt(0)}
-                </div>
+            {formattedName.charAt(0)}
+          </div>
 
-                <div className="pr-1">
-                  <p
-                    className="
-                      text-[10px]
-                      font-medium
-                      uppercase
-                      tracking-[0.14em]
-                      text-slate-400
-                    "
-                  >
-                    Participant
-                  </p>
-
-                  <p
-                    className="
-                      mt-0.5
-                      text-sm
-                      font-medium
-                      leading-none
-                      text-slate-700
-                    "
-                  >
-                    {formattedName}
-                  </p>
-                </div>
-              </div>
-            ) : null}
-
-            <form
-              action={async () => {
-                "use server"
-
-                await signOut({
-                  redirectTo: "/login",
-                })
-              }}
+          {/* Participant identity */}
+          <div className="pr-2">
+            <p
+              className="
+                text-[9px]
+                font-semibold
+                uppercase
+                tracking-[0.16em]
+                text-slate-400
+              "
             >
-              <button
-                type="submit"
-                className="
-                  group
-                  inline-flex
-                  h-10
-                  items-center
-                  gap-2
-                  rounded-full
-                  px-4
-                  text-sm
-                  font-medium
-                  text-slate-500
-                  transition-all
-                  duration-200
-                  hover:bg-slate-50
-                  hover:text-[#173B7A]
-                  focus-visible:outline-none
-                  focus-visible:ring-2
-                  focus-visible:ring-[#1473E6]/25
-                "
-              >
-                <span className="hidden sm:inline">
-                  Sign out
-                </span>
+              Participant
+            </p>
 
-                <span
-                  className="
-                    flex
-                    h-7
-                    w-7
-                    items-center
-                    justify-center
-                    rounded-full
-                    bg-slate-100
-                    text-slate-500
-                    transition-all
-                    duration-200
-                    group-hover:bg-[#EEF6FF]
-                    group-hover:text-[#173B7A]
-                  "
-                >
-                  <LogOut
-                    aria-hidden="true"
-                    size={14}
-                    strokeWidth={1.7}
-                  />
-                </span>
-              </button>
-            </form>
+            <p
+              className="
+                mt-1
+                text-sm
+                font-medium
+                leading-none
+                text-slate-700
+              "
+            >
+              {formattedName}
+            </p>
           </div>
         </div>
-      </header>
+      ) : null}
+
+      {/* =================================================
+          SIGN OUT
+      ================================================== */}
+      <form
+        action={async () => {
+          "use server"
+
+          await signOut({
+            redirectTo: "/login",
+          })
+        }}
+      >
+        <button
+          type="submit"
+          className="
+            group
+            inline-flex
+            h-10
+            items-center
+            gap-2.5
+            rounded-full
+            px-3
+            text-sm
+            font-medium
+            text-slate-500
+            transition-all
+            duration-200
+            hover:bg-[#F8FAFC]
+            hover:text-[#173B7A]
+            focus-visible:outline-none
+            focus-visible:ring-2
+            focus-visible:ring-[#1473E6]/25
+            focus-visible:ring-offset-2
+            sm:px-4
+          "
+        >
+          <span className="hidden sm:inline">
+            Sign out
+          </span>
+
+          <span
+            className="
+              flex
+              h-8
+              w-8
+              items-center
+              justify-center
+              rounded-full
+              bg-slate-100
+              text-slate-500
+              transition-all
+              duration-200
+              group-hover:bg-[#EAF3FF]
+              group-hover:text-[#173B7A]
+              group-hover:shadow-[0_4px_12px_rgba(23,59,122,0.08)]
+            "
+          >
+            <LogOut
+              aria-hidden="true"
+              size={14}
+              strokeWidth={1.7}
+            />
+          </span>
+        </button>
+      </form>
+    </div>
+  </div>
+</header>
 
       {/* =====================================================
           PAGE CONTENT
