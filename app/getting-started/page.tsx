@@ -102,7 +102,7 @@ export default async function GettingStartedPage() {
         priority
         className="
           h-auto
-          w-[142px]
+          w-[36px]
           transition-opacity
           duration-200
           group-hover:opacity-90
