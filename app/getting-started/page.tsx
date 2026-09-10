@@ -58,8 +58,7 @@ export default async function GettingStartedPage() {
       sticky
     top-0
     z-50
-    border-b
-    border-slate-100/80
+   
     bg-white/95
     backdrop-blur-xl
   "
@@ -128,7 +127,7 @@ export default async function GettingStartedPage() {
             text-cyan-700
           "
         >
-          AIDES-T2D Research Study
+          AIDES-T2D
         </p>
 
         <p
