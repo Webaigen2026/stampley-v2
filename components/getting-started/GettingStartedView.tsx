@@ -192,8 +192,8 @@ export default function GettingStartedView() {
                 rounded-[10px]
                 bg-[#173B7A]
                 px-6
-                text-sm
-                font-normal
+                text-lg
+                font-semibold
                 text-white
                 shadow-[0_10px_28px_rgba(23,59,122,0.13)]
                 transition-[background-color,box-shadow,transform]
@@ -209,7 +209,7 @@ export default function GettingStartedView() {
                 sm:min-w-[290px]
               "
             >
-              <span>Begin pre-survey</span>
+              <span className="text-lg font-semibold">Begin pre-survey</span>
 
               <span
                 className="
@@ -230,10 +230,11 @@ export default function GettingStartedView() {
                 <ArrowRight
                   aria-hidden="true"
                   strokeWidth={1.7}
-                  className="h-4 w-4"
+                  className="h-5 w-5"
                 />
               </span>
             </Link>
+      
           </div>
 
           {/* =================================================
@@ -313,7 +314,7 @@ export default function GettingStartedView() {
               className="
                 absolute
                 right-[0]
-                top-[62%]
+                top-[72%]
                 z-20
                 w-[165px]
               "
@@ -564,88 +565,121 @@ export default function GettingStartedView() {
         </div>
       </section>
 
-      {/* =====================================================
-          BEFORE YOU CONTINUE — FULL WIDTH SECTION
-      ====================================================== */}
-      <section
+ {/* =====================================================
+    BEFORE YOU CONTINUE — FULL WIDTH SECTION
+====================================================== */}
+<section
+  className="
+    gs-fade
+    gs-delay-5
+    relative
+    left-1/2
+    mt-16
+    w-screen
+    -translate-x-1/2
+  "
+>
+  <div
+    className="
+      mx-auto
+      w-full
+      max-w-[1600px]
+      px-5
+      sm:px-8
+      lg:px-12
+      xl:px-16
+      2xl:px-20
+    "
+  >
+    <div
+      className="
+        flex
+        gap-4
+        rounded-[12px]
+        border-l-4
+        border-l-blue-900
+        bg-white
+        px-5
+        py-6
+        shadow-[0_10px_30px_rgba(15,45,80,0.08)]
+        sm:px-7
+        sm:py-7
+      "
+    >
+      {/* Information icon */}
+      <div
         className="
-          gs-fade
-          gs-delay-5
-          relative
-          left-1/2
-          mt-16
-          w-screen
-          -translate-x-1/2
+          flex
+          h-9
+          w-9
+          shrink-0
+          items-center
+          justify-center
+         
+          text-[#1473E6]
         "
       >
-        <div
+        <Info
+          aria-hidden="true"
+          strokeWidth={1.7}
+          className="h-[18px] w-[18px]"
+        />
+      </div>
+
+      {/* Content */}
+      <div className="min-w-0">
+        <h2 className="text-base font-medium text-slate-950">
+          Before you continue
+        </h2>
+
+        <p
           className="
-            mx-auto
-            w-full
-            max-w-[1600px]
-            px-5
-            sm:px-8
-            lg:px-12
-            xl:px-16
-            2xl:px-20
+            mt-2
+            max-w-[100ch]
+            text-sm
+            font-normal
+            leading-relaxed
+            text-slate-600
           "
         >
-          <div
-            className="
-              flex
-              gap-4
-              rounded-[12px]
-              bg-[#EEF6FF]
-              px-5
-              py-6
-              sm:px-7
-              sm:py-7
-            "
-          >
-            <div
-              className="
-                flex
-                h-9
-                w-9
-                shrink-0
-                items-center
-                justify-center
-                rounded-full
-                bg-white
-                text-[#1473E6]
-              "
-            >
-              <Info
-                aria-hidden="true"
-                strokeWidth={1.7}
-                className="h-[18px] w-[18px]"
-              />
-            </div>
+          You will have a chance to review the study information before
+          deciding whether you consent to participate. Your participation is
+          completely voluntary, and you can stop at any time without penalty.
+        </p>
 
-            <div>
-              <h2 className="text-base font-medium text-slate-950">
-                Before you continue
-              </h2>
+        {/* Timing information */}
+        <div
+          className="
+            mt-5
+            flex
+            flex-col
+            gap-2
+            border-t
+            border-slate-100
+            pt-4
+            sm:flex-row
+            sm:items-center
+            sm:gap-8
+          "
+        >
+          <p className="text-sm text-slate-600">
+            <span className="font-medium text-[#173B7A]">
+              Pre-Survey:
+            </span>{" "}
+            only a few minutes
+          </p>
 
-              <p
-                className="
-                  mt-2
-                  max-w-[100ch]
-                  text-sm
-                  font-normal
-                  leading-relaxed
-                  text-slate-600
-                "
-              >
-                You will have a chance to review the study information before
-                deciding whether you consent to participate. Your participation
-                is completely voluntary, and you can stop at any time without
-                penalty.
-              </p>
-            </div>
-          </div>
+          <p className="text-sm text-slate-600">
+            <span className="font-medium text-[#173B7A]">
+              Diabetes Distress Survey:
+            </span>{" "}
+            only a few minutes
+          </p>
         </div>
-      </section>
+      </div>
+    </div>
+  </div>
+</section>
     </>
   )
 }
