@@ -3,7 +3,11 @@
 import Image from "next/image"
 import Link from "next/link"
 
-import PreSurveySidebar from "./PreSurveySidebar"
+import PreSurveySidebar, {
+  PRE_SURVEY_STEP_TITLES,
+} from "./PreSurveySidebar"
+
+const TOTAL_STEPS = 7
 
 export default function PreSurveyShell({
   currentStep,
@@ -12,60 +16,84 @@ export default function PreSurveyShell({
   currentStep: number
   children: React.ReactNode
 }) {
+  const clampedStep = Math.min(Math.max(currentStep, 1), TOTAL_STEPS)
+  const progressPercent = (clampedStep / TOTAL_STEPS) * 100
+  const currentTitle = PRE_SURVEY_STEP_TITLES[clampedStep - 1] ?? ""
+
   return (
     <main
-      className="min-h-screen bg-[#f8fafc]"
-      style={{ fontFamily: "'Poppins', sans-serif" }}
+      className="
+        min-h-dvh
+        bg-white
+        font-['Outfit',system-ui,sans-serif]
+        text-slate-950
+      "
     >
-      <div className="mx-auto flex min-h-screen flex-col">
-        
-        {/* Header */}
-        <header className="border-b border-black/[0.06] bg-[#003e73] text-white shadow-[0_2px_16px_rgba(0,0,0,0.08)]">
-          <div className="mx-auto flex max-w-7xl items-center gap-4 py-5">
-            
-            <Link href="/">
-            <div className="flex h-13 w-13 shrink-0 items-center justify-center  bg-white backdrop-blur-sm">
-              <Image
-                src="/images/stampleyLogo.png"
-                alt="AIDES-T2D"
-                width={30}
-                height={30}
-                className="h-auto w-auto object-contain"
-                priority
-              />
-            </div></Link>
+      <header className="border-b border-slate-100 bg-white">
+        <div className="mx-auto flex h-[72px] max-w-[1200px] items-center px-5 sm:px-8 lg:px-10">
+          <Link
+            href="/"
+            className="
+              inline-flex items-center gap-3 rounded-[10px]
+              focus-visible:outline-2
+              focus-visible:outline-offset-4
+              focus-visible:outline-[#1473E6]
+            "
+          >
+            <Image
+              src="/images/stampleyLogo.png"
+              alt="AIDES-T2D"
+              width={32}
+              height={32}
+              priority
+              className="h-8 w-auto"
+            />
+            <span className="hidden text-[10px] font-medium uppercase tracking-[0.16em] text-slate-500 sm:inline">
+              AIDES-T2D Research Study
+            </span>
+          </Link>
+        </div>
+      </header>
 
-            <div className="min-w-0">
-              <p className="text-[10px] font-['Poppins', sans-serif]  uppercase tracking-[0.22em] text-white/70 leading-tight">
-                AIDES-T2D Research Study
-              </p>
-              <h1 className="text-[20px] font-['Poppins', sans-serif] tracking-[-0.03em] text-white leading-tight">
-                Participant Pre-Survey Form
-              </h1>
-              <p className="text-[13px] font-['Poppins', sans-serif]  leading-tight text-white/70">
-              Help us understand your diabetes experience and support needs.
+      <div className="mx-auto max-w-[1200px] px-5 py-8 sm:px-8 sm:py-10 lg:px-10 lg:py-12">
+        <section className="max-w-[820px]">
+          <p className="text-xs font-bold uppercase tracking-[0.35em] text-cyan-700">
+            Pre-survey
+          </p>
+
+          <div className="mt-4 flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <p className="text-sm font-medium text-[#173B7A]">{currentTitle}</p>
+              <p className="mt-1 text-sm text-slate-500">
+                Step {clampedStep} of {TOTAL_STEPS}
               </p>
             </div>
-
-       
           </div>
-        </header>
 
-        {/* Content */}
-        <section className="flex-1 px-4 py-6 md:px-6 lg:px-8">
-          <div className="mx-auto grid max-w-7xl gap-6 lg:grid-cols-[300px_1fr]">
-            
-            {/* Sidebar */}
-            <aside className=" border border-black/[0.06] bg-white p-5 shadow-[0_4px_24px_rgba(10,10,15,0.04)]">
-              <PreSurveySidebar currentStep={currentStep} />
-            </aside>
-
-            {/* Main Form */}
-            <div className="overflow-hidden  border border-black/[0.06] bg-white shadow-[0_4px_24px_rgba(10,10,15,0.05)]">
-              {children}
-            </div>
+          <div
+            className="mt-5 h-[3px] overflow-hidden bg-slate-100"
+            role="progressbar"
+            aria-label="Pre-survey progress"
+            aria-valuemin={1}
+            aria-valuemax={TOTAL_STEPS}
+            aria-valuenow={clampedStep}
+          >
+            <div
+              className="h-full bg-[#173B7A] transition-[width] duration-300 ease-out"
+              style={{ width: `${progressPercent}%` }}
+            />
           </div>
         </section>
+
+        <div className="mt-10 flex items-start gap-12 lg:gap-16">
+          <aside className="hidden w-[240px] shrink-0 lg:block">
+            <PreSurveySidebar currentStep={currentStep} />
+          </aside>
+
+          <div className="min-w-0 flex-1">
+            <div className="max-w-[800px]">{children}</div>
+          </div>
+        </div>
       </div>
     </main>
   )

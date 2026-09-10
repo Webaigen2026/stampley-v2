@@ -1,6 +1,8 @@
-"use client";
+"use client"
 
-const steps = [
+import { Check } from "lucide-react"
+
+export const PRE_SURVEY_STEP_TITLES = [
   "Consent",
   "Demographics",
   "Health Literacy",
@@ -8,38 +10,92 @@ const steps = [
   "Technology",
   "PHQ-9",
   "Review",
-];
+] as const
 
-export default function PreSurveySidebar({ currentStep }: { currentStep: number }) {
+export default function PreSurveySidebar({
+  currentStep,
+}: {
+  currentStep: number
+}) {
   return (
-    <aside className="border border-gray-300 bg-[#f7f9fb]">
-      <div className="border-b border-gray-300 bg-gray-100 px-4 py-3">
-        <h2 className="text-sm font-bold text-gray-800">Form Progress</h2>
-      </div>
+    <nav aria-label="Pre-survey progress">
+      <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-slate-400">
+        Sections
+      </p>
 
-      <ol className="divide-y divide-gray-300">
-        {steps.map((step, index) => {
-          const stepNumber = index + 1;
-          const active = currentStep === stepNumber;
-          const completed = currentStep > stepNumber;
+      <div className="relative mt-6">
+        <div
+          aria-hidden="true"
+          className="absolute top-3 bottom-3 left-[15px] w-px bg-slate-200"
+        />
+
+        <ol className="relative list-none">
+        {PRE_SURVEY_STEP_TITLES.map((title, index) => {
+          const stepNumber = index + 1
+          const active = currentStep === stepNumber
+          const completed = currentStep > stepNumber
+          const padded = String(stepNumber).padStart(2, "0")
 
           return (
             <li
-              key={step}
-              className={`flex gap-3 px-4 py-3 text-sm ${
-                active
-                  ? "border-l-4 border-[#005ea8] bg-white font-bold text-[#003e73]"
-                  : completed
-                  ? "text-gray-700"
-                  : "text-gray-500"
+              key={title}
+              aria-current={active ? "step" : undefined}
+              className={`relative flex items-start gap-3 py-3 ${
+                index === 0 ? "pt-0" : ""
+              } ${
+                index === PRE_SURVEY_STEP_TITLES.length - 1 ? "pb-0" : ""
               }`}
             >
-              <span>{completed ? "✓" : stepNumber}.</span>
-              <span>{step}</span>
+              <span
+                className={`
+                  relative z-10
+                  flex h-8 w-8 shrink-0 items-center justify-center
+                  rounded-full text-[11px] font-medium
+                  ${
+                    active
+                      ? "bg-[#173B7A] text-white"
+                      : completed
+                        ? "bg-[#eef6ff] text-[#173B7A]"
+                        : "bg-white text-slate-400 ring-1 ring-slate-200"
+                  }
+                `}
+              >
+                {completed ? (
+                  <Check aria-hidden="true" strokeWidth={2.2} className="h-3.5 w-3.5" />
+                ) : (
+                  padded
+                )}
+              </span>
+
+              <span className="min-w-0 pt-1">
+                <span
+                  className={`
+                    block text-[10px] font-bold tracking-[0.16em]
+                    ${active ? "text-[#1473E6]" : "text-slate-400"}
+                  `}
+                >
+                  {padded}
+                </span>
+                <span
+                  className={`
+                    mt-0.5 block text-sm leading-snug
+                    ${
+                      active
+                        ? "font-medium text-[#173B7A]"
+                        : completed
+                          ? "font-normal text-slate-700"
+                          : "font-normal text-slate-400"
+                    }
+                  `}
+                >
+                  {title}
+                </span>
+              </span>
             </li>
-          );
+          )
         })}
-      </ol>
-    </aside>
-  );
+        </ol>
+      </div>
+    </nav>
+  )
 }
