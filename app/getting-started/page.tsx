@@ -97,8 +97,8 @@ export default async function GettingStartedPage() {
       <Image
         src="/images/stampleyLogo.png"
         alt="AIDES-T2D"
-        width={156}
-        height={52}
+        width={36}
+        height={36}
         priority
         className="
           h-auto
