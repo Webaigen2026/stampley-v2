@@ -55,7 +55,7 @@ export default async function GettingStartedPage() {
 ====================================================== */}
 <header
   className="
-    sticky
+      sticky
     top-0
     z-50
     border-b
@@ -66,7 +66,7 @@ export default async function GettingStartedPage() {
 >
   <div
     className="
-      mx-auto
+       mx-auto
       flex
       h-[78px]
       max-w-[1320px]
@@ -83,7 +83,7 @@ export default async function GettingStartedPage() {
     <Link
       href="/"
       className="
-        group
+       group
         inline-flex
         items-center
         gap-5
@@ -137,7 +137,7 @@ export default async function GettingStartedPage() {
             text-xs
             font-normal
             leading-none
-            text-slate-400
+            
           "
         >
           Participant onboarding
@@ -159,15 +159,14 @@ export default async function GettingStartedPage() {
       {formattedName ? (
         <div
           className="
-            hidden
+             hidden
             items-center
             gap-3
             rounded-full
-            bg-[#F8FAFC]
+            
             px-2.5
             py-2
-            ring-1
-            ring-slate-100
+           
             sm:flex
           "
         >
@@ -180,7 +179,7 @@ export default async function GettingStartedPage() {
               items-center
               justify-center
               rounded-full
-              bg-[#EAF3FF]
+       
               text-sm
               font-semibold
               uppercase
@@ -210,7 +209,7 @@ export default async function GettingStartedPage() {
                 text-sm
                 font-medium
                 leading-none
-                text-slate-700
+              
               "
             >
               {formattedName}

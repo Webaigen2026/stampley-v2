@@ -155,6 +155,9 @@ export default function GettingStartedView() {
           bg-white
         "
       >
+
+
+        
         <div
           className="
             mx-auto
@@ -176,71 +179,8 @@ export default function GettingStartedView() {
         >
 
 
-  <Link
-      href="/"
-      className="
-        group
-        inline-flex
-        items-center
-        gap-5
-        rounded-[10px]
-        focus-visible:outline-none
-        focus-visible:ring-2
-        focus-visible:ring-[#1473E6]/25
-        focus-visible:ring-offset-4
-      "
-    >
-      <Image
-        src="/images/stampleyLogo.png"
-        alt="AIDES-T2D"
-        width={36}
-        height={36}
-        priority
-        className="
-          h-auto
-          w-[36px]
-          transition-opacity
-          duration-200
-          group-hover:opacity-90
-        "
-      />
 
-      <div
-        className="
-          hidden
-          min-w-0
-          border-l
-          border-slate-200
-          pl-5
-          sm:block
-        "
-      >
-        <p
-          className="
-            text-[10px]
-            font-bold
-            uppercase
-            tracking-[0.24em]
-            text-cyan-700
-          "
-        >
-          AIDES-T2D Research Study
-        </p>
-
-        <p
-          className="
-            mt-1.5
-            text-xs
-            font-normal
-            leading-none
-            text-slate-400
-          "
-        >
-          Participant onboarding
-        </p>
-      </div>
-    </Link>
-
+          
           {/* =================================================
               LEFT CONTENT
           ================================================== */}
