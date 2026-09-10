@@ -45,15 +45,13 @@ export default async function GettingStartedPage() {
         <div className="mx-auto flex h-[72px] max-w-[1320px] items-center justify-between px-5 sm:px-8 lg:px-10">
           <Link href="/" className="inline-flex items-center gap-3">
             <Image
-              src="/images/stampleyLogo.png"
+              src="images/stampleylogomain.webp"
               alt="AIDES-T2D"
               width={32}
               height={32}
               className="h-8 w-auto"
             />
-            <span className="hidden text-[10px] font-medium uppercase tracking-[0.16em] text-slate-500 sm:inline">
-              AIDES-T2D Research Study
-            </span>
+           
           </Link>
 
           <div className="flex items-center gap-5">
