@@ -176,7 +176,7 @@ export default async function DashboardPage() {
       <main
         className="
           min-h-screen
-          bg-[#f8fafc]
+          bg-white
           font-['Outfit',system-ui,sans-serif]
           text-[#0b1f45]
         "
@@ -209,7 +209,7 @@ export default async function DashboardPage() {
               {session.user.role ===
                 "PARTICIPANT" && (
                 <>
-                  <DashboardSummaryCards
+                  {/* <DashboardSummaryCards
                     thisWeekCompleted={
                       thisWeekCompleted
                     }
@@ -220,7 +220,7 @@ export default async function DashboardPage() {
                     remainingCheckins={
                       remainingCheckins
                     }
-                  />
+                  /> */}
 
                   <section
                     className="

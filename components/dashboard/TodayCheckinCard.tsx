@@ -1,10 +1,6 @@
 import Link from "next/link"
 
-import {
-  ArrowRight,
-  Check,
-  Clock3,
-} from "lucide-react"
+import { ArrowRight, Check } from "lucide-react"
 
 type Props = {
   checkedInToday: boolean
@@ -24,83 +20,331 @@ export default function TodayCheckinCard({
         overflow-hidden
         rounded-[22px]
         bg-[#0b4178]
-        p-6
+        font-[Univers,'Helvetica_Neue',Helvetica,Arial,sans-serif]
         text-white
-        md:p-8
       "
     >
-      <div className="relative z-10 flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
-        <div className="flex gap-4">
-          <div
+      <style>{`
+        @keyframes checkinIllustrationFloat {
+          0%,
+          100% {
+            transform: translate3d(0, 0, 0) rotate(0deg);
+          }
+
+          50% {
+            transform: translate3d(0, -8px, 0) rotate(1deg);
+          }
+        }
+
+        @keyframes checkinIllustrationGlow {
+          0%,
+          100% {
+            opacity: 0.16;
+            transform: scale(0.96);
+          }
+
+          50% {
+            opacity: 0.3;
+            transform: scale(1.05);
+          }
+        }
+
+        .checkin-illustration {
+          animation: checkinIllustrationFloat 5.5s ease-in-out infinite;
+          will-change: transform;
+        }
+
+        .checkin-illustration-glow {
+          animation: checkinIllustrationGlow 5.5s ease-in-out infinite;
+          will-change: transform, opacity;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .checkin-illustration,
+          .checkin-illustration-glow {
+            animation: none;
+          }
+        }
+      `}</style>
+
+      <div
+        className="
+          grid
+          min-h-[220px]
+          items-center
+          gap-6
+          px-7
+          py-8
+          md:px-9
+          lg:grid-cols-[minmax(0,1fr)_300px]
+          lg:gap-10
+        "
+      >
+        {/* =====================================================
+            CONTENT
+        ====================================================== */}
+        <div className="relative z-10">
+          <p
             className="
-              flex
-              h-14
-              w-14
-              shrink-0
-              items-center
-              justify-center
-              rounded-full
-              border
-              border-white/25
+              text-[10px]
+              font-medium
+              uppercase
+              tracking-[0.2em]
+              text-white/60
             "
           >
-            {checkedInToday ? (
-              <Check size={25} strokeWidth={1.7} />
-            ) : (
-              <Clock3 size={24} strokeWidth={1.7} />
-            )}
-          </div>
+            Today&apos;s Check-In
+          </p>
 
-          <div>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/55">
-              Today&apos;s Check-In
-            </p>
+          <h2
+            className="
+              mt-3
+              text-[28px]
+              font-normal
+              leading-[1.15]
+              tracking-[-0.025em]
+              text-white
+              md:text-[30px]
+            "
+          >
+            {studyComplete
+              ? "Your study check-ins are complete."
+              : checkedInToday
+                ? "You’re all set for today."
+                : "Your check-in is ready."}
+          </h2>
 
-            <h2 className="mt-2 text-[24px] font-medium tracking-[-0.025em] text-white">
-              {studyComplete
-                ? "Your study check-ins are complete."
-                : checkedInToday
-                  ? "You’re all set for today."
-                  : "Your check-in is ready."}
-            </h2>
+          <p
+            className="
+              mt-4
+              max-w-[600px]
+              text-[14px]
+              font-normal
+              leading-6
+              text-white/70
+            "
+          >
+            {studyComplete
+              ? "Thank you for completing all 20 study check-ins."
+              : checkedInToday
+                ? "Today’s check-in has been saved. Come back tomorrow for your next session."
+                : "Take a few minutes to complete today’s study session."}
+          </p>
 
-            <p className="mt-2 max-w-xl text-[14px] leading-6 text-white/70">
-              {studyComplete
-                ? "Thank you for completing all 20 study check-ins."
-                : checkedInToday
-                  ? "Today’s check-in has been saved. Come back tomorrow for your next session."
-                  : "Take a few minutes to complete today’s study session."}
-            </p>
-          </div>
+          {/* Action */}
+          <div className="mt-7">
+  {studyComplete ? (
+    postSurveyCompleted ? (
+      /* Completed state */
+      <div
+        className="
+          inline-flex
+          h-[50px]
+          items-center
+          gap-3
+          rounded-[10px]
+          border
+          border-white/20
+          bg-white/[0.08]
+          px-5
+          text-[12px]
+          font-medium
+          tracking-[0.01em]
+          text-white
+          backdrop-blur-sm
+        "
+      >
+        <span
+          className="
+            flex
+            h-6
+            w-6
+            items-center
+            justify-center
+            rounded-full
+            bg-white
+            text-[#0b4178]
+          "
+        >
+          <Check size={13} strokeWidth={2} />
+        </span>
+
+        Study complete
+      </div>
+    ) : (
+      /* Post-survey CTA */
+      <Link
+        href="/survey/post-survey"
+        className="
+          group
+          inline-flex
+          h-[52px]
+          items-center
+          gap-6
+          rounded-[10px]
+          bg-white
+          pl-6
+          pr-2
+          text-[13px]
+          font-medium
+          tracking-[-0.01em]
+          text-[#0b4178]
+          shadow-[0_8px_24px_rgba(0,0,0,0.12)]
+          transition-all
+          duration-300
+          ease-out
+          hover:-translate-y-[1px]
+          hover:shadow-[0_12px_30px_rgba(0,0,0,0.18)]
+          focus-visible:outline-none
+          focus-visible:ring-2
+          focus-visible:ring-white
+          focus-visible:ring-offset-2
+          focus-visible:ring-offset-[#0b4178]
+          active:translate-y-0
+        "
+      >
+        <span>Complete Post-Survey</span>
+
+        <span
+          className="
+            flex
+            h-9
+            w-9
+            items-center
+            justify-center
+            rounded-full
+            bg-[#0b4178]
+            text-white
+            transition-all
+            duration-300
+            group-hover:bg-[#1261a0]
+          "
+        >
+          <ArrowRight
+            size={16}
+            strokeWidth={1.8}
+            className="
+              transition-transform
+              duration-300
+              group-hover:translate-x-[2px]
+            "
+          />
+        </span>
+      </Link>
+    )
+  ) : (
+    /* Check-in CTA */
+    <Link
+      href="/check-in"
+      className="
+        group
+        inline-flex
+        h-[52px]
+        items-center
+        gap-6
+        rounded-[10px]
+        bg-white
+        pl-6
+        pr-2
+        text-[13px]
+        font-medium
+        tracking-[-0.01em]
+        text-[#0b4178]
+        shadow-[0_8px_24px_rgba(0,0,0,0.12)]
+        transition-all
+        duration-300
+        ease-out
+        hover:-translate-y-[1px]
+        hover:shadow-[0_12px_30px_rgba(0,0,0,0.18)]
+        focus-visible:outline-none
+        focus-visible:ring-2
+        focus-visible:ring-white
+        focus-visible:ring-offset-2
+        focus-visible:ring-offset-[#0b4178]
+        active:translate-y-0
+      "
+    >
+      <span>
+        {checkedInToday
+          ? "View Today's Status"
+          : "Start Check-In"}
+      </span>
+
+      <span
+        className="
+          flex
+          h-9
+          w-9
+          items-center
+          justify-center
+          rounded-full
+          bg-[#0b4178]
+          text-white
+          transition-all
+          duration-300
+          group-hover:bg-[#1261a0]
+        "
+      >
+        <ArrowRight
+          size={16}
+          strokeWidth={1.8}
+          className="
+            transition-transform
+            duration-300
+            group-hover:translate-x-[2px]
+          "
+        />
+      </span>
+    </Link>
+  )}
+</div>
+
+
         </div>
 
-        <div className="shrink-0">
-          {studyComplete ? (
-            postSurveyCompleted ? (
-              <div className="rounded-full border border-white/20 px-5 py-3 text-[12px] font-medium">
-                Study complete
-              </div>
-            ) : (
-              <Link
-                href="/survey/post-survey"
-                className="inline-flex items-center gap-2 rounded-full bg-white px-5 py-3 text-[12px] font-medium text-blue-900"
-              >
-                Complete Post-Survey
-                <ArrowRight size={15} />
-              </Link>
-            )
-          ) : (
-            <Link
-              href="/check-in"
-              className="inline-flex items-center gap-2 rounded-full bg-white px-5 py-3 text-[12px] font-medium text-blue-900"
-            >
-              {checkedInToday
-                ? "View Today's Status"
-                : "Start Check-In"}
+        {/* =====================================================
+            ILLUSTRATION
+        ====================================================== */}
+        <div
+          className="
+            relative
+            hidden
+            h-[210px]
+            items-center
+            justify-center
+            lg:flex
+          "
+        >
+          {/* Soft animated glow behind image */}
+          <div
+            aria-hidden="true"
+            className="
+              checkin-illustration-glow
+              absolute
+              h-[160px]
+              w-[220px]
+              rounded-full
+              bg-[#48AEDA]
+              blur-[45px]
+            "
+          />
 
-              <ArrowRight size={15} />
-            </Link>
-          )}
+          <img
+            src="/dashboard/bannerlogo.png"
+            alt=""
+            width={300}
+            height={220}
+            className="
+              checkin-illustration
+              relative
+              z-10
+              block
+              h-auto
+              w-full
+              max-w-[280px]
+              object-contain
+            "
+          />
         </div>
       </div>
     </section>

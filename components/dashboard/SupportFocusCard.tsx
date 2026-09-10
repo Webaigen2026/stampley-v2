@@ -21,11 +21,10 @@ export default function SupportFocusCard({
     <section
       id="focus"
       className="
-        rounded-[18px]
-        border
-        border-[#dfe8f3]
+        rounded-[14px]
         bg-white
         p-6
+        shadow-[0_8px_30px_rgba(15,45,80,0.08)]
       "
     >
       <div className="flex items-center gap-3">
@@ -63,19 +62,13 @@ export default function SupportFocusCard({
           </p>
 
           <p className="mt-2 text-[12px] leading-5 text-[#7a8a9f]">
-            Your focus will be selected during Step 4 of your
-            next check-in.
+            Your focus will be selected during Step 4 of your next
+            check-in.
           </p>
         </div>
       )}
 
-      <Link
-        href="/survey/dds/results"
-        className="mt-5 inline-flex items-center gap-2 text-[12px] font-medium text-blue-700"
-      >
-        View DDS Results
-        <ArrowRight size={14} />
-      </Link>
+   
     </section>
   )
 }
