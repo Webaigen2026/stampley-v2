@@ -1,12 +1,9 @@
 import Image from "next/image"
 import Link from "next/link"
+
 import {
   ArrowRight,
-  ClipboardCheck,
   Info,
-  ListChecks,
-  MessageCircleHeart,
-  Target,
 } from "lucide-react"
 
 const STEPS = [
@@ -15,32 +12,32 @@ const STEPS = [
     title: "Pre-Survey",
     description:
       "Review the study information, provide your participation choice, and answer some questions about yourself and your experience with diabetes.",
-    icon: ClipboardCheck,
-    iconClass: "bg-[#eef6ff] text-[#173B7A]",
+    imageSrc: "/pre-survey/Pre-Survey.png",
+    imageAlt: "Pre-Survey preparation",
   },
   {
     number: "02",
     title: "Diabetes Distress Survey",
     description:
       "Complete a short questionnaire about areas of diabetes management that may be causing stress or concern.",
-    icon: ListChecks,
-    iconClass: "bg-[#ecf8f1] text-[#173B7A]",
+    imageSrc: "/pre-survey/Distress Survey.png",
+    imageAlt: "Diabetes Distress Survey",
   },
   {
     number: "03",
     title: "Choose Your Support Focus",
     description:
       "Review your results and confirm the area you would like to focus on during your study participation.",
-    icon: Target,
-    iconClass: "bg-[#f3eeff] text-[#173B7A]",
+    imageSrc: "/pre-survey/Support.png",
+    imageAlt: "Personal support focus",
   },
   {
     number: "04",
     title: "First Check-In",
     description:
       "Complete your first check-in and begin your conversation with Stampley.",
-    icon: MessageCircleHeart,
-    iconClass: "bg-[#fff6e5] text-[#173B7A]",
+    imageSrc: "/pre-survey/Check-In.png",
+    imageAlt: "First study check-in",
   },
 ]
 
@@ -49,19 +46,40 @@ export default function GettingStartedView() {
     <>
       <style>{`
         @keyframes gsFadeUp {
-          from { opacity: 0; transform: translateY(16px); }
-          to { opacity: 1; transform: translateY(0); }
+          from {
+            opacity: 0;
+            transform: translateY(16px);
+          }
+
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
         }
 
         .gs-fade {
           animation: gsFadeUp 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
         }
 
-        .gs-delay-1 { animation-delay: 80ms; }
-        .gs-delay-2 { animation-delay: 160ms; }
-        .gs-delay-3 { animation-delay: 240ms; }
-        .gs-delay-4 { animation-delay: 320ms; }
-        .gs-delay-5 { animation-delay: 400ms; }
+        .gs-delay-1 {
+          animation-delay: 80ms;
+        }
+
+        .gs-delay-2 {
+          animation-delay: 160ms;
+        }
+
+        .gs-delay-3 {
+          animation-delay: 240ms;
+        }
+
+        .gs-delay-4 {
+          animation-delay: 320ms;
+        }
+
+        .gs-delay-5 {
+          animation-delay: 400ms;
+        }
 
         @media (prefers-reduced-motion: reduce) {
           .gs-fade {
@@ -70,176 +88,457 @@ export default function GettingStartedView() {
         }
       `}</style>
 
+      {/* =====================================================
+          HERO
+      ====================================================== */}
       <section className="gs-fade">
-        <div className="grid items-center gap-10 sm:gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(420px,0.8fr)] lg:gap-16">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-[0.35em] text-cyan-700">
+        <div
+          className="
+            grid
+            items-center
+            gap-12
+            lg:min-h-[500px]
+            lg:grid-cols-[minmax(0,0.88fr)_minmax(520px,1.12fr)]
+            lg:gap-8
+            xl:min-h-[540px]
+          "
+        >
+          {/* Left content */}
+          <div className="relative z-20 py-8 sm:py-10 lg:py-14">
+            <p
+              className="
+                text-xs
+                font-bold
+                uppercase
+                tracking-[0.35em]
+                text-cyan-700
+              "
+            >
               Getting started
             </p>
 
-            <h1 className="mt-5 max-w-[12ch] text-4xl font-light tracking-tight text-slate-950 md:text-5xl lg:text-6xl">
+            <h1
+              className="
+                mt-5
+                text-3xl
+                font-light
+                leading-[1.1]
+                tracking-[-0.02em]
+                text-[#0B2857]
+                sm:text-4xl
+                lg:text-5xl
+                xl:text-5xl
+                max-w-full
+                whitespace-nowrap
+                overflow-x-auto
+              "
+            >
               Before you begin.
             </h1>
+       
+       
 
-            <p className="mt-6 max-w-[42ch] text-lg leading-relaxed text-slate-600">
+            <p
+              className="
+                mt-7
+                max-w-[39ch]
+                text-lg
+                font-normal
+                leading-[1.7]
+                text-slate-600
+                md:text-xl
+              "
+            >
               Your first visit includes a few short steps to help us understand
               your experience and personalize your study participation.
             </p>
+
+            <Link
+              href="/survey/pre-survey"
+              className="
+                group
+                mt-8
+                inline-flex
+                h-[58px]
+                w-full
+                items-center
+                justify-between
+                gap-8
+                rounded-[10px]
+                bg-[#173B7A]
+                px-6
+                text-sm
+                font-normal
+                text-white
+                shadow-[0_10px_28px_rgba(23,59,122,0.13)]
+                transition-[background-color,box-shadow,transform]
+                duration-200
+                hover:-translate-y-0.5
+                hover:bg-[#122E60]
+                hover:shadow-[0_14px_32px_rgba(23,59,122,0.18)]
+                focus-visible:outline-2
+                focus-visible:outline-offset-2
+                focus-visible:outline-[#173B7A]
+                active:translate-y-0
+                sm:w-auto
+                sm:min-w-[290px]
+              "
+            >
+              <span>Begin pre-survey</span>
+
+              <span
+                className="
+                  flex
+                  h-9
+                  w-9
+                  shrink-0
+                  items-center
+                  justify-center
+                  rounded-full
+                  border
+                  border-white/65
+                  transition-transform
+                  duration-200
+                  group-hover:translate-x-0.5
+                "
+              >
+                <ArrowRight
+                  aria-hidden="true"
+                  strokeWidth={1.7}
+                  className="h-4 w-4"
+                />
+              </span>
+            </Link>
           </div>
 
-          <div className="relative mx-auto aspect-[4/3] w-full max-w-[360px] sm:max-w-[420px] lg:mx-0 lg:max-w-[520px]">
-            <Image
-              src="/pre-survey/womanBeforePresurvey.png"
-              alt="Participant preparing to begin the AIDES-T2D study"
-              fill
-              priority
-              sizes="(min-width: 1024px) 42vw, 100vw"
-              className="object-contain"
+          {/* =================================================
+              DESKTOP IMAGE COMPOSITION
+          ================================================== */}
+          <div className="relative hidden min-h-[500px] lg:block xl:min-h-[540px]">
+            {/* Soft blue accent */}
+            <div
+              aria-hidden="true"
+              className="
+                absolute
+                left-[1%]
+                top-[2%]
+                h-[190px]
+                w-[190px]
+                rounded-full
+                bg-[#E4F0FF]
+                xl:h-[210px]
+                xl:w-[210px]
+              "
             />
+
+            {/* Main photograph */}
+            <div
+              className="
+                absolute
+                bottom-0
+                left-[5%]
+                top-0
+                z-10
+                w-[78%]
+                overflow-hidden
+                rounded-[46%_54%_47%_53%/42%_42%_58%_58%]
+              "
+            >
+              <Image
+                src="/pre-survey/womanpresurvey.png"
+                alt="Participant preparing to begin the AIDES-T2D study"
+                fill
+                priority
+                sizes="(min-width: 1280px) 48vw, (min-width: 1024px) 52vw, 100vw"
+                className="object-cover object-center"
+              />
+            </div>
+
+            {/* Gold editorial arc */}
+            <div
+              aria-hidden="true"
+              className="
+                absolute
+                right-[-62px]
+                top-[112px]
+                h-[250px]
+                w-[250px]
+                rotate-[9deg]
+                rounded-full
+                border-[2px]
+                border-[#F2B134]
+                border-b-transparent
+                border-l-transparent
+                opacity-90
+              "
+            />
+
+            {/* Editorial quote */}
+            <div
+              className="
+                absolute
+                right-[0]
+                top-[80%]
+                z-20
+                w-[150px]
+              "
+            >
+              <p
+                className="
+                  font-['Cormorant_Garamond',Georgia,serif]
+                  text-[27px]
+                  font-medium
+                  leading-[1.02]
+                  tracking-[-0.025em]
+                  text-[#173B7A]
+                  xl:text-[30px]
+                "
+              >
+                Small steps.
+                <br />
+                Brighter
+                <br />
+                <span className="font-normal italic">
+                  tomorrows.
+                </span>
+              </p>
+
+              <div
+                aria-hidden="true"
+                className="mt-5 h-[2px] w-10 bg-[#F2B134]"
+              />
+            </div>
+          </div>
+
+          {/* =================================================
+              MOBILE / TABLET IMAGE
+          ================================================== */}
+          <div className="relative mx-auto w-full max-w-[520px] lg:hidden">
+            <div
+              aria-hidden="true"
+              className="
+                absolute
+                -left-3
+                -top-3
+                h-28
+                w-28
+                rounded-full
+                bg-[#E4F0FF]
+                sm:h-36
+                sm:w-36
+              "
+            />
+
+            <div
+              className="
+                relative
+                aspect-[4/3]
+                w-full
+                overflow-hidden
+                rounded-[42%_58%_48%_52%/38%_42%_58%_62%]
+              "
+            >
+              <Image
+                src="/pre-survey/womanBeforePresurvey.png"
+                alt="Participant preparing to begin the AIDES-T2D study"
+                fill
+                priority
+                sizes="(max-width: 1023px) 90vw, 520px"
+                className="object-cover object-center"
+              />
+            </div>
+
+            <div className="relative mt-6 text-center">
+              <p
+                className="
+                  font-['Cormorant_Garamond',Georgia,serif]
+                  text-[28px]
+                  font-medium
+                  leading-[1.05]
+                  tracking-[-0.025em]
+                  text-[#173B7A]
+                "
+              >
+                Small steps. Brighter{" "}
+                <span className="font-normal italic">
+                  tomorrows.
+                </span>
+              </p>
+
+              <div
+                aria-hidden="true"
+                className="mx-auto mt-4 h-[2px] w-10 bg-[#F2B134]"
+              />
+            </div>
           </div>
         </div>
       </section>
 
-      <section className="gs-fade gs-delay-1 mt-16 lg:mt-20">
+      {/* =====================================================
+          STUDY JOURNEY
+      ====================================================== */}
+      <section className="gs-fade gs-delay-1 mt-14 lg:mt-20">
         <div className="relative">
+          {/* Desktop connector */}
           <div
             aria-hidden="true"
             className="
               pointer-events-none
               absolute
-              top-[28px]
-              right-[8%]
-              left-[8%]
+              left-[6%]
+              right-[6%]
+              top-[56px]
               hidden
               h-px
-              bg-[#d7e4f4]
+              bg-[#D7E4F4]
               lg:block
             "
           />
 
-          <ol className="relative grid list-none gap-10 sm:grid-cols-2 lg:grid-cols-4 lg:gap-8">
-          {STEPS.map((step, index) => {
-            const Icon = step.icon
-
-            return (
+          <ol
+            className="
+              relative
+              grid
+              list-none
+              gap-10
+              sm:grid-cols-2
+              sm:gap-x-10
+              sm:gap-y-14
+              lg:grid-cols-4
+              lg:gap-8
+            "
+          >
+            {STEPS.map((step, index) => (
               <li
                 key={step.number}
                 className={`gs-fade gs-delay-${index + 2} relative`}
               >
+                {/* Step photograph */}
                 <div
-                  className={`
+                  className="
                     relative
                     z-10
-                    mb-5
-                    flex
-                    h-14
-                    w-14
-                    items-center
-                    justify-center
+                    mb-6
+                    h-[112px]
+                    w-[112px]
+                    overflow-hidden
                     rounded-full
-                    ${step.iconClass}
-                  `}
+                    bg-white
+                    ring-[6px]
+                    ring-white
+                  "
                 >
-                  <Icon
-                    aria-hidden="true"
-                    strokeWidth={1.6}
-                    className="h-6 w-6"
+                  <Image
+                    src={step.imageSrc}
+                    alt={step.imageAlt}
+                    fill
+                    sizes="112px"
+                    className="object-cover"
                   />
                 </div>
 
-                <p className="text-xs font-bold tracking-[0.16em] text-[#1473E6]">
+                <p
+                  className="
+                    text-xs
+                    font-bold
+                    tracking-[0.16em]
+                    text-[#1473E6]
+                  "
+                >
                   {step.number}
                 </p>
-                <h2 className="mt-3 text-xl font-light tracking-tight text-slate-950">
+
+                <h2
+                  className="
+                    mt-3
+                    text-xl
+                    font-light
+                    tracking-tight
+                    text-slate-950
+                  "
+                >
                   {step.title}
                 </h2>
-                <p className="mt-3 text-sm font-normal leading-relaxed text-slate-600">
+
+                <p
+                  className="
+                    mt-3
+                    max-w-[31ch]
+                    text-sm
+                    font-normal
+                    leading-[1.65]
+                    text-slate-600
+                  "
+                >
                   {step.description}
                 </p>
               </li>
-            )
-          })}
+            ))}
           </ol>
         </div>
       </section>
 
+      {/* =====================================================
+          BEFORE YOU CONTINUE
+      ====================================================== */}
       <section className="gs-fade gs-delay-5 mt-16">
-        <div className="flex gap-4 rounded-[12px] bg-[#eef6ff] px-5 py-6 sm:px-7 sm:py-7">
-          <Info
-            aria-hidden="true"
-            strokeWidth={1.7}
-            className="mt-0.5 h-5 w-5 shrink-0 text-[#1473E6]"
-          />
+        <div
+          className="
+            flex
+            gap-4
+            rounded-[12px]
+            bg-[#EEF6FF]
+            px-5
+            py-6
+            sm:px-7
+            sm:py-7
+          "
+        >
+          <div
+            className="
+              flex
+              h-9
+              w-9
+              shrink-0
+              items-center
+              justify-center
+              rounded-full
+              bg-white
+              text-[#1473E6]
+            "
+          >
+            <Info
+              aria-hidden="true"
+              strokeWidth={1.7}
+              className="h-[18px] w-[18px]"
+            />
+          </div>
+
           <div>
             <h2 className="text-base font-medium text-slate-950">
               Before you continue
             </h2>
-            <p className="mt-2 text-sm font-normal leading-relaxed text-slate-600">
+
+            <p
+              className="
+                mt-2
+                max-w-[100ch]
+                text-sm
+                font-normal
+                leading-relaxed
+                text-slate-600
+              "
+            >
               You will have a chance to review the study information before
-              deciding whether you consent to participate. Your participation is
-              completely voluntary, and you can stop at any time without
+              deciding whether you consent to participate. Your participation
+              is completely voluntary, and you can stop at any time without
               penalty.
             </p>
           </div>
         </div>
       </section>
 
-      <section className="gs-fade gs-delay-5 mt-10 flex flex-col items-start gap-4 sm:items-center sm:text-center">
-        <Link
-          href="/survey/pre-survey"
-          className="
-            group
-            inline-flex
-            h-[56px]
-            w-full
-            items-center
-            justify-between
-            gap-6
-            rounded-[10px]
-            bg-[#173B7A]
-            px-6
-            text-sm
-            font-normal
-            text-white
-            transition-all
-            duration-200
-            hover:bg-[#122E60]
-            focus-visible:outline-2
-            focus-visible:outline-offset-2
-            focus-visible:outline-[#173B7A]
-            active:scale-[0.995]
-            sm:w-auto
-            sm:min-w-[280px]
-          "
-        >
-          <span>Begin pre-survey</span>
-          <span
-            className="
-              flex
-              h-8
-              w-8
-              items-center
-              justify-center
-              rounded-full
-              border
-              border-white/70
-              transition-transform
-              duration-200
-              group-hover:translate-x-0.5
-            "
-          >
-            <ArrowRight
-              aria-hidden="true"
-              strokeWidth={1.8}
-              className="h-[15px] w-[15px]"
-            />
-          </span>
-        </Link>
-
-        <p className="text-sm text-slate-500">
-          Thank you for being part of the AIDES-T2D research study.
-        </p>
-      </section>
+   
     </>
   )
 }
