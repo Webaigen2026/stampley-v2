@@ -1,3 +1,5 @@
+"use client"
+
 import Image from "next/image"
 import Link from "next/link"
 
@@ -5,6 +7,14 @@ import {
   ArrowRight,
   Info,
 } from "lucide-react"
+
+import {
+  motion,
+  useReducedMotion,
+  useScroll,
+  useTransform,
+  type Variants,
+} from "framer-motion"
 
 const STEPS = [
   {
@@ -41,59 +51,102 @@ const STEPS = [
   },
 ]
 
+const easeOut = [0.22, 1, 0.36, 1] as const
+
+const fadeUp: Variants = {
+  hidden: {
+    opacity: 0,
+    y: 28,
+    filter: "blur(4px)",
+  },
+  visible: {
+    opacity: 1,
+    y: 0,
+    filter: "blur(0px)",
+    transition: {
+      duration: 0.8,
+      ease: easeOut,
+    },
+  },
+}
+
+const heroContainer: Variants = {
+  hidden: {},
+  visible: {
+    transition: {
+      staggerChildren: 0.11,
+      delayChildren: 0.08,
+    },
+  },
+}
+
+const journeyContainer: Variants = {
+  hidden: {},
+  visible: {
+    transition: {
+      staggerChildren: 0.12,
+      delayChildren: 0.1,
+    },
+  },
+}
+
+const stepItem: Variants = {
+  hidden: {
+    opacity: 0,
+    y: 34,
+    scale: 0.97,
+    filter: "blur(4px)",
+  },
+  visible: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    filter: "blur(0px)",
+    transition: {
+      duration: 0.75,
+      ease: easeOut,
+    },
+  },
+}
+
 export default function GettingStartedView() {
+  const reduceMotion = useReducedMotion()
+
+  const { scrollYProgress } = useScroll()
+
+  /*
+   * Very restrained movement.
+   * It gives the hero composition some depth while scrolling,
+   * without turning the page into a parallax-heavy experience.
+   */
+  const heroImageY = useTransform(
+    scrollYProgress,
+    [0, 0.35],
+    [0, reduceMotion ? 0 : 34]
+  )
+
+  const blueAccentY = useTransform(
+    scrollYProgress,
+    [0, 0.35],
+    [0, reduceMotion ? 0 : -22]
+  )
+
+  const goldArcY = useTransform(
+    scrollYProgress,
+    [0, 0.35],
+    [0, reduceMotion ? 0 : 18]
+  )
+
   return (
     <>
-      <style>{`
-        @keyframes gsFadeUp {
-          from {
-            opacity: 0;
-            transform: translateY(16px);
-          }
-
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
-        .gs-fade {
-          animation: gsFadeUp 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
-        }
-
-        .gs-delay-1 {
-          animation-delay: 80ms;
-        }
-
-        .gs-delay-2 {
-          animation-delay: 160ms;
-        }
-
-        .gs-delay-3 {
-          animation-delay: 240ms;
-        }
-
-        .gs-delay-4 {
-          animation-delay: 320ms;
-        }
-
-        .gs-delay-5 {
-          animation-delay: 400ms;
-        }
-
-        @media (prefers-reduced-motion: reduce) {
-          .gs-fade {
-            animation: none;
-          }
-        }
-      `}</style>
-
       {/* =====================================================
           HERO — FULL WIDTH
       ====================================================== */}
-      <section
+      <motion.section
+        initial="hidden"
+        animate="visible"
+        variants={heroContainer}
         className="
-          gs-fade
           relative
           left-1/2
           w-screen
@@ -124,7 +177,8 @@ export default function GettingStartedView() {
           {/* =================================================
               LEFT CONTENT
           ================================================== */}
-          <div
+          <motion.div
+            variants={heroContainer}
             className="
               relative
               z-20
@@ -133,7 +187,8 @@ export default function GettingStartedView() {
               lg:py-16
             "
           >
-            <p
+            <motion.p
+              variants={fadeUp}
               className="
                 text-xs
                 font-bold
@@ -143,9 +198,10 @@ export default function GettingStartedView() {
               "
             >
               Getting started
-            </p>
+            </motion.p>
 
-            <h1
+            <motion.h1
+              variants={fadeUp}
               className="
                 mt-5
                 max-w-[11ch]
@@ -161,9 +217,10 @@ export default function GettingStartedView() {
               "
             >
               Before you begin.
-            </h1>
+            </motion.h1>
 
-            <p
+            <motion.p
+              variants={fadeUp}
               className="
                 mt-7
                 max-w-[39ch]
@@ -176,66 +233,67 @@ export default function GettingStartedView() {
             >
               Your first visit includes a few short steps to help us understand
               your experience and personalize your study participation.
-            </p>
+            </motion.p>
 
-            <Link
-              href="/survey/pre-survey"
-              className="
-                group
-                mt-8
-                inline-flex
-                h-[58px]
-                w-full
-                items-center
-                justify-between
-                gap-8
-                rounded-[10px]
-                bg-[#173B7A]
-                px-6
-                text-lg
-                font-semibold
-                text-white
-                shadow-[0_10px_28px_rgba(23,59,122,0.13)]
-                transition-[background-color,box-shadow,transform]
-                duration-200
-                hover:-translate-y-0.5
-                hover:bg-[#122E60]
-                hover:shadow-[0_14px_32px_rgba(23,59,122,0.18)]
-                focus-visible:outline-2
-                focus-visible:outline-offset-2
-                focus-visible:outline-[#173B7A]
-                active:translate-y-0
-                sm:w-auto
-                sm:min-w-[290px]
-              "
-            >
-              <span className="text-lg font-semibold">Begin pre-survey</span>
-
-              <span
+            <motion.div variants={fadeUp}>
+              <Link
+                href="/survey/pre-survey"
                 className="
-                  flex
-                  h-9
-                  w-9
-                  shrink-0
+                  group
+                  mt-8
+                  inline-flex
+                  h-[58px]
+                  w-full
                   items-center
-                  justify-center
-                  rounded-full
-                  border
-                  border-white/65
-                  transition-transform
+                  justify-between
+                  gap-8
+                  rounded-[10px]
+                  bg-[#173B7A]
+                  px-6
+                  text-lg
+                  font-semibold
+                  text-white
+                  shadow-[0_10px_28px_rgba(23,59,122,0.13)]
+                  transition-[background-color,box-shadow,transform]
                   duration-200
-                  group-hover:translate-x-0.5
+                  hover:-translate-y-0.5
+                  hover:bg-[#122E60]
+                  hover:shadow-[0_14px_32px_rgba(23,59,122,0.18)]
+                  focus-visible:outline-2
+                  focus-visible:outline-offset-2
+                  focus-visible:outline-[#173B7A]
+                  active:translate-y-0
+                  sm:w-auto
+                  sm:min-w-[290px]
                 "
               >
-                <ArrowRight
-                  aria-hidden="true"
-                  strokeWidth={1.7}
-                  className="h-5 w-5"
-                />
-              </span>
-            </Link>
-      
-          </div>
+                <span>Begin pre-survey</span>
+
+                <span
+                  className="
+                    flex
+                    h-9
+                    w-9
+                    shrink-0
+                    items-center
+                    justify-center
+                    rounded-full
+                    border
+                    border-white/65
+                    transition-transform
+                    duration-300
+                    group-hover:translate-x-1
+                  "
+                >
+                  <ArrowRight
+                    aria-hidden="true"
+                    strokeWidth={1.7}
+                    className="h-5 w-5"
+                  />
+                </span>
+              </Link>
+            </motion.div>
+          </motion.div>
 
           {/* =================================================
               DESKTOP IMAGE COMPOSITION
@@ -249,9 +307,27 @@ export default function GettingStartedView() {
               xl:min-h-[580px]
             "
           >
-            {/* Soft blue accent */}
-            <div
+            {/* Blue background accent */}
+            <motion.div
               aria-hidden="true"
+              variants={{
+                hidden: {
+                  opacity: 0,
+                  scale: 0.82,
+                },
+                visible: {
+                  opacity: 1,
+                  scale: 1,
+                  transition: {
+                    duration: 1,
+                    delay: 0.12,
+                    ease: easeOut,
+                  },
+                },
+              }}
+              style={{
+                y: blueAccentY,
+              }}
               className="
                 absolute
                 left-[1%]
@@ -265,8 +341,28 @@ export default function GettingStartedView() {
               "
             />
 
-            {/* Main organic image */}
-            <div
+            {/* Main photograph */}
+            <motion.div
+              variants={{
+                hidden: {
+                  opacity: 0,
+                  scale: 0.96,
+                  x: 28,
+                },
+                visible: {
+                  opacity: 1,
+                  scale: 1,
+                  x: 0,
+                  transition: {
+                    duration: 1.05,
+                    delay: 0.12,
+                    ease: easeOut,
+                  },
+                },
+              }}
+              style={{
+                y: heroImageY,
+              }}
               className="
                 absolute
                 bottom-0
@@ -276,6 +372,7 @@ export default function GettingStartedView() {
                 w-[79%]
                 overflow-hidden
                 rounded-[46%_54%_47%_53%/42%_42%_58%_58%]
+                will-change-transform
               "
             >
               <Image
@@ -284,33 +381,72 @@ export default function GettingStartedView() {
                 fill
                 priority
                 sizes="(min-width: 1280px) 48vw, (min-width: 1024px) 52vw, 100vw"
-                className="object-cover object-center"
+                className="
+                  object-cover
+                  object-center
+                  transition-transform
+                  duration-700
+                  hover:scale-[1.015]
+                "
               />
-            </div>
+            </motion.div>
 
             {/* Gold editorial arc */}
-            <div
+            <motion.div
               aria-hidden="true"
+              variants={{
+                hidden: {
+                  opacity: 0,
+                  scale: 0.86,
+                  rotate: -6,
+                },
+                visible: {
+                  opacity: 0.9,
+                  scale: 1,
+                  rotate: 9,
+                  transition: {
+                    duration: 1.1,
+                    delay: 0.3,
+                    ease: easeOut,
+                  },
+                },
+              }}
+              style={{
+                y: goldArcY,
+              }}
               className="
                 absolute
                 right-[-55px]
                 top-[110px]
                 h-[270px]
                 w-[270px]
-                rotate-[9deg]
                 rounded-full
                 border-[2px]
                 border-[#F2B134]
                 border-b-transparent
                 border-l-transparent
-                opacity-90
                 xl:h-[300px]
                 xl:w-[300px]
               "
             />
 
             {/* Editorial quote */}
-            <div
+            <motion.div
+              variants={{
+                hidden: {
+                  opacity: 0,
+                  x: 20,
+                },
+                visible: {
+                  opacity: 1,
+                  x: 0,
+                  transition: {
+                    duration: 0.85,
+                    delay: 0.5,
+                    ease: easeOut,
+                  },
+                },
+              }}
               className="
                 absolute
                 right-[0]
@@ -339,22 +475,47 @@ export default function GettingStartedView() {
                 </span>
               </p>
 
-              <div
+              <motion.div
                 aria-hidden="true"
+                initial={{
+                  scaleX: 0,
+                }}
+                animate={{
+                  scaleX: 1,
+                }}
+                transition={{
+                  duration: 0.75,
+                  delay: 0.72,
+                  ease: easeOut,
+                }}
                 className="
                   mt-5
                   h-[2px]
                   w-10
+                  origin-left
                   bg-[#F2B134]
                 "
               />
-            </div>
+            </motion.div>
           </div>
 
           {/* =================================================
               MOBILE / TABLET IMAGE
           ================================================== */}
-          <div
+          <motion.div
+            initial={{
+              opacity: 0,
+              y: 24,
+            }}
+            animate={{
+              opacity: 1,
+              y: 0,
+            }}
+            transition={{
+              duration: 0.85,
+              delay: 0.28,
+              ease: easeOut,
+            }}
             className="
               relative
               mx-auto
@@ -426,17 +587,23 @@ export default function GettingStartedView() {
                 "
               />
             </div>
-          </div>
+          </motion.div>
         </div>
-      </section>
+      </motion.section>
 
       {/* =====================================================
-          STUDY JOURNEY — FULL WIDTH
+          STUDY JOURNEY — SCROLL REVEAL
       ====================================================== */}
-      <section
+      <motion.section
+        initial="hidden"
+        whileInView="visible"
+        viewport={{
+          once: false,
+          amount: 0.18,
+          margin: "0px 0px -60px 0px",
+        }}
+        variants={journeyContainer}
         className="
-          gs-fade
-          gs-delay-1
           relative
           left-1/2
           mt-14
@@ -470,12 +637,36 @@ export default function GettingStartedView() {
               top-[56px]
               hidden
               h-px
-              bg-[#D7E4F4]
+              overflow-hidden
+              bg-[#EDF2F7]
               lg:block
             "
-          />
+          >
+            <motion.div
+              variants={{
+                hidden: {
+                  scaleX: 0,
+                },
+                visible: {
+                  scaleX: 1,
+                  transition: {
+                    duration: 1.2,
+                    delay: 0.06,
+                    ease: easeOut,
+                  },
+                },
+              }}
+              className="
+                absolute
+                inset-0
+                origin-left
+                bg-[#C9DBEF]
+              "
+            />
+          </div>
 
-          <ol
+          <motion.ol
+            variants={journeyContainer}
             className="
               relative
               grid
@@ -488,17 +679,26 @@ export default function GettingStartedView() {
               lg:gap-10
             "
           >
-            {STEPS.map((step, index) => (
-              <li
+            {STEPS.map((step) => (
+              <motion.li
                 key={step.number}
-                className={`
-                  gs-fade
-                  gs-delay-${index + 2}
-                  relative
-                `}
+                variants={stepItem}
+                className="relative"
               >
                 {/* Step photograph */}
-                <div
+                <motion.div
+                  whileHover={
+                    reduceMotion
+                      ? undefined
+                      : {
+                          y: -5,
+                          scale: 1.025,
+                        }
+                  }
+                  transition={{
+                    duration: 0.3,
+                    ease: easeOut,
+                  }}
                   className="
                     relative
                     z-10
@@ -510,6 +710,7 @@ export default function GettingStartedView() {
                     bg-white
                     ring-[7px]
                     ring-white
+                    shadow-[0_10px_30px_rgba(15,45,80,0.07)]
                   "
                 >
                   <Image
@@ -517,11 +718,15 @@ export default function GettingStartedView() {
                     alt={step.imageAlt}
                     fill
                     sizes="116px"
-                    className="object-cover"
+                    className="
+                      object-cover
+                      transition-transform
+                      duration-500
+                      hover:scale-[1.035]
+                    "
                   />
-                </div>
+                </motion.div>
 
-                {/* Step number */}
                 <p
                   className="
                     text-xs
@@ -533,7 +738,6 @@ export default function GettingStartedView() {
                   {step.number}
                 </p>
 
-                {/* Step title */}
                 <h2
                   className="
                     mt-3
@@ -546,12 +750,11 @@ export default function GettingStartedView() {
                   {step.title}
                 </h2>
 
-                {/* Step description */}
                 <p
                   className="
                     mt-3
                     max-w-[31ch]
-                    text-sm
+                    text-md
                     font-normal
                     leading-[1.65]
                     text-slate-600
@@ -559,127 +762,185 @@ export default function GettingStartedView() {
                 >
                   {step.description}
                 </p>
-              </li>
+              </motion.li>
             ))}
-          </ol>
+          </motion.ol>
         </div>
-      </section>
+      </motion.section>
 
- {/* =====================================================
-    BEFORE YOU CONTINUE — FULL WIDTH SECTION
-====================================================== */}
-<section
-  className="
-    gs-fade
-    gs-delay-5
-    relative
-    left-1/2
-    mt-16
-    w-screen
-    -translate-x-1/2
-  "
->
-  <div
-    className="
-      mx-auto
-      w-full
-      max-w-[1600px]
-      px-5
-      sm:px-8
-      lg:px-12
-      xl:px-16
-      2xl:px-20
-    "
-  >
-    <div
-      className="
-        flex
-        gap-4
-        rounded-[12px]
-        border-l-4
-        border-l-blue-900
-        bg-white
-        px-5
-        py-6
-        shadow-[0_10px_30px_rgba(15,45,80,0.08)]
-        sm:px-7
-        sm:py-7
-      "
-    >
-      {/* Information icon */}
-      <div
+      {/* =====================================================
+          BEFORE YOU CONTINUE — SCROLL REVEAL
+      ====================================================== */}
+      <motion.section
+        initial={{
+          opacity: 0,
+          y: 32,
+          scale: 0.992,
+        }}
+        whileInView={{
+          opacity: 1,
+          y: 0,
+          scale: 1,
+        }}
+        viewport={{
+          once: false,
+          amount: 0.3,
+        }}
+        transition={{
+          duration: 0.8,
+          ease: easeOut,
+        }}
         className="
-          flex
-          h-9
-          w-9
-          shrink-0
-          items-center
-          justify-center
-         
-          text-[#1473E6]
+          relative
+          left-1/2
+          mt-16
+          w-screen
+          -translate-x-1/2
         "
       >
-        <Info
-          aria-hidden="true"
-          strokeWidth={1.7}
-          className="h-[18px] w-[18px]"
-        />
-      </div>
-
-      {/* Content */}
-      <div className="min-w-0">
-        <h2 className="text-base font-medium text-slate-950">
-          Before you continue
-        </h2>
-
-        <p
-          className="
-            mt-2
-            max-w-[100ch]
-            text-sm
-            font-normal
-            leading-relaxed
-            text-slate-600
-          "
-        >
-          You will have a chance to review the study information before
-          deciding whether you consent to participate. Your participation is
-          completely voluntary, and you can stop at any time without penalty.
-        </p>
-
-        {/* Timing information */}
         <div
           className="
-            mt-5
-            flex
-            flex-col
-            gap-2
-            border-t
-            border-slate-100
-            pt-4
-            sm:flex-row
-            sm:items-center
-            sm:gap-8
+            mx-auto
+            w-full
+            max-w-[1600px]
+            px-5
+            sm:px-8
+            lg:px-12
+            xl:px-16
+            2xl:px-20
           "
         >
-          <p className="text-sm text-slate-600">
-            <span className="font-medium text-[#173B7A]">
-              Pre-Survey:
-            </span>{" "}
-            only a few minutes
-          </p>
+          <motion.div
+            whileHover={
+              reduceMotion
+                ? undefined
+                : {
+                    y: -2,
+                  }
+            }
+            transition={{
+              duration: 0.25,
+              ease: easeOut,
+            }}
+            className="
+              flex
+              gap-4
+              rounded-[12px]
+              border-l-4
+              border-l-blue-900
+              bg-white
+              px-5
+              py-6
+              shadow-[0_10px_30px_rgba(15,45,80,0.08)]
+              sm:px-7
+              sm:py-7
+            "
+          >
+            {/* Information icon */}
+            <motion.div
+              initial={{
+                opacity: 0,
+                scale: 0.75,
+              }}
+              whileInView={{
+                opacity: 1,
+                scale: 1,
+              }}
+              viewport={{
+                once: false,
+              }}
+              transition={{
+                duration: 0.55,
+                delay: 0.15,
+                ease: easeOut,
+              }}
+              className="
+                flex
+                h-9
+                w-9
+                shrink-0
+                items-center
+                justify-center
+                text-[#1473E6]
+              "
+            >
+              <Info
+                aria-hidden="true"
+                strokeWidth={1.7}
+                className="h-[18px] w-[18px]"
+              />
+            </motion.div>
 
-          <p className="text-sm text-slate-600">
-            <span className="font-medium text-[#173B7A]">
-              Diabetes Distress Survey:
-            </span>{" "}
-            only a few minutes
-          </p>
+            <div className="min-w-0">
+              <h2 className="text-base font-medium text-slate-950">
+                Before you continue
+              </h2>
+
+              <p
+                className="
+                  mt-2
+                  max-w-[100ch]
+                  text-md
+                  font-normal
+                  leading-relaxed
+                  text-slate-600
+                "
+              >
+                You will have a chance to review the study information before
+                deciding whether you consent to participate. Your participation
+                is completely voluntary, and you can stop at any time without
+                penalty.
+              </p>
+
+              {/* Timing */}
+              <motion.div
+                initial={{
+                  opacity: 0,
+                  y: 10,
+                }}
+                whileInView={{
+                  opacity: 1,
+                  y: 0,
+                }}
+                viewport={{
+                  once: false,
+                }}
+                transition={{
+                  duration: 0.6,
+                  delay: 0.18,
+                  ease: easeOut,
+                }}
+                className="
+                  mt-5
+                  flex
+                  flex-col
+                  gap-2
+                  border-t
+                  border-slate-100
+                  pt-4
+                  sm:flex-row
+                  sm:items-center
+                  sm:gap-8
+                "
+              >
+                <p className="text-sm text-slate-600">
+                  <span className="font-medium text-[#173B7A]">
+                    Pre-Survey:
+                  </span>{" "}
+                  only a few minutes
+                </p>
+
+                <p className="text-sm text-slate-600">
+                  <span className="font-medium text-[#173B7A]">
+                    Diabetes Distress Survey:
+                  </span>{" "}
+                  only a few minutes
+                </p>
+              </motion.div>
+            </div>
+          </motion.div>
         </div>
-      </div>
-    </div>
-  </div>
-</section>
+      </motion.section>
     </>
   )
 }
