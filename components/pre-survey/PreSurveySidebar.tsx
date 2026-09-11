@@ -195,7 +195,7 @@ export default function PreSurveySidebar({
                     min-w-0
                     flex-1
                     rounded-[14px]
-                    px-4
+                    px-5
                     py-3
                     transition-all
                     duration-300

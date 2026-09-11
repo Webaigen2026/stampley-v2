@@ -134,7 +134,7 @@ export default function DiabetesHistoryStep({
             "
           >
             These questions help us understand your diabetes history, current
-            treatment, and overall health background.
+            treatment, and overall health background..
           </motion.p>
 
           {/* =================================================

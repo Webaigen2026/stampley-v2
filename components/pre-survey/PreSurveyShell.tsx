@@ -21,6 +21,9 @@ export default function PreSurveyShell({
         text-slate-950
       "
     >
+      {/* =====================================================
+          FIXED SIDEBAR
+      ====================================================== */}
       <aside
         className="
           fixed
@@ -41,23 +44,46 @@ export default function PreSurveyShell({
         <PreSurveySidebar currentStep={currentStep} />
       </aside>
 
+      {/* =====================================================
+          MAIN CONTENT
+      ====================================================== */}
       <div className="min-w-0 lg:pl-[340px]">
+        {/* ===================================================
+            STICKY HEADER
+        ==================================================== */}
         <header
           className="
             sticky
             top-0
             z-50
-            border-b
-            border-slate-100
-            bg-white/95
-            backdrop-blur-md
+            bg-white/92
+            backdrop-blur-xl
+            shadow-[0_1px_0_rgba(15,45,80,0.06),0_8px_24px_rgba(15,45,80,0.035)]
           "
         >
-          <div className="mx-auto flex h-[72px] max-w-[1200px] items-center px-5 sm:px-8 lg:px-10">
+          <div
+            className="
+              mx-auto
+              flex
+              h-[72px]
+              w-full
+              max-w-[1200px]
+              items-center
+              justify-between
+              px-5
+              sm:px-8
+              lg:px-10
+            "
+          >
+            {/* Brand */}
             <Link
               href="/"
               className="
-                inline-flex items-center gap-3 rounded-[10px]
+                group
+                inline-flex
+                items-center
+                gap-3
+                rounded-[10px]
                 focus-visible:outline-2
                 focus-visible:outline-offset-4
                 focus-visible:outline-[#1473E6]
@@ -66,18 +92,62 @@ export default function PreSurveyShell({
               <Image
                 src="/images/stampleyLogo.png"
                 alt="AIDES-T2D"
-                width={32}
-                height={32}
+                width={156}
+                height={52}
                 priority
-                className="h-8 w-auto"
+                className="
+                  h-auto
+                  w-[40px]
+                  object-contain
+                  transition-opacity
+                  duration-200
+                  group-hover:opacity-90
+                "
               />
-              <span className="hidden text-[10px] font-medium uppercase tracking-[0.16em] text-slate-500 sm:inline">
-                AIDES-T2D
-              </span>
             </Link>
+
+            {/* Survey Status */}
+            <div
+              className="
+                hidden
+                items-center
+                gap-2.5
+                rounded-full
+                bg-[#F4F8FD]
+                px-4
+                py-2
+                shadow-[inset_0_0_0_1px_rgba(219,234,254,0.7)]
+                sm:flex
+              "
+            >
+              <span
+                aria-hidden="true"
+                className="
+                  h-1.5
+                  w-1.5
+                  rounded-full
+                  bg-[#1473E6]
+                "
+              />
+
+              <span
+                className="
+                  text-[11px]
+                  font-semibold
+                  uppercase
+                  tracking-[0.16em]
+                  text-[#173B7A]
+                "
+              >
+                Pre-Survey
+              </span>
+            </div>
           </div>
         </header>
 
+        {/* ===================================================
+            PAGE CONTENT
+        ==================================================== */}
         <div className="w-full min-w-0">
           <div
             className={`
@@ -88,7 +158,11 @@ export default function PreSurveyShell({
               px-5
               sm:px-8
               lg:px-10
-              ${currentStep === 6 ? "max-w-[1100px]" : "max-w-[900px]"}
+              ${
+                currentStep === 6
+                  ? "max-w-[1100px]"
+                  : "max-w-[900px]"
+              }
             `}
           >
             {children}
