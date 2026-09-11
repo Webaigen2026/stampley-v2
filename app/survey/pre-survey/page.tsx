@@ -20,7 +20,7 @@ export default async function PreSurveyPage() {
   })
 
   if (preSurvey) {
-    redirect("/survey/dds")
+    redirect("/survey/pre-survey/completed")
   }
 
   return <PreSurveyClient />

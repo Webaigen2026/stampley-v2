@@ -279,110 +279,7 @@ export default function PHQStep({
             lg:px-10
           "
         >
-          <div
-            className="
-              max-w-[900px]
-              rounded-[16px]
-              bg-white
-              px-5
-              py-5
-              shadow-[0_10px_30px_rgba(15,45,80,0.07)]
-              sm:px-6
-            "
-          >
-            <div
-              className="
-                flex
-                items-center
-                justify-between
-                gap-4
-              "
-            >
-              <div>
-                <p
-                  className="
-                    text-sm
-                    font-medium
-                    text-slate-900
-                  "
-                >
-                  Completion progress
-                </p>
-
-                <p
-                  className="
-                    mt-1
-                    text-sm
-                    font-normal
-                    text-slate-500
-                  "
-                >
-                  {answeredQuestions} of {questions.length} questions answered
-                </p>
-              </div>
-
-              <motion.div
-                key={progress}
-                initial={
-                  reduceMotion
-                    ? false
-                    : {
-                        scale: 0.92,
-                        opacity: 0.6,
-                      }
-                }
-                animate={{
-                  scale: 1,
-                  opacity: 1,
-                }}
-                transition={{
-                  duration: 0.25,
-                  ease: easeOut,
-                }}
-                className="
-                  flex
-                  h-11
-                  min-w-[68px]
-                  items-center
-                  justify-center
-                  rounded-full
-                  bg-[#EEF6FF]
-                  px-4
-                  text-sm
-                  font-semibold
-                  text-[#173B7A]
-                "
-              >
-                {progress}%
-              </motion.div>
-            </div>
-
-            <div
-              className="
-                mt-5
-                h-2
-                overflow-hidden
-                rounded-full
-                bg-slate-100
-              "
-            >
-              <motion.div
-                initial={false}
-                animate={{
-                  width: `${progress}%`,
-                }}
-                transition={{
-                  duration: 0.45,
-                  ease: easeOut,
-                }}
-                className="
-                  h-full
-                  rounded-full
-                  bg-[#1473E6]
-                "
-              />
-            </div>
-          </div>
+        
         </motion.div>
 
         {/* =====================================================
@@ -435,7 +332,7 @@ export default function PHQStep({
                         font-bold
                         uppercase
                         tracking-[0.16em]
-                        text-slate-400
+                        text-slate-700
                       "
                     >
                       Question
@@ -467,7 +364,7 @@ export default function PHQStep({
                           className="
                             mt-1
                             block
-                            text-[10px]
+                            text-[13px]
                             font-normal
                             text-slate-400
                           "
@@ -505,7 +402,7 @@ export default function PHQStep({
                         >
                           <p
                             className="
-                              text-[15px]
+                              text-[18px]
                               font-medium
                               leading-relaxed
                               text-slate-900
@@ -663,30 +560,7 @@ export default function PHQStep({
             lg:px-10
           "
         >
-          <div
-            className="
-              max-w-[900px]
-              rounded-[14px]
-              bg-[#FFF9ED]
-              px-5
-              py-5
-              shadow-[0_8px_24px_rgba(120,83,20,0.08)]
-              sm:px-6
-            "
-          >
-            <p
-              className="
-                text-sm
-                font-normal
-                leading-relaxed
-                text-amber-900
-              "
-            >
-              If you are experiencing emotional distress or thoughts of
-              self-harm, please contact a healthcare provider or emergency
-              support service immediately.
-            </p>
-          </div>
+          
         </motion.div>
 
         {/* =====================================================

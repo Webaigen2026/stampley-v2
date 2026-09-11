@@ -102,7 +102,7 @@ export default function ReviewStep({
 
       await submitPreSurvey(formData)
 
-      window.location.href = "/survey/dds"
+      window.location.href = "/survey/pre-survey/completed"
     } catch (error) {
       console.error("Pre-survey submit failed:", error)
       setIsSubmitting(false)
@@ -474,7 +474,7 @@ function ReviewRow({
         <div className="min-w-0">
           <p
             className="
-              text-sm
+              text-lg
               font-medium
               text-slate-500
             "
@@ -485,7 +485,7 @@ function ReviewRow({
           <p
             className={`
               mt-2
-              text-base
+              text-lg
               font-medium
               leading-relaxed
               ${

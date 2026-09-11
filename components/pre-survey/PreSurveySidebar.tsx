@@ -22,20 +22,19 @@ export default function PreSurveySidebar({
       aria-label="Pre-survey progress"
       className="
         w-full
-        max-w-[290px]
+        max-w-[270px]
         font-['Outfit',system-ui,sans-serif]
       "
     >
       {/* =====================================================
           HEADER
       ====================================================== */}
-      <div className="mb-8">
-      
 
+      <div className="mb-7">
         <p
           className="
             mt-3
-            text-[22px]
+            text-[20px]
             font-light
             leading-none
             tracking-[-0.025em]
@@ -49,15 +48,16 @@ export default function PreSurveySidebar({
       {/* =====================================================
           PROGRESS
       ====================================================== */}
+
       <div className="relative">
         {/* Base vertical rail */}
         <div
           aria-hidden="true"
           className="
             absolute
-            bottom-[42px]
-            left-[31px]
-            top-[42px]
+            bottom-[38px]
+            left-[23px]
+            top-[38px]
             w-px
             bg-[#D8E3F0]
           "
@@ -68,8 +68,8 @@ export default function PreSurveySidebar({
           aria-hidden="true"
           className="
             absolute
-            left-[31px]
-            top-[42px]
+            left-[23px]
+            top-[38px]
             w-px
             bg-[#8FB8E8]
             transition-[height]
@@ -103,8 +103,8 @@ export default function PreSurveySidebar({
                   relative
                   flex
                   items-center
-                  gap-5
-                  py-3.5
+                  gap-4
+                  py-3
                   ${index === 0 ? "pt-0" : ""}
                   ${
                     index === PRE_SURVEY_STEP_TITLES.length - 1
@@ -116,22 +116,23 @@ export default function PreSurveySidebar({
                 {/* =================================================
                     STEP MARKER
                 ================================================== */}
-                <div className="relative z-10 flex w-[64px] shrink-0 justify-center">
+
+                <div className="relative z-10 flex w-[44px] shrink-0 justify-center">
                   {active ? (
                     <span
                       className="
                         relative
                         flex
-                        h-[64px]
-                        w-[64px]
+                        h-[44px]
+                        w-[44px]
                         items-center
                         justify-center
                         rounded-full
-                       bg-white
-                        text-[19px]
+                        bg-white
+                        text-[14px]
                         font-medium
                         text-blue-900
-                        shadow-[0_8px_22px_rgba(23,59,122,0.18)]
+                        shadow-[0_4px_12px_rgba(23,59,122,0.15)]
                         ring-[1px]
                         ring-[#EEF6FF]
                         transition-all
@@ -144,12 +145,12 @@ export default function PreSurveySidebar({
                     <span
                       className="
                         flex
-                        h-[54px]
-                        w-[54px]
+                        h-[36px]
+                        w-[36px]
                         items-center
                         justify-center
                         rounded-full
-                        bg-[#EAF3FF]
+                        bg-white
                         text-[#173B7A]
                         ring-1
                         ring-[#D5E5F7]
@@ -160,20 +161,20 @@ export default function PreSurveySidebar({
                       <Check
                         aria-hidden="true"
                         strokeWidth={2}
-                        className="h-5 w-5"
+                        className="h-[14px] w-[14px]"
                       />
                     </span>
                   ) : (
                     <span
                       className="
                         flex
-                        h-[54px]
-                        w-[54px]
+                        h-[36px]
+                        w-[36px]
                         items-center
                         justify-center
                         rounded-full
                         bg-white
-                        text-[18px]
+                        text-[12px]
                         font-normal
                         text-slate-500
                         ring-1
@@ -186,17 +187,19 @@ export default function PreSurveySidebar({
                     </span>
                   )}
                 </div>
+          
 
                 {/* =================================================
                     STEP CONTENT
                 ================================================== */}
+
                 <div
                   className={`
                     min-w-0
                     flex-1
                     rounded-[14px]
-                    px-5
-                    py-3
+                    px-4
+                    py-2.5
                     transition-all
                     duration-300
                     ${
@@ -209,7 +212,7 @@ export default function PreSurveySidebar({
                   <span
                     className={`
                       block
-                      text-[11px]
+                      text-[10px]
                       font-semibold
                       uppercase
                       tracking-[0.24em]
@@ -227,9 +230,9 @@ export default function PreSurveySidebar({
 
                   <span
                     className={`
-                      mt-2
+                      mt-1.5
                       block
-                      text-[17px]
+                      text-[15px]
                       leading-tight
                       tracking-[-0.015em]
                       ${
