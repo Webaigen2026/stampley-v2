@@ -30,17 +30,7 @@ export default function PreSurveySidebar({
           HEADER
       ====================================================== */}
       <div className="mb-8">
-        <p
-          className="
-            text-[11px]
-            font-semibold
-            uppercase
-            tracking-[0.28em]
-            text-slate-500
-          "
-        >
-          Survey Progress
-        </p>
+      
 
         <p
           className="
@@ -137,12 +127,12 @@ export default function PreSurveySidebar({
                         items-center
                         justify-center
                         rounded-full
-                        bg-[#173B7A]
+                       bg-white
                         text-[19px]
                         font-medium
-                        text-white
+                        text-blue-900
                         shadow-[0_8px_22px_rgba(23,59,122,0.18)]
-                        ring-[10px]
+                        ring-[1px]
                         ring-[#EEF6FF]
                         transition-all
                         duration-300
@@ -211,8 +201,8 @@ export default function PreSurveySidebar({
                     duration-300
                     ${
                       active
-                        ? "bg-[#F2F8FF]"
-                        : "bg-transparent"
+                        ? "font-medium text-blue-900"
+                        : "font-normal text-slate-500"
                     }
                   `}
                 >

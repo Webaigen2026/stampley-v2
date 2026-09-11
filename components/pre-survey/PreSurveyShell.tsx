@@ -41,7 +41,7 @@ export default function PreSurveyShell({
         <PreSurveySidebar currentStep={currentStep} />
       </aside>
 
-      <div className="lg:pl-[340px]">
+      <div className="min-w-0 lg:pl-[340px]">
         <header
           className="
             sticky
@@ -78,17 +78,18 @@ export default function PreSurveyShell({
           </div>
         </header>
 
-        <div className="w-full">
+        <div className="w-full min-w-0">
           <div
-            className="
+            className={`
               mx-auto
               mt-4
               w-full
-              max-w-[900px]
+              min-w-0
               px-5
               sm:px-8
               lg:px-10
-            "
+              ${currentStep === 6 ? "max-w-[1100px]" : "max-w-[900px]"}
+            `}
           >
             {children}
           </div>

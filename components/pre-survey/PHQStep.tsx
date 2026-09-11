@@ -1,6 +1,13 @@
 "use client"
 
+import {
+  motion,
+  useReducedMotion,
+  type Variants,
+} from "framer-motion"
+
 import StepButtons from "./StepButtons"
+import PreSurveyBackground from "./PreSurveyBackground"
 
 const questions = [
   "Little interest or pleasure in doing things",
@@ -21,163 +28,694 @@ const options = [
   { value: 3, label: "Nearly every day" },
 ]
 
+const easeOut = [0.22, 1, 0.36, 1] as const
+
+const fadeUp: Variants = {
+  hidden: {
+    opacity: 0,
+    y: 28,
+    filter: "blur(3px)",
+  },
+
+  visible: {
+    opacity: 1,
+    y: 0,
+    filter: "blur(0px)",
+
+    transition: {
+      duration: 0.7,
+      ease: easeOut,
+    },
+  },
+}
+
+const fadeLeft: Variants = {
+  hidden: {
+    opacity: 0,
+    x: -22,
+    filter: "blur(2px)",
+  },
+
+  visible: {
+    opacity: 1,
+    x: 0,
+    filter: "blur(0px)",
+
+    transition: {
+      duration: 0.75,
+      ease: easeOut,
+    },
+  },
+}
+
+const container: Variants = {
+  hidden: {},
+
+  visible: {
+    transition: {
+      staggerChildren: 0.1,
+      delayChildren: 0.04,
+    },
+  },
+}
+
+const rowContainer: Variants = {
+  hidden: {},
+
+  visible: {
+    transition: {
+      staggerChildren: 0.06,
+      delayChildren: 0.04,
+    },
+  },
+}
+
 export default function PHQStep({
   formData,
   setFormData,
   nextStep,
   prevStep,
 }: any) {
+  const reduceMotion = useReducedMotion()
+
   const answeredQuestions = questions.filter((_, index) => {
     const name = `phq${index + 1}`
     return formData[name] !== undefined
   }).length
 
-  const progress = Math.round((answeredQuestions / questions.length) * 100)
+  const progress = Math.round(
+    (answeredQuestions / questions.length) * 100
+  )
 
   return (
-    <section className="bg-white">
-      <div className="border-b border-gray-300 bg-[#003e73] px-6 py-5 text-white">
-        <p className="text-xs font-['Poppins', sans-serif] uppercase tracking-[0.18em] text-blue-100">
-          Section E
-        </p>
+    <PreSurveyBackground>
+      <section
+        className="
+          relative
+          min-w-0
+          font-['Outfit',system-ui,sans-serif]
+          text-slate-950
+        "
+      >
+        {/* =====================================================
+            HEADER
+        ====================================================== */}
+        <motion.div
+          initial="hidden"
+          whileInView="visible"
+          viewport={{
+            once: false,
+            amount: 0.22,
+          }}
+          variants={container}
+          className="
+            px-6
+            pb-10
+            pt-6
+            sm:px-8
+            sm:pb-12
+            sm:pt-7
+            lg:px-10
+          "
+        >
+          <motion.h1
+            variants={fadeUp}
+            className="
+              mt-4
+              text-3xl
+              font-light
+              tracking-tight
+              text-slate-950
+              sm:text-4xl
+            "
+          >
+            Patient Health Questionnaire-9
+            <span className="text-slate-400"> (PHQ-9)</span>
+          </motion.h1>
 
-        <h1 className="mt-2 text-2xl font-['Poppins', sans-serif]">
-          Patient Health Questionnaire-9 (PHQ-9)
-        </h1>
+          <motion.p
+            variants={fadeUp}
+            className="
+              mt-5
+              max-w-[68ch]
+              text-lg
+              font-normal
+              leading-relaxed
+              text-slate-600
+            "
+          >
+            Over the last 2 weeks, how often have you been bothered by the
+            following problems?
+          </motion.p>
 
-        <p className="mt-3 max-w-3xl text-sm leading-6 text-blue-50 font-['Poppins', sans-serif]">
-          Over the last 2 weeks, how often have you been bothered by the
-          following problems?
-        </p>
-      </div>
+          {/* About this section */}
+          <motion.div
+            variants={fadeUp}
+            whileHover={
+              reduceMotion
+                ? undefined
+                : {
+                    y: -2,
+                  }
+            }
+            transition={{
+              duration: 0.25,
+              ease: easeOut,
+            }}
+            className="
+              mt-7
+              flex
+              max-w-[900px]
+              items-start
+              gap-4
+              rounded-[14px]
+              bg-white
+              px-5
+              py-5
+              shadow-[0_10px_32px_rgba(15,45,80,0.08)]
+              sm:px-6
+            "
+          >
+            <motion.div
+              variants={{
+                hidden: {
+                  opacity: 0,
+                  scale: 0.8,
+                },
 
-      <div className="border-b border-gray-300 bg-gray-50 px-6 py-5">
-        <div className="mb-2 flex items-center justify-between text-xs font-medium text-gray-500">
-          <span>Completion Progress</span>
-          <span>{progress}% completed</span>
-        </div>
+                visible: {
+                  opacity: 1,
+                  scale: 1,
 
-        <div className="h-2 overflow-hidden border border-gray-300 bg-white">
+                  transition: {
+                    duration: 0.6,
+                    ease: easeOut,
+                  },
+                },
+              }}
+              className="
+                flex
+                h-10
+                w-10
+                shrink-0
+                items-center
+                justify-center
+                rounded-full
+                bg-[#EAF3FF]
+                text-sm
+                font-semibold
+                text-[#1473E6]
+              "
+            >
+              i
+            </motion.div>
+
+            <motion.div
+              variants={fadeLeft}
+              className="min-w-0"
+            >
+              <h2
+                className="
+                  text-base
+                  font-medium
+                  text-[#173B7A]
+                "
+              >
+                About this section
+              </h2>
+
+              <p
+                className="
+                  mt-1.5
+                  max-w-[72ch]
+                  text-base
+                  font-normal
+                  leading-relaxed
+                  text-slate-600
+                "
+              >
+                Please choose the response that best reflects how often you
+                experienced each item during the past two weeks.
+              </p>
+            </motion.div>
+          </motion.div>
+        </motion.div>
+
+        {/* =====================================================
+            COMPLETION PROGRESS
+        ====================================================== */}
+        <motion.div
+          initial="hidden"
+          whileInView="visible"
+          viewport={{
+            once: false,
+            amount: 0.4,
+          }}
+          variants={fadeUp}
+          className="
+            px-6
+            pb-8
+            sm:px-8
+            lg:px-10
+          "
+        >
           <div
-            className="h-full bg-[#005ea8] transition-all duration-300"
-            style={{ width: `${progress}%` }}
-          />
-        </div>
+            className="
+              max-w-[900px]
+              rounded-[16px]
+              bg-white
+              px-5
+              py-5
+              shadow-[0_10px_30px_rgba(15,45,80,0.07)]
+              sm:px-6
+            "
+          >
+            <div
+              className="
+                flex
+                items-center
+                justify-between
+                gap-4
+              "
+            >
+              <div>
+                <p
+                  className="
+                    text-sm
+                    font-medium
+                    text-slate-900
+                  "
+                >
+                  Completion progress
+                </p>
 
-        <p className="mt-2 text-xs text-gray-500">
-          {answeredQuestions} of {questions.length} questions answered
-        </p>
-      </div>
+                <p
+                  className="
+                    mt-1
+                    text-sm
+                    font-normal
+                    text-slate-500
+                  "
+                >
+                  {answeredQuestions} of {questions.length} questions answered
+                </p>
+              </div>
 
-      <div className="px-6 py-6">
-        <div className="overflow-x-auto border border-gray-300 bg-white">
-          <table className="w-full min-w-[880px] border-collapse">
-            <thead>
-              <tr className="border-b border-gray-300 bg-gray-50">
-                <th className="w-[45%] px-4 py-3 text-left text-[11px] font-bold uppercase tracking-[0.12em] text-gray-500">
-                  Question
-                </th>
+              <motion.div
+                key={progress}
+                initial={
+                  reduceMotion
+                    ? false
+                    : {
+                        scale: 0.92,
+                        opacity: 0.6,
+                      }
+                }
+                animate={{
+                  scale: 1,
+                  opacity: 1,
+                }}
+                transition={{
+                  duration: 0.25,
+                  ease: easeOut,
+                }}
+                className="
+                  flex
+                  h-11
+                  min-w-[68px]
+                  items-center
+                  justify-center
+                  rounded-full
+                  bg-[#EEF6FF]
+                  px-4
+                  text-sm
+                  font-semibold
+                  text-[#173B7A]
+                "
+              >
+                {progress}%
+              </motion.div>
+            </div>
 
-                {options.map((option) => (
-                  <th
-                    key={option.value}
-                    className="px-3 py-3 text-center text-[11px] font-bold uppercase tracking-[0.08em] text-gray-500"
-                  >
-                    <span className="block text-gray-900">
-                      {option.label}
-                    </span>
+            <div
+              className="
+                mt-5
+                h-2
+                overflow-hidden
+                rounded-full
+                bg-slate-100
+              "
+            >
+              <motion.div
+                initial={false}
+                animate={{
+                  width: `${progress}%`,
+                }}
+                transition={{
+                  duration: 0.45,
+                  ease: easeOut,
+                }}
+                className="
+                  h-full
+                  rounded-full
+                  bg-[#1473E6]
+                "
+              />
+            </div>
+          </div>
+        </motion.div>
 
-                    <span className="mt-1 block text-[10px] font-normal text-gray-400">
-                      Score {option.value}
-                    </span>
-                  </th>
-                ))}
-              </tr>
-            </thead>
+        {/* =====================================================
+            QUESTION MATRIX
+        ====================================================== */}
+        <motion.div
+          initial="hidden"
+          whileInView="visible"
+          viewport={{
+            once: false,
+            amount: 0.06,
+          }}
+          variants={rowContainer}
+          className="
+            min-w-0
+            px-6
+            pb-10
+            sm:px-8
+            lg:px-10
+          "
+        >
+          <div
+            className="
+              w-full
+              max-w-[1100px]
+              min-w-0
+              overflow-hidden
+              rounded-[18px]
+              bg-white
+              shadow-[0_14px_40px_rgba(15,45,80,0.08)]
+            "
+          >
+            <div className="w-full overflow-x-auto overscroll-x-contain">
+              <table
+                className="
+                  w-full
+                  min-w-[940px]
+                  border-collapse
+                "
+              >
+                <thead>
+                  <tr className="bg-[#F8FAFD]">
+                    <th
+                      className="
+                        w-[46%]
+                        px-6
+                        py-5
+                        text-left
+                        text-[11px]
+                        font-bold
+                        uppercase
+                        tracking-[0.16em]
+                        text-slate-400
+                      "
+                    >
+                      Question
+                    </th>
 
-            <tbody>
-              {questions.map((question, index) => {
-                const name = `phq${index + 1}`
-
-                return (
-                  <tr
-                    key={name}
-                    className="border-b border-gray-200 last:border-b-0"
-                  >
-                    <td className="px-4 py-4 align-middle">
-                      <div className="flex items-start gap-3">
-                        <span className="flex h-6 w-6 shrink-0 items-center justify-center border border-gray-300 bg-gray-50 text-[11px] font-semibold text-gray-600">
-                          {index + 1}
+                    {options.map((option) => (
+                      <th
+                        key={option.value}
+                        className="
+                          px-3
+                          py-5
+                          text-center
+                        "
+                      >
+                        <span
+                          className="
+                            block
+                            text-[12px]
+                            font-medium
+                            normal-case
+                            tracking-normal
+                            text-slate-700
+                          "
+                        >
+                          {option.label}
                         </span>
 
-                        <p className="text-[13px] font-medium leading-5 text-gray-900">
-                          {question}
-                        </p>
-                      </div>
-                    </td>
-
-                    {options.map((option) => {
-                      const selected = formData[name] === option.value
-
-                      return (
-                        <td
-                          key={option.value}
-                          className={`px-3 py-4 text-center align-middle transition ${
-                            selected ? "bg-[#f0f6fc]" : "bg-white"
-                          }`}
+                        <span
+                          className="
+                            mt-1
+                            block
+                            text-[10px]
+                            font-normal
+                            text-slate-400
+                          "
                         >
-                          <label className="inline-flex cursor-pointer items-center justify-center">
-                            <input
-                              type="radio"
-                              name={name}
-                              value={option.value}
-                              checked={selected}
-                              onChange={() =>
-                                setFormData({
-                                  ...formData,
-                                  [name]: option.value,
-                                })
-                              }
-                              className="sr-only"
-                            />
-
-                            <span
-                              className={`flex h-5 w-5 items-center justify-center rounded-full border transition ${
-                                selected
-                                  ? "border-[#005ea8] bg-[#005ea8]"
-                                  : "border-gray-400 bg-white hover:border-[#005ea8]"
-                              }`}
-                              aria-hidden="true"
-                            >
-                              {selected ? (
-                                <span className="h-2 w-2 rounded-full bg-white" />
-                              ) : null}
-                            </span>
-
-                            <span className="sr-only">{option.label}</span>
-                          </label>
-                        </td>
-                      )
-                    })}
+                          Score {option.value}
+                        </span>
+                      </th>
+                    ))}
                   </tr>
-                )
-              })}
-            </tbody>
-          </table>
-        </div>
-      </div>
+                </thead>
 
-      <div className="border-t border-amber-200 bg-amber-50 px-6 py-5">
-        <p className="text-sm leading-6 text-amber-900">
-          If you are experiencing emotional distress or thoughts of self-harm,
-          please contact a healthcare provider or emergency support service
-          immediately.
-        </p>
-      </div>
+                <tbody>
+                  {questions.map((question, index) => {
+                    const name = `phq${index + 1}`
 
-      <div className="bg-gray-50">
-        <StepButtons prevStep={prevStep} nextStep={nextStep} />
-      </div>
-    </section>
+                    return (
+                      <motion.tr
+                        key={name}
+                        variants={fadeUp}
+                        className="
+                          border-t
+                          border-slate-100
+                          bg-white
+                          transition-colors
+                          duration-200
+                          hover:bg-[#FCFDFF]
+                        "
+                      >
+                        <td
+                          className="
+                            px-6
+                            py-6
+                            align-middle
+                          "
+                        >
+                          <p
+                            className="
+                              text-[15px]
+                              font-medium
+                              leading-relaxed
+                              text-slate-900
+                            "
+                          >
+                            {question}
+                          </p>
+                        </td>
+
+                        {options.map((option) => {
+                          const selected =
+                            formData[name] === option.value
+
+                          return (
+                            <td
+                              key={option.value}
+                              className={`
+                                px-3
+                                py-6
+                                text-center
+                                align-middle
+                                transition-colors
+                                duration-200
+                                ${
+                                  selected
+                                    ? "bg-[#F3F8FF]"
+                                    : "bg-transparent"
+                                }
+                              `}
+                            >
+                              <label
+                                className="
+                                  inline-flex
+                                  cursor-pointer
+                                  items-center
+                                  justify-center
+                                  rounded-full
+                                  p-2
+                                "
+                              >
+                                <input
+                                  type="radio"
+                                  name={name}
+                                  value={option.value}
+                                  checked={selected}
+                                  onChange={() =>
+                                    setFormData({
+                                      ...formData,
+                                      [name]:
+                                        option.value,
+                                    })
+                                  }
+                                  className="sr-only"
+                                />
+
+                                <motion.span
+                                  aria-hidden="true"
+                                  animate={{
+                                    scale: selected
+                                      ? 1
+                                      : 0.94,
+                                    backgroundColor: selected
+                                      ? "#1473E6"
+                                      : "#FFFFFF",
+                                    boxShadow: selected
+                                      ? "0 5px 14px rgba(20,115,230,0.22), inset 0 0 0 1px rgba(20,115,230,1)"
+                                      : "inset 0 0 0 1px rgba(148,163,184,0.7)",
+                                  }}
+                                  whileHover={
+                                    reduceMotion
+                                      ? undefined
+                                      : {
+                                          scale: 1.08,
+                                        }
+                                  }
+                                  transition={{
+                                    duration: 0.2,
+                                    ease: easeOut,
+                                  }}
+                                  className="
+                                    flex
+                                    h-6
+                                    w-6
+                                    items-center
+                                    justify-center
+                                    rounded-full
+                                  "
+                                >
+                                  {selected ? (
+                                    <motion.span
+                                      initial={{
+                                        scale: 0,
+                                        opacity: 0,
+                                      }}
+                                      animate={{
+                                        scale: 1,
+                                        opacity: 1,
+                                      }}
+                                      transition={{
+                                        duration: 0.18,
+                                        ease: easeOut,
+                                      }}
+                                      className="
+                                        h-2
+                                        w-2
+                                        rounded-full
+                                        bg-white
+                                      "
+                                    />
+                                  ) : null}
+                                </motion.span>
+
+                                <span className="sr-only">
+                                  {option.label}
+                                </span>
+                              </label>
+                            </td>
+                          )
+                        })}
+                      </motion.tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* =====================================================
+            SAFETY NOTICE
+        ====================================================== */}
+        <motion.div
+          initial={{
+            opacity: 0,
+            y: 22,
+            scale: 0.99,
+          }}
+          whileInView={{
+            opacity: 1,
+            y: 0,
+            scale: 1,
+          }}
+          viewport={{
+            once: false,
+            amount: 0.35,
+          }}
+          transition={{
+            duration: 0.65,
+            ease: easeOut,
+          }}
+          className="
+            px-6
+            pb-10
+            sm:px-8
+            lg:px-10
+          "
+        >
+          <div
+            className="
+              max-w-[900px]
+              rounded-[14px]
+              bg-[#FFF9ED]
+              px-5
+              py-5
+              shadow-[0_8px_24px_rgba(120,83,20,0.08)]
+              sm:px-6
+            "
+          >
+            <p
+              className="
+                text-sm
+                font-normal
+                leading-relaxed
+                text-amber-900
+              "
+            >
+              If you are experiencing emotional distress or thoughts of
+              self-harm, please contact a healthcare provider or emergency
+              support service immediately.
+            </p>
+          </div>
+        </motion.div>
+
+        {/* =====================================================
+            FOOTER
+        ====================================================== */}
+        <motion.div
+          initial={{
+            opacity: 0,
+            y: 20,
+          }}
+          whileInView={{
+            opacity: 1,
+            y: 0,
+          }}
+          viewport={{
+            once: false,
+            amount: 0.5,
+          }}
+          transition={{
+            duration: 0.6,
+            ease: easeOut,
+          }}
+        >
+          <StepButtons
+            prevStep={prevStep}
+            nextStep={nextStep}
+          />
+        </motion.div>
+      </section>
+    </PreSurveyBackground>
   )
 }
