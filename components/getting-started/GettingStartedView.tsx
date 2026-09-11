@@ -1,5 +1,10 @@
 "use client"
 
+import {
+  useEffect,
+  useState,
+} from "react"
+
 import Image from "next/image"
 import Link from "next/link"
 
@@ -15,6 +20,9 @@ import {
   useTransform,
   type Variants,
 } from "framer-motion"
+
+const PRE_SURVEY_STARTED_KEY =
+  "aides-t2d-pre-survey-started"
 
 const STEPS = [
   {
@@ -112,7 +120,46 @@ const stepItem: Variants = {
 export default function GettingStartedView() {
   const reduceMotion = useReducedMotion()
 
+  const [preSurveyStarted, setPreSurveyStarted] =
+    useState(false)
+
+  const [
+    hasCheckedPreSurveyState,
+    setHasCheckedPreSurveyState,
+  ] = useState(false)
+
   const { scrollYProgress } = useScroll()
+
+  useEffect(() => {
+    try {
+      const started =
+        window.localStorage.getItem(
+          PRE_SURVEY_STARTED_KEY
+        ) === "true"
+
+      setPreSurveyStarted(started)
+    } catch {
+      // If browser storage is unavailable,
+      // safely fall back to the default CTA state.
+      setPreSurveyStarted(false)
+    } finally {
+      setHasCheckedPreSurveyState(true)
+    }
+  }, [])
+
+  const handlePreSurveyStart = () => {
+    try {
+      window.localStorage.setItem(
+        PRE_SURVEY_STARTED_KEY,
+        "true"
+      )
+    } catch {
+      // Navigation should still continue even
+      // when browser storage is unavailable.
+    }
+
+    setPreSurveyStarted(true)
+  }
 
   /*
    * Very restrained movement.
@@ -155,9 +202,6 @@ export default function GettingStartedView() {
           bg-white
         "
       >
-
-
-        
         <div
           className="
             mx-auto
@@ -177,10 +221,6 @@ export default function GettingStartedView() {
             2xl:px-20
           "
         >
-
-
-
-          
           {/* =================================================
               LEFT CONTENT
           ================================================== */}
@@ -225,7 +265,6 @@ export default function GettingStartedView() {
             >
               Before you begin.
             </motion.h1>
-       
 
             <motion.p
               variants={fadeUp}
@@ -239,13 +278,19 @@ export default function GettingStartedView() {
                 md:text-xl
               "
             >
-              Your first visit includes a few short steps to help us understand
-              your experience and personalize your study participation.
+              Your first visit includes a few short
+              steps to help us understand your
+              experience and personalize your study
+              participation.
             </motion.p>
 
+            {/* =================================================
+                PRE-SURVEY CTA
+            ================================================== */}
             <motion.div variants={fadeUp}>
               <Link
                 href="/survey/pre-survey"
+                onClick={handlePreSurveyStart}
                 className="
                   group
                   mt-8
@@ -275,7 +320,13 @@ export default function GettingStartedView() {
                   sm:min-w-[290px]
                 "
               >
-                <span>Begin pre-survey</span>
+                <span>
+                  {!hasCheckedPreSurveyState
+                    ? "\u00A0"
+                    : preSurveyStarted
+                      ? "Resume pre-survey"
+                      : "Begin pre-survey"}
+                </span>
 
                 <span
                   className="

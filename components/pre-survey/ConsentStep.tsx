@@ -1,134 +1,417 @@
-"use client";
+"use client"
 
-import StepButtons from "./StepButtons";
+import { Info, ShieldCheck } from "lucide-react"
+
+import StepButtons from "./StepButtons"
 
 export default function ConsentStep({
   formData,
   setFormData,
   nextStep,
 }: any) {
-  return (
-    <section>
-      {/* Header */}
-      <div className="border-b border-gray-300 bg-gray-50 px-6 py-5">
-        <p className="text-xs font-bold uppercase tracking-[0.18em] text-gray-500">
-          Section 1
-        </p>
+  const options = [
+    {
+      value: "I consent to participate",
+      title: "I consent to participate",
+      description:
+        "I have read the information above and voluntarily agree to participate in this research study.",
+    },
+    {
+      value: "I do not consent",
+      title: "I do not consent",
+      description:
+        "I do not wish to participate in this research study.",
+    },
+  ]
 
-        <h1 className="mt-2 text-2xl font-bold text-gray-900">
+  return (
+    <section
+      className="
+        font-['Outfit',system-ui,sans-serif]
+        text-slate-950
+      "
+    >
+      {/* =====================================================
+          HEADER
+      ====================================================== */}
+      <div
+        className="
+          border-b
+          border-slate-100
+          px-6
+          pb-8
+          pt-6
+          sm:px-8
+          sm:pb-9
+          sm:pt-7
+          lg:px-10
+        "
+      >
+     
+
+        <h1
+          className="
+            mt-4
+            text-3xl
+            font-light
+            tracking-tight
+            text-slate-950
+            sm:text-4xl
+          "
+        >
           Consent to Participate
         </h1>
 
-        <p className="mt-3 max-w-3xl text-sm leading-6 text-gray-700">
+        <p
+          className="
+            mt-5
+            max-w-[68ch]
+            text-lg
+            font-normal
+            leading-relaxed
+            text-slate-600
+          "
+        >
           You are being invited to participate in the AIDES-T2D research study.
           Before continuing, please review the information below and indicate
           whether you consent to participate in this study.
         </p>
-        <div className="mt-4 max-w-3xl  border border-[#c7d8ea] bg-[#f0f6fc] px-4 py-4">
-  <p className="text-sm leading-6 text-[#24415c]">
-    This pre-survey is completed only once at the beginning of the study.
-    Your responses will help personalize your experience throughout the
-    AIDES-T2D program and support ongoing research focused on
-    diabetes-related distress and well-being.
-  </p>
-</div>
+
+        {/* Pre-survey context */}
+        <div
+          className="
+            mt-6
+            flex
+            max-w-[760px]
+            gap-4
+            shadow-lg
+            rounded-lg
+            border-l-4
+            border-l-blue-900
+          
+            px-5
+            py-5
+          "
+        >
+          <div
+            className="
+              mt-0.5
+              flex
+              h-9
+              w-9
+              shrink-0
+              items-center
+              justify-center
+              rounded-full
+              bg-white
+              text-[#1473E6]
+              shadow-[0_4px_14px_rgba(15,45,80,0.06)]
+            "
+          >
+            <Info
+              aria-hidden="true"
+              size={18}
+              strokeWidth={1.7}
+            />
+          </div>
+
+          <p
+            className="
+              max-w-[70ch]
+              text-sm
+              font-normal
+              leading-relaxed
+              text-slate-600
+            "
+          >
+            This pre-survey is completed only once at the beginning of the
+            study. Your responses will help personalize your experience
+            throughout the AIDES-T2D program and support ongoing research
+            focused on diabetes-related distress and well-being.
+          </p>
+        </div>
       </div>
 
-      {/* Body */}
-      <div className="space-y-8 px-6 py-8">
-        {/* Notice Box */}
-        <div className="border border-[#c7d8ea] bg-[#f0f6fc] p-5">
-          <h2 className="text-sm font-bold uppercase tracking-wide text-[#003e73]">
-            Important Information
-          </h2>
+      {/* =====================================================
+          BODY
+      ====================================================== */}
+      <div
+        className="
+          space-y-10
+          px-6
+          py-9
+          sm:px-8
+          sm:py-10
+          lg:px-10
+        "
+      >
+        {/* =================================================
+            IMPORTANT INFORMATION
+        ================================================== */}
+       <div
+          className="
+            mt-6
+            flex
+            max-w-[760px]
+            gap-4
+            shadow-lg
+            rounded-lg
+            border-l-4
+            border-l-blue-900
+          
+            px-5
+            py-5
+          "
+        >
+          <div className="flex items-start gap-4">
+            <div
+              className="
+                flex
+                h-10
+                w-10
+                shrink-0
+                items-center
+                justify-center
+                rounded-full
+                bg-[#EAF3FF]
+                text-[#1473E6]
+              "
+            >
+              <ShieldCheck
+                aria-hidden="true"
+                size={19}
+                strokeWidth={1.7}
+              />
+            </div>
 
-          <ul className="mt-4 space-y-3 text-sm leading-6 text-gray-700">
-            <li>
-              • Your participation in this study is completely voluntary.
-            </li>
+            <div className="min-w-0">
+              <h2
+                className="
+                  text-base
+                  font-medium
+                  text-[#173B7A]
+                "
+              >
+                Important information
+              </h2>
 
-            <li>
-              • You may stop participating at any time without penalty.
-            </li>
+              <ul
+                className="
+                  mt-4
+                  space-y-3
+                  text-sm
+                  font-normal
+                  leading-relaxed
+                  text-slate-600
+                "
+              >
+                <li className="flex gap-3">
+                  <span className="mt-[9px] h-1.5 w-1.5 shrink-0 rounded-full bg-[#1473E6]" />
 
-            <li>
-              • Your responses will be kept confidential and used only for
-              research purposes.
-            </li>
+                  <span>
+                    Your participation in this study is completely voluntary.
+                  </span>
+                </li>
 
-            <li>
-              • Some survey questions may ask about your emotional well-being
-              and experiences managing diabetes.
-            </li>
-          </ul>
+                <li className="flex gap-3">
+                  <span className="mt-[9px] h-1.5 w-1.5 shrink-0 rounded-full bg-[#1473E6]" />
+
+                  <span>
+                    You may stop participating at any time without penalty.
+                  </span>
+                </li>
+
+                <li className="flex gap-3">
+                  <span className="mt-[9px] h-1.5 w-1.5 shrink-0 rounded-full bg-[#1473E6]" />
+
+                  <span>
+                    Your responses will be kept confidential and used only for
+                    research purposes.
+                  </span>
+                </li>
+
+                <li className="flex gap-3">
+                  <span className="mt-[9px] h-1.5 w-1.5 shrink-0 rounded-full bg-[#1473E6]" />
+
+                  <span>
+                    Some survey questions may ask about your emotional
+                    well-being and experiences managing diabetes.
+                  </span>
+                </li>
+              </ul>
+            </div>
+          </div>
         </div>
 
-        {/* Consent Question */}
-        <div className="border border-gray-300">
-          <div className="border-b border-gray-300 bg-gray-100 px-4 py-3">
-            <p className="text-sm font-semibold text-gray-900">
-              Participant Consent
+        {/* =================================================
+            PARTICIPANT CONSENT
+        ================================================== */}
+        <div className="max-w-[820px]">
+          <div className="mb-5">
+            <h2
+              className="
+                text-2xl
+                font-light
+                tracking-tight
+                text-slate-950
+              "
+            >
+              Participant consent
+            </h2>
+
+            <p
+              className="
+                mt-2
+                text-sm
+                font-normal
+                leading-relaxed
+                text-slate-500
+              "
+            >
+              Please select one of the options below.
             </p>
           </div>
 
-          <div className="space-y-4 px-5 py-5">
-            {[
-              {
-                value: "I consent to participate",
-                title: "I consent to participate",
-                description:
-                  "I have read the information above and voluntarily agree to participate in this research study.",
-              },
-              {
-                value: "I do not consent",
-                title: "I do not consent",
-                description:
-                  "I do not wish to participate in this research study.",
-              },
-            ].map((option) => (
-              <label
-                key={option.value}
-                className={`block cursor-pointer border p-4 transition ${
-                  formData.consent_status === option.value
-                    ? "border-[#005ea8] bg-[#f0f6fc]"
-                    : "border-gray-300 bg-white hover:bg-gray-50"
-                }`}
-              >
-                <div className="flex items-start gap-3">
-                  <input
-                    type="radio"
-                    name="consent_status"
-                    value={option.value}
-                    checked={formData.consent_status === option.value}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        consent_status: e.target.value,
-                      })
+          <div className="space-y-3">
+            {options.map((option) => {
+              const selected =
+                formData.consent_status === option.value
+
+              return (
+                <label
+                  key={option.value}
+                  className={`
+                    group
+                    relative
+                    block
+                    cursor-pointer
+                    rounded-[14px]
+                    border
+                    px-5
+                    py-5
+                    transition-all
+                    duration-200
+                    ${
+                      selected
+                        ? `
+                          border-blue-900
+                          bg-white
+                          shadow-[0_8px_24px_rgba(20,115,230,0.08)]
+                        `
+                        : `
+                          border-slate-200
+                          bg-white
+                          hover:border-blue-900
+                          hover:bg-white
+                        `
                     }
-                    className="mt-1 h-4 w-4 accent-[#005ea8]"
-                  />
+                  `}
+                >
+                  <div className="flex items-start gap-4">
+                    {/* Radio */}
+                    <span
+                      className={`
+                        mt-0.5
+                        flex
+                        h-5
+                        w-5
+                        shrink-0
+                        items-center
+                        justify-center
+                        rounded-full
+                        border
+                        transition-all
+                        duration-200
+                        ${
+                          selected
+                            ? "border-[#1473E6] bg-[#1473E6]"
+                            : "border-slate-300 bg-white"
+                        }
+                      `}
+                    >
+                      {selected ? (
+                        <span className="h-2 w-2 rounded-full bg-white" />
+                      ) : null}
+                    </span>
 
-                  <div>
-                    <p className="text-sm font-semibold text-gray-900">
-                      {option.title}
-                    </p>
+                    {/* Native radio kept for behavior/accessibility */}
+                    <input
+                      type="radio"
+                      name="consent_status"
+                      value={option.value}
+                      checked={selected}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          consent_status: e.target.value,
+                        })
+                      }
+                      className="sr-only"
+                    />
 
-                    <p className="mt-1 text-sm leading-5 text-gray-600">
-                      {option.description}
-                    </p>
+                    {/* Copy */}
+                    <div className="min-w-0">
+                      <p
+                        className={`
+                          text-[15px]
+                          font-medium
+                          leading-snug
+                          transition-colors
+                          duration-200
+                          ${
+                            selected
+                              ? "text-[#173B7A]"
+                              : "text-slate-900"
+                          }
+                        `}
+                      >
+                        {option.title}
+                      </p>
+
+                      <p
+                        className="
+                          mt-1.5
+                          max-w-[68ch]
+                          text-sm
+                          font-normal
+                          leading-relaxed
+                          text-slate-500
+                        "
+                      >
+                        {option.description}
+                      </p>
+                    </div>
                   </div>
-                </div>
-              </label>
-            ))}
+                </label>
+              )
+            })}
           </div>
         </div>
 
-        {/* Acknowledgement */}
-        <div className="rounded-sm border-l-4 border-[#005ea8] bg-[#f8fafc] px-4 py-4">
-          <p className="text-sm leading-6 text-gray-700">
+        {/* =================================================
+            ACKNOWLEDGEMENT
+        ================================================== */}
+        <div
+          className="
+            max-w-[820px]
+            border-l-4
+            border-[#173B7A]
+            bg-white
+            px-5
+            py-4
+            shadow-[0_8px_24px_rgba(15,45,80,0.06)]
+          "
+        >
+          <p
+            className="
+              text-sm
+              font-normal
+              leading-relaxed
+              text-slate-600
+            "
+          >
             By selecting{" "}
-            <span className="font-semibold">
+            <span className="font-medium text-slate-900">
               “I consent to participate”
             </span>
             , you acknowledge that you understand the purpose of this study and
@@ -137,8 +420,10 @@ export default function ConsentStep({
         </div>
       </div>
 
-      {/* Footer Buttons */}
+      {/* =====================================================
+          FOOTER BUTTONS
+      ====================================================== */}
       <StepButtons nextStep={nextStep} />
     </section>
-  );
+  )
 }
