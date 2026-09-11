@@ -7,11 +7,13 @@ export default function StepButtons({
   nextStep,
   nextLabel = "Continue",
   submit = false,
+  disabled = false,
 }: {
   prevStep?: () => void
   nextStep?: () => void
   nextLabel?: string
   submit?: boolean
+  disabled?: boolean
 }) {
   return (
     <div className="mt-8 flex items-center justify-between gap-4 border-t border-slate-100 bg-white px-6 py-5 font-['Outfit',system-ui,sans-serif]">
@@ -44,6 +46,7 @@ export default function StepButtons({
       <button
         type={submit ? "submit" : "button"}
         onClick={submit ? undefined : nextStep}
+        disabled={disabled}
         className="
           group
           inline-flex
@@ -64,6 +67,8 @@ export default function StepButtons({
           focus-visible:outline-2
           focus-visible:outline-offset-2
           focus-visible:outline-[#173B7A]
+          disabled:cursor-not-allowed
+          disabled:opacity-50
         "
       >
         <span>{nextLabel}</span>

@@ -705,10 +705,15 @@ function ScaleField({
   setFormData,
   reduceMotion,
 }: any) {
-  const numericValue =
-    typeof value === "number"
-      ? value
-      : Number(value ?? 0)
+  const answered = typeof value === "number"
+  const numericValue = answered ? value : 0
+
+  function commitValue(raw: string) {
+    setFormData({
+      ...formData,
+      [name]: Number(raw),
+    })
+  }
 
   return (
     <FieldWrapper
@@ -740,14 +745,15 @@ function ScaleField({
           type="range"
           min={0}
           max={10}
-          value={value}
-          onChange={(e) =>
-            setFormData({
-              ...formData,
-              [name]: Number(e.target.value),
-            })
+          value={numericValue}
+          onChange={(e) => commitValue(e.target.value)}
+          onInput={(e) =>
+            commitValue((e.target as HTMLInputElement).value)
           }
           aria-label={label}
+          aria-valuetext={
+            answered ? String(value) : "Not selected"
+          }
           className="
             h-2
             w-full
@@ -761,15 +767,15 @@ function ScaleField({
             background: `linear-gradient(
               to right,
               #1473E6 0%,
-              #1473E6 ${numericValue * 10}%,
-              #E2E8F0 ${numericValue * 10}%,
+              #1473E6 ${answered ? numericValue * 10 : 0}%,
+              #E2E8F0 ${answered ? numericValue * 10 : 0}%,
               #E2E8F0 100%
             )`,
           }}
         />
 
         <motion.div
-          key={numericValue}
+          key={answered ? numericValue : "unanswered"}
           initial={
             reduceMotion
               ? false
@@ -807,7 +813,7 @@ function ScaleField({
               text-slate-500
             "
           >
-            Selected value
+            {answered ? "Selected value" : "Not selected"}
           </span>
 
           <span
@@ -826,7 +832,7 @@ function ScaleField({
               shadow-[0_5px_14px_rgba(23,59,122,0.18)]
             "
           >
-            {value}
+            {answered ? value : "—"}
           </span>
         </motion.div>
       </div>

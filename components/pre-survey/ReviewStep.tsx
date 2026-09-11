@@ -80,6 +80,7 @@ const rowsContainer: Variants = {
 export default function ReviewStep({
   formData,
   prevStep,
+  onBeforeSubmit,
 }: any) {
   const [isSubmitting, setIsSubmitting] = useState(false)
 
@@ -87,6 +88,14 @@ export default function ReviewStep({
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+
+    if (isSubmitting) {
+      return
+    }
+
+    if (onBeforeSubmit && !onBeforeSubmit()) {
+      return
+    }
 
     try {
       setIsSubmitting(true)
@@ -394,6 +403,7 @@ export default function ReviewStep({
           <StepButtons
             prevStep={prevStep}
             submit
+            disabled={isSubmitting}
             nextLabel={
               isSubmitting
                 ? "Submitting..."

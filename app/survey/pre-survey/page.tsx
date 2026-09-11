@@ -10,6 +10,10 @@ export default async function PreSurveyPage() {
     redirect("/login")
   }
 
+  if (session.user.role !== "PARTICIPANT") {
+    redirect("/dashboard")
+  }
+
   const preSurvey = await prisma.preSurveyResponse.findUnique({
     where: { userId: session.user.id },
     select: { id: true },

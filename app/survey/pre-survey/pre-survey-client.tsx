@@ -28,17 +28,17 @@ type PreSurveyFormData = {
   reading_help_frequency: string;
   diabetes_duration: string;
   current_treatments: string[];
-  attended_diabetes_classes: boolean;
+  attended_diabetes_classes: boolean | undefined;
   diabetes_tools_used: string[];
   overall_health_rating: string;
-  owns_smartphone: boolean;
+  owns_smartphone: boolean | undefined;
   internet_usage: string;
   app_comfort: string;
-  telehealth_used: boolean;
-  mental_health_apps_used: boolean;
-  smartphone_app_comfort: number;
-  digital_health_tools_used: boolean;
-  voice_tech_comfort: number;
+  telehealth_used: boolean | undefined;
+  mental_health_apps_used: boolean | undefined;
+  smartphone_app_comfort: number | undefined;
+  digital_health_tools_used: boolean | undefined;
+  voice_tech_comfort: number | undefined;
   communication_preference: string;
   phq1: number | undefined;
   phq2: number | undefined;
@@ -57,6 +57,15 @@ function isFilled(value: string): boolean {
 
 function isNonEmptyArray(value: string[]): boolean {
   return Array.isArray(value) && value.length > 0;
+}
+
+function isValidComfortScale(value: unknown): value is number {
+  return (
+    typeof value === "number" &&
+    Number.isInteger(value) &&
+    value >= 0 &&
+    value <= 10
+  );
 }
 
 function validateStep(
@@ -112,6 +121,9 @@ function validateStep(
       if (!isNonEmptyArray(formData.current_treatments)) {
         missing.push("current_treatments");
       }
+      if (typeof formData.attended_diabetes_classes !== "boolean") {
+        missing.push("attended_diabetes_classes");
+      }
       if (!isNonEmptyArray(formData.diabetes_tools_used)) {
         missing.push("diabetes_tools_used");
       }
@@ -121,8 +133,26 @@ function validateStep(
       break;
 
     case 5:
+      if (typeof formData.owns_smartphone !== "boolean") {
+        missing.push("owns_smartphone");
+      }
       if (!isFilled(formData.internet_usage)) missing.push("internet_usage");
       if (!isFilled(formData.app_comfort)) missing.push("app_comfort");
+      if (typeof formData.telehealth_used !== "boolean") {
+        missing.push("telehealth_used");
+      }
+      if (typeof formData.mental_health_apps_used !== "boolean") {
+        missing.push("mental_health_apps_used");
+      }
+      if (!isValidComfortScale(formData.smartphone_app_comfort)) {
+        missing.push("smartphone_app_comfort");
+      }
+      if (typeof formData.digital_health_tools_used !== "boolean") {
+        missing.push("digital_health_tools_used");
+      }
+      if (!isValidComfortScale(formData.voice_tech_comfort)) {
+        missing.push("voice_tech_comfort");
+      }
       if (!isFilled(formData.communication_preference)) {
         missing.push("communication_preference");
       }
@@ -174,19 +204,19 @@ export default function PreSurveyClient() {
 
     diabetes_duration: "",
     current_treatments: [] as string[],
-    attended_diabetes_classes: false,
+    attended_diabetes_classes: undefined,
     diabetes_tools_used: [] as string[],
     overall_health_rating: "",
 
-    owns_smartphone: false,
+    owns_smartphone: undefined,
     internet_usage: "",
     app_comfort: "",
-    telehealth_used: false,
-    mental_health_apps_used: false,
+    telehealth_used: undefined,
+    mental_health_apps_used: undefined,
 
-    smartphone_app_comfort: 0,
-    digital_health_tools_used: false,
-    voice_tech_comfort: 0,
+    smartphone_app_comfort: undefined,
+    digital_health_tools_used: undefined,
+    voice_tech_comfort: undefined,
     communication_preference: "",
 
     phq1: undefined,
@@ -215,6 +245,19 @@ export default function PreSurveyClient() {
   const prevStep = () => {
     setStepError("");
     setStep((prev) => Math.max(prev - 1, 1));
+  };
+
+  const canSubmitFinal = () => {
+    for (let dataStep = 1; dataStep <= 6; dataStep++) {
+      if (!validateStep(dataStep, formData).valid) {
+        setStepError(STEP_VALIDATION_MESSAGE);
+        setStep(dataStep);
+        return false;
+      }
+    }
+
+    setStepError("");
+    return true;
   };
 
   return (
@@ -279,7 +322,11 @@ export default function PreSurveyClient() {
       )}
 
       {step === 7 && (
-        <ReviewStep formData={formData} prevStep={prevStep} />
+        <ReviewStep
+          formData={formData}
+          prevStep={prevStep}
+          onBeforeSubmit={canSubmitFinal}
+        />
       )}
     </PreSurveyShell>
   );
