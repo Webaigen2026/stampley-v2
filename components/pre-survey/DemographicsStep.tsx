@@ -21,7 +21,7 @@ export default function DemographicsStep({
 
         <p className="mt-3 max-w-3xl text-sm leading-6 text-gray-700">
           Please complete the following background questions. Select the option
-          that best describes you.
+          that best describes you....
         </p>
       </div>
 

@@ -1,6 +1,6 @@
 "use client"
 
-import { Info, ShieldCheck } from "lucide-react"
+import { ShieldCheck } from "lucide-react"
 
 import StepButtons from "./StepButtons"
 
@@ -47,8 +47,6 @@ export default function ConsentStep({
           lg:px-10
         "
       >
-     
-
         <h1
           className="
             mt-4
@@ -77,48 +75,53 @@ export default function ConsentStep({
           whether you consent to participate in this study.
         </p>
 
-        {/* Pre-survey context */}
+        {/* =================================================
+            PRE-SURVEY CONTEXT
+        ================================================== */}
         <div
           className="
             mt-6
             flex
             max-w-[760px]
-            gap-4
-            shadow-lg
+            items-center
+            gap-5
             rounded-lg
             border-l-4
             border-l-blue-900
-          
             px-5
             py-5
+            shadow-lg
           "
         >
+          {/* Pre-survey illustration */}
           <div
             className="
-              mt-0.5
               flex
-              h-9
-              w-9
+              h-[76px]
+              w-[76px]
               shrink-0
               items-center
               justify-center
-              rounded-full
-              bg-white
-              text-[#1473E6]
-              shadow-[0_4px_14px_rgba(15,45,80,0.06)]
+              sm:h-[84px]
+              sm:w-[84px]
             "
           >
-            <Info
+            <img
+              src="/pre-survey/presurvey1.png"
+              alt=""
               aria-hidden="true"
-              size={18}
-              strokeWidth={1.7}
+              className="
+                h-full
+                w-full
+                object-contain
+              "
             />
           </div>
 
           <p
             className="
               max-w-[70ch]
-              text-sm
+              text-base
               font-normal
               leading-relaxed
               text-slate-600
@@ -129,6 +132,7 @@ export default function ConsentStep({
             throughout the AIDES-T2D program and support ongoing research
             focused on diabetes-related distress and well-being.
           </p>
+     
         </div>
       </div>
 
@@ -148,19 +152,18 @@ export default function ConsentStep({
         {/* =================================================
             IMPORTANT INFORMATION
         ================================================== */}
-       <div
+        <div
           className="
             mt-6
             flex
             max-w-[760px]
             gap-4
-            shadow-lg
             rounded-lg
             border-l-4
             border-l-blue-900
-          
             px-5
             py-5
+            shadow-lg
           "
         >
           <div className="flex items-start gap-4">
@@ -199,14 +202,24 @@ export default function ConsentStep({
                 className="
                   mt-4
                   space-y-3
-                  text-sm
+                  text-md
                   font-normal
                   leading-relaxed
                   text-slate-600
                 "
               >
                 <li className="flex gap-3">
-                  <span className="mt-[9px] h-1.5 w-1.5 shrink-0 rounded-full bg-[#1473E6]" />
+                  <span
+                    aria-hidden="true"
+                    className="
+                      mt-[9px]
+                      h-1.5
+                      w-1.5
+                      shrink-0
+                      rounded-full
+                      bg-[#1473E6]
+                    "
+                  />
 
                   <span>
                     Your participation in this study is completely voluntary.
@@ -214,7 +227,17 @@ export default function ConsentStep({
                 </li>
 
                 <li className="flex gap-3">
-                  <span className="mt-[9px] h-1.5 w-1.5 shrink-0 rounded-full bg-[#1473E6]" />
+                  <span
+                    aria-hidden="true"
+                    className="
+                      mt-[9px]
+                      h-1.5
+                      w-1.5
+                      shrink-0
+                      rounded-full
+                      bg-[#1473E6]
+                    "
+                  />
 
                   <span>
                     You may stop participating at any time without penalty.
@@ -222,7 +245,17 @@ export default function ConsentStep({
                 </li>
 
                 <li className="flex gap-3">
-                  <span className="mt-[9px] h-1.5 w-1.5 shrink-0 rounded-full bg-[#1473E6]" />
+                  <span
+                    aria-hidden="true"
+                    className="
+                      mt-[9px]
+                      h-1.5
+                      w-1.5
+                      shrink-0
+                      rounded-full
+                      bg-[#1473E6]
+                    "
+                  />
 
                   <span>
                     Your responses will be kept confidential and used only for
@@ -231,7 +264,17 @@ export default function ConsentStep({
                 </li>
 
                 <li className="flex gap-3">
-                  <span className="mt-[9px] h-1.5 w-1.5 shrink-0 rounded-full bg-[#1473E6]" />
+                  <span
+                    aria-hidden="true"
+                    className="
+                      mt-[9px]
+                      h-1.5
+                      w-1.5
+                      shrink-0
+                      rounded-full
+                      bg-[#1473E6]
+                    "
+                  />
 
                   <span>
                     Some survey questions may ask about your emotional
@@ -308,8 +351,9 @@ export default function ConsentStep({
                   `}
                 >
                   <div className="flex items-start gap-4">
-                    {/* Radio */}
+                    {/* Custom radio */}
                     <span
+                      aria-hidden="true"
                       className={`
                         mt-0.5
                         flex
@@ -334,7 +378,7 @@ export default function ConsentStep({
                       ) : null}
                     </span>
 
-                    {/* Native radio kept for behavior/accessibility */}
+                    {/* Native radio */}
                     <input
                       type="radio"
                       name="consent_status"
