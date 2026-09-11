@@ -1,7 +1,5 @@
 "use client"
 
-import Image from "next/image"
-
 import {
   Check,
   ChevronDown,
@@ -176,12 +174,12 @@ export default function DemographicsStep({
               items-start
               gap-4
               rounded-[14px]
-              border-l-4
-              border-blue-900
               bg-white
               px-5
               py-5
               shadow-[0_10px_32px_rgba(15,45,80,0.08)]
+              border-l-4
+              border-blue-900
               sm:px-6
             "
           >
@@ -218,20 +216,12 @@ export default function DemographicsStep({
                 justify-center
                 rounded-full
                 shadow-sm
+                text-sm
+                font-semibold
+                text-[#1473E6]
               "
             >
-              <Image
-                src="/dashboard/about.png"
-                alt=""
-                aria-hidden="true"
-                width={24}
-                height={24}
-                className="
-                  h-6
-                  w-6
-                  object-contain
-                "
-              />
+              i
             </motion.div>
 
             <motion.div
@@ -811,6 +801,162 @@ function SingleSelectCardField({
                   items-center
                   justify-center
                   rounded-full
+                  ${
+                    selected
+                      ? `
+                        bg-[#1473E6]
+                        text-white
+                        shadow-[0_4px_12px_rgba(20,115,230,0.22)]
+                      `
+                      : `
+                        bg-slate-100
+                        text-transparent
+                        shadow-[inset_0_0_0_1px_rgba(203,213,225,0.85)]
+                      `
+                  }
+                `}
+              >
+                <Check
+                  aria-hidden="true"
+                  strokeWidth={2.5}
+                  className="h-3.5 w-3.5"
+                />
+              </motion.span>
+            </motion.button>
+          )
+        })}
+      </div>
+    </FieldWrapper>
+  )
+}
+
+/* =========================================================
+   MULTI SELECT FIELD
+========================================================= */
+
+function MultiSelectField({
+  label,
+  name,
+  values,
+  options,
+  formData,
+  setFormData,
+  reduceMotion,
+}: any) {
+  function toggleOption(option: string) {
+    const current =
+      Array.isArray(values)
+        ? values
+        : []
+
+    const updated =
+      current.includes(option)
+        ? current.filter(
+            (item: string) =>
+              item !== option
+          )
+        : [
+            ...current,
+            option,
+          ]
+
+    setFormData({
+      ...formData,
+      [name]: updated,
+    })
+  }
+
+  return (
+    <FieldWrapper
+      label={label}
+      reduceMotion={reduceMotion}
+    >
+      <div
+        className="
+          grid
+          gap-3
+          sm:grid-cols-2
+          xl:grid-cols-3
+        "
+      >
+        {options.map((option: string) => {
+          const selected =
+            values?.includes(option)
+
+          return (
+            <motion.button
+              type="button"
+              key={option}
+              onClick={() =>
+                toggleOption(option)
+              }
+              aria-pressed={selected}
+              whileHover={
+                reduceMotion
+                  ? undefined
+                  : {
+                      y: -2,
+                    }
+              }
+              whileTap={
+                reduceMotion
+                  ? undefined
+                  : {
+                      scale: 0.99,
+                    }
+              }
+              transition={{
+                duration: 0.2,
+                ease: easeOut,
+              }}
+              className={`
+                flex
+                min-h-[62px]
+                cursor-pointer
+                items-center
+                justify-between
+                gap-3
+                rounded-[12px]
+                bg-white
+                px-4
+                py-3.5
+                text-left
+                text-sm
+                font-normal
+                outline-none
+                transition-shadow
+                duration-200
+                ${
+                  selected
+                    ? `
+                      bg-[#F3F8FF]
+                      text-[#173B7A]
+                      shadow-[0_8px_24px_rgba(20,115,230,0.14),inset_0_0_0_2px_rgba(20,115,230,0.75)]
+                    `
+                    : `
+                      text-slate-600
+                      shadow-[0_5px_18px_rgba(15,45,80,0.07)]
+                      hover:shadow-[0_8px_24px_rgba(15,45,80,0.11)]
+                    `
+                }
+              `}
+            >
+              <span className="leading-snug">
+                {option}
+              </span>
+
+              <motion.span
+                animate={{
+                  scale: selected ? 1 : 0.92,
+                }}
+                className={`
+                  flex
+                  h-6
+                  w-6
+                  shrink-0
+                  items-center
+                  justify-center
+                  rounded-[7px]
                   ${
                     selected
                       ? `

@@ -5,6 +5,7 @@ import Link from "next/link"
 
 import PreSurveySidebar from "./PreSurveySidebar"
 
+
 export default function PreSurveyShell({
   currentStep,
   children,
@@ -59,7 +60,9 @@ export default function PreSurveyShell({
             bg-white/92
             backdrop-blur-xl
             shadow-[0_1px_0_rgba(15,45,80,0.06),0_8px_24px_rgba(15,45,80,0.035)]
-          "
+          
+          
+            "
         >
           <div
             className="
@@ -112,11 +115,10 @@ export default function PreSurveyShell({
                 hidden
                 items-center
                 gap-2.5
-                rounded-full
-                bg-[#F4F8FD]
+              
                 px-4
                 py-2
-                shadow-[inset_0_0_0_1px_rgba(219,234,254,0.7)]
+                
                 sm:flex
               "
             >
@@ -126,24 +128,33 @@ export default function PreSurveyShell({
                   h-1.5
                   w-1.5
                   rounded-full
-                  bg-[#1473E6]
+                 
                 "
               />
 
+
+
+
               <span
                 className="
-                  text-[11px]
-                  font-semibold
-                  uppercase
-                  tracking-[0.16em]
-                  text-[#173B7A]
+                  text-[24px]
+                  font-bold
+                  text-blue-900
                 "
+                style={{
+                  fontFamily: `'Playfair Display', 'Cinzel', 'Dancing Script', 'Caveat', 'Great Vibes', cursive, serif, system-ui, sans-serif`,
+                  letterSpacing: '0.01em',
+                }}
               >
                 Pre-Survey
               </span>
+         
             </div>
           </div>
+          
         </header>
+
+       
 
         {/* ===================================================
             PAGE CONTENT
