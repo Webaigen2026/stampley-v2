@@ -153,11 +153,10 @@ export default async function DDSResultsPage() {
               hidden
               items-center
               gap-2.5
-              rounded-full
-              bg-[#F4F8FD]
+            
               px-4
               py-2
-              shadow-[inset_0_0_0_1px_rgba(219,234,254,0.7)]
+    
               sm:flex
             "
           >
@@ -604,51 +603,41 @@ export default async function DDSResultsPage() {
           <section
             className="
               mt-12
-              rounded-[22px]
+              
               bg-white
               p-6
               shadow-[0_14px_42px_rgba(15,45,80,0.08)]
               sm:p-8
             "
           >
-            <p
-              className="
-                text-[11px]
-                font-bold
-                uppercase
-                tracking-[0.26em]
-                text-cyan-700
-              "
-            >
-              Next Step
-            </p>
+         
 
-            <h2
-              className="
-                mt-3
-                text-2xl
-                font-light
-                tracking-tight
-                text-slate-950
-                sm:text-3xl
-              "
-            >
-              Choose your support focus
-            </h2>
+         <h2
+  className="
+    mt-3
+    text-2xl
+    font-light
+    tracking-tight
+    text-slate-950
+    sm:text-3xl
+  "
+>
+  Choose your support focus for today&apos;s check-in
+</h2>
 
-            <p
-              className="
-                mt-4
-                max-w-[720px]
-                text-base
-                leading-relaxed
-                text-slate-600
-              "
-            >
-              We recommend beginning with the area most connected to your DDS
-              responses. You can accept the recommendation or choose another
-              area that feels more important to you right now.
-            </p>
+<p
+  className="
+    mt-4
+    max-w-[720px]
+    text-base
+    leading-relaxed
+    text-slate-600
+  "
+>
+  Based on your DDS-17 responses, we recommend starting with the area
+  most relevant to you today. You can continue with our recommendation
+  or choose another area that feels more important right now.
+</p>
 
             <div className="mt-8">
               <DomainConfirmation

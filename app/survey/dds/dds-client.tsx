@@ -1149,7 +1149,7 @@ export default function DDSClient() {
         {loading
           ? "Calculating your results..."
           : allAnswered
-            ? "See My Results"
+            ? "Submit"
             : `Answer all questions (${remaining} remaining)`}
       </span>
 
