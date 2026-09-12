@@ -129,16 +129,67 @@ export default function CollapsibleSidebar() {
 
       {/* Hide the image when sidebar is collapsed */}
       {!isCollapsed && (
-        <div className="flex justify-center py-4">
-          <img
-            src="/dashboard/doctor.png"
-            alt="Doctor illustration"
-            loading="lazy"
-            draggable={false}
-            width={120}
-            height={120}
-          />
-        </div>
+            <div
+            aria-hidden="true"
+            className="
+              pointer-events-none
+            flex
+            justify-center
+              bottom-0
+            
+              z-10
+              h-[285px]
+              w-full
+              overflow-hidden
+            "
+          >
+            {/* Soft background circle */}
+            <div
+              className="
+                absolute
+                -bottom-[100px]
+                
+                h-[300px]
+                w-[300px]
+                rounded-full
+                bg-[radial-gradient(circle_at_center,#eef7ff_0%,#f7fbff_62%,transparent_100%)]
+              "
+            />
+        
+            {/* Secondary ring */}
+            <div
+              className="
+                absolute
+                bottom-[18px]
+                
+                h-[180px]
+                w-[180px]
+                rounded-full
+                border
+                border-[#d8e9f8]
+                opacity-70
+              "
+            />
+        
+          
+        <img
+          src="/dashboard/nurse.png"
+          alt=""
+          width={120}
+          height={160}
+          className="
+            absolute
+            bottom-0
+           
+            z-10
+            h-[168px]
+            w-auto
+            max-w-none
+            object-contain
+            object-bottom
+          "
+        />
+          </div>
       )}
 
     </aside>
