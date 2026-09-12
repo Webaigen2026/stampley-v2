@@ -8,7 +8,7 @@ import StepSidebar from "./StepSidebar"
 import Image from "next/image"
 
 const SIDEBAR_CONFIG = {
-  EXPANDED: "w-[320px]",
+  EXPANDED: "w-[300px]",
   COLLAPSED: "w-[88px]",
   TRANSITION: "transition-[width] duration-500 ease-[cubic-bezier(0.4,0,0.2,1)]",
 }
