@@ -277,7 +277,7 @@ export function StampleySidebar({
       >
         {/* Header */}
         <div
-          className={`flex h-[72px] shrink-0 items-center px-3 ${
+          className={`flex h-[82px] shrink-0 items-center px-3 ${
             isCollapsed ? "justify-center" : "justify-between"
           }`}
         >
@@ -285,11 +285,15 @@ export function StampleySidebar({
             // <span className="px-1 font-[JetBrains_Mono,monospace] text-[10px] uppercase tracking-[0.22em] text-black">
             //   Session
             // </span> 
-          <Link href="/dashboard" className="flex items-center gap-2 hover:scale-105 transition-all duration-300">
-              <Image src="/images/stampleyLogo.png" alt="Stampley" width={30} height={30} />
+          // <Link href="/dashboard" className="flex items-center gap-2 hover:scale-105 transition-all duration-300">
+          //     <Image src="/images/stampleyLogo.png" alt="Stampley" width={30} height={30} />
      
-          </Link>
-          
+          // </Link>
+
+          <div className="w-full h-full  flex items-center justify-start my-2 px-2">
+            {/* <img src="/dashboard/bannerlogo.png" alt="Stampley" width={50} height={50} /> */}
+         <span className="text-lg font-medium text-[#173B7A]">Daily Check-in</span>
+          </div> 
           
           )}
           <button
@@ -597,22 +601,69 @@ export function StampleySidebar({
               </p>
             </SidebarCard> */}
 
-            {setActiveView && (
-              <button
-                type="button"
-                onClick={() => setActiveView("results")}
-                className="flex w-full cursor-pointer items-center gap-2 rounded-[12px] bg-white px-3 py-3 text-sm text-[#173B7A] shadow-[0_8px_20px_rgba(15,45,80,0.06)] transition hover:bg-[#F7FAFD]"
-              >
-                <FileBarChart size={15} strokeWidth={1.6} />
-                <span className="flex-1 text-left">View results summary</span>
-                <ChevronRight size={15} strokeWidth={1.6} className="text-slate-400" />
-              </button>
-            )}
+          
        
           </div>
         )}
 
+{!isCollapsed && (
+  <div
+    aria-hidden="true"
+    className="
+      pointer-events-none
+      flex
+      justify-center
+      bottom-0
+      z-10
+      h-[285px]
+      w-full
+      overflow-hidden
+    "
+  >
+    {/* Soft background circle */}
+    <div
+      className="
+        absolute
+        -bottom-[100px]
+        h-[300px]
+        w-[300px]
+        rounded-full
+        bg-[radial-gradient(circle_at_center,#eef7ff_0%,#f7fbff_62%,transparent_100%)]
+      "
+    />
 
+    {/* Secondary ring */}
+    <div
+      className="
+        absolute
+        bottom-[18px]
+        h-[180px]
+        w-[180px]
+        rounded-full
+        border
+        border-[#d8e9f8]
+        opacity-70
+      "
+    />
+
+    <img
+      src="/dashboard/doctor.png"
+      alt=""
+      width={120}
+      height={160}
+      className="
+        absolute
+        bottom-0
+        z-10
+        h-[168px]
+        w-auto
+        max-w-none
+        object-contain
+        object-bottom
+      "
+    />
+  </div>
+)}
         
       </motion.aside>
     </>

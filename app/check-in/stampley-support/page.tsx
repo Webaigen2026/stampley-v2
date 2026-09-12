@@ -1374,7 +1374,7 @@ function ChatMessage({
         className="flex w-full justify-end"
       >
         <div className="flex max-w-[70%] flex-col items-end gap-1">
-          <div className="rounded-[18px] bg-[#1473E6] px-5 py-3 text-[16px] leading-relaxed text-white shadow-[0_8px_20px_rgba(20,115,230,0.16)]">
+          <div className="rounded-[18px]  px-5 py-3 text-[16px] leading-relaxed  shadow-[0_8px_20px_rgba(20,115,230,0.16)]">
             {msg.content}
           </div>
           <span className="px-2 text-[11px] text-slate-400">
