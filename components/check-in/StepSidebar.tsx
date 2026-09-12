@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation"
 import { Check, ShieldCheck, Sparkles } from "lucide-react"
 import { STEPS } from "@/app/check-in/constants/navigation"
 import { motion, AnimatePresence } from "framer-motion"
-import DailyWellnessRadar from "../daily-metrics/DailyWellnessRadar"
+// import DailyWellnessRadar from "../daily-metrics/DailyWellnessRadar"
 import { useCheckInStore } from "@/store/checkin-store"
 import { canNavigateToStep } from "@/lib/check-in-step-validation"
 
@@ -250,9 +250,9 @@ export default function StepSidebar({ collapsed = false }: StepSidebarProps) {
           })}
         </div>
 
-        <div className="mt-16 hidden w-full max-w-[300px] sm:block">
+        {/* <div className="mt-16 hidden w-full max-w-[300px] sm:block">
           <DailyWellnessRadar affect={affect} />
-        </div>
+        </div> */}
       </div>
 
       {!collapsed ? (

@@ -126,6 +126,20 @@ export default function CollapsibleSidebar() {
           <StepSidebar collapsed={isCollapsed} />
         </div>
       </div>
+
+
+    <div className="flex justify-center py-4">
+      <img
+        src="/dashboard/doctor.png"
+        alt="Doctor illustration"
+       
+        loading="lazy"
+        draggable={false}
+        width={120}
+        height={120}
+      />
+    </div>
+
     </aside>
   )
 }

@@ -31,7 +31,7 @@ function MetricCard({
   return (
     <section
       className="
-        rounded-[18px]
+        rounded-[8px]
         bg-white
         px-5
         py-6
