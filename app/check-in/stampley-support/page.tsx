@@ -4,7 +4,6 @@ import React, { useRef, useState, useCallback, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
-import StampleyHeader from "@/components/stampley/stampley-header"
 import {
   Phone,
   Wind,
@@ -20,6 +19,7 @@ import {
   SquarePen,
   Trash2,
 } from "lucide-react"
+import CheckInStepFrame from "@/components/check-in/CheckInStepFrame"
 import { useCheckInStore } from "@/store/checkin-store"
 import { useCheckInSubmit } from "@/components/check-in/CheckInSubmitContext"
 import {
@@ -53,8 +53,6 @@ import {
   writeActiveChatDraft,
   type ActiveChatSnapshot,
 } from "@/lib/stampley-active-chat-draft"
-import CheckInSubHeader from "@/components/check-in/CheckInSubHeader"
-
 type SavedMetrics = {
   distress: number
   mood: number
@@ -713,111 +711,80 @@ export default function StampleySupportPage() {
 
   if (!chatReady) {
     return (
-      <>
-        <style>{`
-          @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;1,9..144,300;1,9..144,400&family=JetBrains+Mono:wght@300;400;500&family=Outfit:wght@300;400;500;600&display=swap');
-        `}</style>
-
-        <motion.div
-          className="flex h-full min-h-0 w-full flex-col overflow-hidden bg-white text-[#0a0a0f] antialiased"
-          style={{ fontFamily: "'Outfit', system-ui, sans-serif" }}
-        >
-
-
-        <StampleyHeader
-  step="Step 5 of 5"
-  title="Stampley Support"
-  subtitle="Daily reflection support"
-/>
-<CheckInSubHeader
-          eyebrow="Step 5 of 5"
-          title="Stampley Support"
-          description="Review your check-in metrics and start chatting with Stampley."
-        />
-
-
-
-
-          <main className="flex min-h-0 flex-1 flex-col overflow-hidden my-10  ">
-            <div className="min-h-0 flex-1 overflow-y-auto mb-10">
-            <motion.div className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 py-6 md:px-6 md:py-8">
-              <section className="flex items-center gap-3  border border-black/[0.07] bg-white px-4 py-3 shadow-[0_1px_4px_rgba(10,10,15,0.04)]">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[9px] bg-[#3d5a80]/[0.08] text-[#3d5a80]">
-                  <Activity size={15} strokeWidth={1.5} />
-                </div>
-                <motion.div className="min-w-0 flex-1">
-                  <p className="mb-0.5 font-['Poppins', sans-serif] text-[8.5px] uppercase tracking-[0.18em] text-black">
-                    Today&apos;s metrics
-                 
-                    
-                  </p>
-                  <p className="text-[16px] font-['Poppins',sans-serif] text-black">
-                    Distress {metrics.distress} · Mood {metrics.mood} · Energy{" "}
-                    {metrics.energy}
-                    {metrics.domain ? (
-                      <span className="ml-1.5 text-[11px] text-black">
-                        · {metrics.domain}
-                      </span>
-                    ) : null}
-                  </p>
-                </motion.div>
-              </section>
-
-              {!isBusy && !chatStarted && (
-                <section className="space-y-3 ">
-                  <div className=" border border-black/[0.07] bg-white p-5 shadow-[0_1px_4px_rgba(10,10,15,0.04)]">
-                    <div className="mb-4 flex items-center gap-3">
-                      <CardIcon />
-                      <div>
-                        <p className="font-['Poppins', sans-serif] text-[8.5px] uppercase tracking-[0.18em] text-black">
-                          Ready for Stampley
-                        </p>
-                        <h2 className="font-[Fraunces,Georgia,serif] text-[22px] font-light tracking-[-0.02em] text-black">
-                          Your check-in is ready to discuss.
-                        </h2>
-                      </div>
-                    </div>
-                    <p className="text-[14px] font-light leading-[1.75] text-black">
-                      Review your summary below, then use the button in the dock
-                      to start chatting with Stampley. Your check-in will be
-                      saved when you tap Complete Check-in at the end.
-                    </p>
-                  </div>
-
-                  <div className="grid gap-2.5">
-                    <ReviewRow
-                      label="Context tags"
-                      value={
-                        store.contextTags.length > 0
-                          ? `${store.contextTags.length} selected`
-                          : "None"
-                      }
-                    />
-                    <ReviewRow label="Domain" value={store.domain ?? "—"} />
-                    {store.reflection && (
-                      <ReviewBlock label="Reflection" value={store.reflection} />
-                    )}
-                    {store.copingAction && (
-                      <ReviewBlock
-                        label="Coping action"
-                        value={store.copingAction}
-                      />
-                    )}
-                  </div>
-                </section>
-              )}
-
-              {isBusy && !chatStarted && <LoadingCard />}
-
-              {error && !chatStarted && (
-                <ErrorBanner message={error} />
-              )}
-            </motion.div>
+      <CheckInStepFrame
+        title="Stampley Support"
+        description="Review your check-in metrics and start chatting with Stampley."
+      >
+        <div className="space-y-5">
+          <section className="flex items-center gap-3 rounded-[16px] bg-white px-5 py-4 shadow-[0_10px_30px_rgba(15,45,80,0.07)]">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#EAF4FF] text-[#173B7A]">
+              <Activity size={16} strokeWidth={1.6} />
             </div>
-          </main>
+            <div className="min-w-0 flex-1">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#1473E6]">
+                Today&apos;s metrics
+              </p>
+              <p className="mt-1 text-base text-[#0B2857]">
+                Distress {metrics.distress} · Mood {metrics.mood} · Energy{" "}
+                {metrics.energy}
+                {metrics.domain ? (
+                  <span className="ml-1.5 text-sm text-slate-500">
+                    · {metrics.domain}
+                  </span>
+                ) : null}
+              </p>
+            </div>
+          </section>
 
-        </motion.div>
-      </>
+          {!isBusy && !chatStarted && (
+            <section className="space-y-3">
+              <div className="rounded-[18px] bg-white px-5 py-6 shadow-[0_10px_30px_rgba(15,45,80,0.07)] sm:px-6">
+                <div className="mb-4 flex items-center gap-3">
+                  <CardIcon />
+                  <div>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#1473E6]">
+                      Ready for Stampley
+                    </p>
+                    <h2 className="mt-1 text-xl font-medium tracking-tight text-[#0B2857]">
+                      Your check-in is ready to discuss.
+                    </h2>
+                  </div>
+                </div>
+                <p className="text-sm leading-relaxed text-slate-600 sm:text-base">
+                  Review your summary below, then use the button in the dock
+                  to start chatting with Stampley. Your check-in will be
+                  saved when you tap Complete Check-in at the end.
+                </p>
+              </div>
+
+              <div className="grid gap-3">
+                <ReviewRow
+                  label="Context tags"
+                  value={
+                    store.contextTags.length > 0
+                      ? `${store.contextTags.length} selected`
+                      : "None"
+                  }
+                />
+                <ReviewRow label="Domain" value={store.domain ?? "—"} />
+                {store.reflection && (
+                  <ReviewBlock label="Reflection" value={store.reflection} />
+                )}
+                {store.copingAction && (
+                  <ReviewBlock
+                    label="Coping action"
+                    value={store.copingAction}
+                  />
+                )}
+              </div>
+            </section>
+          )}
+
+          {isBusy && !chatStarted && <LoadingCard />}
+
+          {error && !chatStarted && <ErrorBanner message={error} />}
+        </div>
+      </CheckInStepFrame>
     )
   }
 
@@ -857,12 +824,7 @@ export default function StampleySupportPage() {
         
 <main className="flex h-full min-h-0 flex-1 flex-col overflow-hidden">
             <header
-            className="flex h-16 shrink-0 items-center justify-between px-4"
-            style={{
-              background: "#ffffff",
-              backdropFilter: "blur(12px)",
-              borderBottom: "1px solid rgba(10,10,5,0.06)",
-            }}
+            className="flex h-16 shrink-0 items-center justify-between border-b border-slate-100 bg-white px-4"
           >
             <button
               type="button"
@@ -1139,10 +1101,9 @@ export default function StampleySupportPage() {
              <button
                type="button"
                onClick={() => setActiveView("chat")}
-               className="mt-2 flex w-full items-center justify-center rounded-[18px] border border-[#005ea8]/10 bg-[#005ea8] px-5 py-4 text-[14px] font-medium tracking-[0.01em] text-white transition-all duration-200 hover:-translate-y-[1px] hover:bg-[#004b87] active:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#005ea8]/30 focus-visible:ring-offset-2"
+               className="mt-2 flex h-12 w-full items-center justify-center rounded-[10px] bg-[#173B7A] px-5 text-sm font-normal text-white shadow-[0_8px_20px_rgba(23,59,122,0.14)] transition hover:bg-[#122E60] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#173B7A]"
                style={{
-                 fontFamily: "'Poppins', sans-serif",
-                 boxShadow: "0 10px 24px rgba(0, 94, 168, 0.18)",
+                 fontFamily: "'Outfit', system-ui, sans-serif",
                }}
              >
                Return to Chat to Complete Check-in
@@ -1163,7 +1124,7 @@ export default function StampleySupportPage() {
 
 function CardIcon() {
   return (
-    <div className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-[#3d5a80]/[0.08] text-[#3d5a80]">
+    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#EAF4FF] text-[#173B7A]">
       <ShieldCheck size={16} strokeWidth={1.6} />
     </div>
   )
@@ -1171,18 +1132,18 @@ function CardIcon() {
 
 function ReviewRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex items-center justify-between  border border-black/[0.07] bg-white px-5 py-4 shadow-[0_1px_4px_rgba(10,10,15,0.04)]">
-      <p className="text-[12px] text-black">{label}</p>
-      <p className="text-right text-[13px] font-medium text-black/70">{value}</p>
+    <div className="flex items-center justify-between rounded-[16px] bg-white px-5 py-4 shadow-[0_10px_30px_rgba(15,45,80,0.07)]">
+      <p className="text-sm text-slate-500">{label}</p>
+      <p className="text-right text-sm font-medium text-[#0B2857]">{value}</p>
     </div>
   )
 }
 
 function ReviewBlock({ label, value }: { label: string; value: string }) {
   return (
-    <div className=" border border-black/[0.07] bg-white px-5 py-4 shadow-[0_1px_4px_rgba(10,10,15,0.04)]">
-      <p className="mb-2 text-[12px] text-black">{label}</p>
-      <p className="line-clamp-4 text-[13px] leading-[1.75] text-black/60">
+    <div className="rounded-[16px] bg-white px-5 py-4 shadow-[0_10px_30px_rgba(15,45,80,0.07)]">
+      <p className="mb-2 text-sm text-slate-500">{label}</p>
+      <p className="line-clamp-4 text-sm leading-relaxed text-[#0B2857]">
         {value}
       </p>
     </div>
@@ -1194,9 +1155,9 @@ function LoadingCard() {
     <motion.section
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      className="flex items-center gap-3.5 rounded-[16px] border border-black/[0.07] bg-white px-5 py-6 shadow-[0_1px_4px_rgba(10,10,15,0.04)]"
+      className="flex items-center gap-3.5 rounded-[16px] bg-white px-5 py-6 shadow-[0_10px_30px_rgba(15,45,80,0.07)]"
     >
-      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] border border-black/[0.08] bg-white">
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#F7FAFD]">
         <Image
           src="/images/stampleyLogo.png"
           alt="Stampley"
@@ -1206,11 +1167,11 @@ function LoadingCard() {
         />
       </div>
       <div>
-        <div className="flex items-center gap-2 text-[14px] font-light text-black/55">
-          <Loader2 size={15} className="animate-spin text-[#3d5a80]" />
+        <div className="flex items-center gap-2 text-sm text-slate-600">
+          <Loader2 size={15} className="animate-spin text-[#173B7A]" />
           <span>Stampley is preparing your response…</span>
         </div>
-        <p className="mt-1 text-[12px] text-black/35">
+        <p className="mt-1 text-xs text-slate-400">
           This usually takes a few seconds.
         </p>
       </div>
@@ -1225,10 +1186,10 @@ function ErrorBanner({ message }: { message: string }) {
     <motion.section
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      className={` border px-4 py-3 text-[13px] leading-[1.65] ${
+      className={`rounded-[14px] px-4 py-3 text-sm leading-relaxed ${
         isDuplicate
-          ? "border-amber-200/70 bg-amber-50/90 text-amber-900"
-          : "border-red-200/70 bg-red-50/90 text-red-700"
+          ? "bg-amber-50 text-amber-900"
+          : "bg-red-50 text-red-700"
       }`}
     >
       {message}
@@ -1238,32 +1199,19 @@ function ErrorBanner({ message }: { message: string }) {
 
 function MetricsBar({ metrics }: { metrics: SavedMetrics }) {
   return (
-    <div
-      className="flex items-center gap-3  px-4 py-3"
-      style={{
-        background: "white",
-        border: "1px solid #cfd9e5",
-        boxShadow: "0 1px 4px rgba(10,10,5,0.04)",
-      }}
-    >
-      <motion.div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[9px] bg-black/[0.05]">
-        <Activity size={14} strokeWidth={1.5} className="text-black" />
+    <div className="flex items-center gap-3 rounded-[16px] bg-white px-4 py-3 shadow-[0_10px_30px_rgba(15,45,80,0.07)]">
+      <motion.div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#EAF4FF] text-[#173B7A]">
+        <Activity size={14} strokeWidth={1.5} />
       </motion.div>
       <div>
-        <p
-          className="mb-0.5 text-[8px] uppercase tracking-[0.2em]"
-          style={{
-            color: "text-black",
-            fontFamily: "'Poppins', sans-serif",
-          }}
-        >
+        <p className="mb-0.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#1473E6]">
           Today&apos;s metrics
         </p>
-        <p className="text-[12px] font-light text-black/55">
+        <p className="text-sm text-slate-600">
           Distress {metrics.distress} · Mood {metrics.mood} · Energy{" "}
           {metrics.energy}
           {metrics.domain ? (
-            <span className="ml-2 text-[10px] text-black/25">
+            <span className="ml-2 text-xs text-slate-400">
               · {metrics.domain}
             </span>
           ) : null}
@@ -1285,7 +1233,7 @@ function ReflectionSummaryCard({
 
   return (
     <motion.div
-      className="rounded-[12px] border border-black/[0.07] bg-white px-3.5 py-3 shadow-[0_1px_4px_rgba(10,10,15,0.04)]"
+      className="rounded-[16px] bg-white px-3.5 py-3 shadow-[0_10px_30px_rgba(15,45,80,0.07)]"
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
       transition={materialSpring}
@@ -1350,10 +1298,10 @@ function ChatInputDock({
     <div className="shrink-0 w-full  bg-white px-4 pb-4 pt-3 md:px-6 md:pb-6">
       <div className="mx-auto w-full max-w-3xl">
         <div
-          className={`rounded-[26px] border bg-white transition-all duration-300 ${
+          className={`rounded-[16px] bg-white transition-all duration-300 ${
             inputHintActive
-              ? "border-[#005ea8]/40 ring-2 ring-[#005ea8]/10 shadow-[0_0_0_3px_rgba(0,94,168,0.06)]"
-              : "border-blue-100 shadow-[0_4px_24px_rgba(10,10,15,0.07)] focus-within:border-blue-900 focus-within:shadow-[0_8px_30px_rgba(61,90,128,0.10)]"
+              ? "ring-1 ring-[#1473E6]/30 shadow-[0_10px_30px_rgba(15,45,80,0.07)]"
+              : "shadow-[0_10px_30px_rgba(15,45,80,0.07)] focus-within:ring-1 focus-within:ring-[#173B7A]/25"
           }`}
         >
         <div className="flex items-center gap-3 px-4 py-3">
@@ -1365,12 +1313,12 @@ function ChatInputDock({
     placeholder="Reply to Stampley..."
     disabled={inputDisabled}
     aria-label="Reply to Stampley"
-    className={`h-9 flex-1 bg-transparent text-[16px] font-['Poppins', sans-serif] font-light text-black caret-[#005ea8] outline-none transition-all duration-300 disabled:opacity-40 ${
+    className={`h-9 flex-1 bg-transparent text-base font-light text-[#0B2857] caret-[#1473E6] outline-none transition-all duration-300 disabled:opacity-40 ${
       inputHintActive
-        ? "placeholder:animate-pulse placeholder:text-black/60"
-        : "placeholder:text-black"
+        ? "placeholder:animate-pulse placeholder:text-slate-400"
+        : "placeholder:text-slate-400"
     }`}
-    style={{ fontFamily: "'Poppins', sans-serif",  }}
+    style={{ fontFamily: "'Outfit', system-ui, sans-serif" }}
   />
 
   <button
@@ -1379,8 +1327,8 @@ function ChatInputDock({
     disabled={!inputText.trim() || inputDisabled}
     className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-all duration-150 ${
       inputText.trim() && !inputDisabled
-        ? "bg-blue-900 text-white hover:scale-[1.02] hover:bg-blue-900 active:scale-[0.98]"
-        : "cursor-not-allowed bg-black/[0.06] text-black/25"
+        ? "bg-[#173B7A] text-white hover:bg-[#122E60] active:scale-[0.98]"
+        : "cursor-not-allowed bg-[#F7FAFD] text-slate-300"
     }`}
     aria-label="Send message"
   >
@@ -1401,10 +1349,10 @@ function ChatInputDock({
           type="button"
           onClick={onComplete}
           disabled={inputDisabled || !canComplete}
-          className={`mt-3 flex w-full items-center justify-center gap-2 rounded-[16px] px-6 py-3.5 text-[12.5px] font-semibold uppercase tracking-[0.08em] transition-all duration-200 ${
+          className={`mt-3 flex h-12 w-full items-center justify-center gap-2 rounded-[10px] px-6 text-sm font-normal transition-all duration-200 ${
             inputDisabled || !canComplete
-              ? "cursor-not-allowed border border-[#cfd9e5] bg-[#eef3f8] text-[#7c8da1]"
-              : "bg-[#3d5a80] text-white shadow-[0_6px_18px_rgba(61,90,128,0.22)] hover:-translate-y-px hover:bg-[#2f4a6e]"
+              ? "cursor-not-allowed bg-[#F7FAFD] text-slate-400"
+              : "bg-[#173B7A] text-white shadow-[0_8px_20px_rgba(23,59,122,0.14)] hover:bg-[#122E60]"
           }`}
           style={{ fontFamily: "'Outfit', system-ui, sans-serif" }}
         >
@@ -1745,7 +1693,7 @@ function SafetyCard({
           initial={{ opacity: 0, height: 0 }}
           animate={{ opacity: 1, height: "auto" }}
           exit={{ opacity: 0, height: 0 }}
-          className="relative flex items-start gap-4 overflow-hidden rounded-[16px] border border-[#3d5a80]/20 bg-[#3d5a80]/[0.04] p-5"
+          className="relative flex items-start gap-4 overflow-hidden rounded-[16px] bg-[#F7FAFD] p-5"
         >
           <button
             type="button"
@@ -1763,15 +1711,15 @@ function SafetyCard({
             </svg>
           </button>
 
-          <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] bg-[#3d5a80]/10 text-[#3d5a80]">
+          <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#EAF4FF] text-[#173B7A]">
             <Phone size={16} strokeWidth={1.5} />
           </div>
 
           <div className="min-w-0 flex-1 pr-6">
-            <h3 className="mb-1 font-[Fraunces,Georgia,serif] text-[17px] font-light text-[#0a0a0f]/80">
+            <h3 className="mb-1 text-lg font-medium text-[#0B2857]">
               Support is available
             </h3>
-            <p className="mb-4 text-[15px] font-light leading-[1.65] text-black/55">
+            <p className="mb-4 text-[15px] leading-relaxed text-slate-600">
               Your stress level is very high today. You don&apos;t have to carry
               this alone. If you need immediate support, resources are available
               right now.
@@ -1780,7 +1728,7 @@ function SafetyCard({
             <button
               type="button"
               onClick={() => setShowSupport(!showSupport)}
-              className="rounded-full border border-[#3d5a80]/30 bg-[#3d5a80]/[0.06] px-4 py-2 font-['Poppins', sans-serif] text-[10px] uppercase tracking-[0.14em] text-[#3d5a80] transition-all duration-200 hover:bg-[#3d5a80]/10"
+              className="rounded-[10px] bg-[#EAF4FF] px-4 py-2 text-xs font-medium uppercase tracking-[0.12em] text-[#173B7A] transition hover:bg-[#F1F7FF] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#173B7A]"
             >
               {showSupport ? "Hide Resources" : "View Resources"}
             </button>
@@ -1793,23 +1741,23 @@ function SafetyCard({
                   exit={{ height: 0, opacity: 0 }}
                   className="mt-4 overflow-hidden"
                 >
-                  <motion.div className="space-y-2.5 rounded-[12px] border border-black/[0.07] bg-white p-4">
+                  <motion.div className="space-y-2.5 rounded-[14px] bg-white p-4">
                     <a
                       href="sms:741741&body=HOME"
-                      className="flex items-center gap-2 rounded-[10px] border border-[#3d5a80]/25 bg-[#3d5a80]/[0.04] px-4 py-2.5 text-[12.5px] font-medium text-[#3d5a80] transition-all hover:bg-[#3d5a80]/[0.08]"
+                      className="flex items-center gap-2 rounded-[10px] bg-[#EAF4FF] px-4 py-2.5 text-[12.5px] font-medium text-[#173B7A] transition hover:bg-[#F1F7FF]"
                     >
                       Crisis Text Line — Text HOME to 741741
                     </a>
                     <a
                       href="tel:18006624357"
-                      className="flex items-center gap-2 rounded-[10px] border border-[#3d5a80]/25 bg-[#3d5a80]/[0.04] px-4 py-2.5 text-[12.5px] font-medium text-[#3d5a80] transition-all hover:bg-[#3d5a80]/[0.08]"
+                      className="flex items-center gap-2 rounded-[10px] bg-[#EAF4FF] px-4 py-2.5 text-[12.5px] font-medium text-[#173B7A] transition hover:bg-[#F1F7FF]"
                     >
                       <Phone size={14} strokeWidth={1.5} />
                       SAMHSA Helpline — 1-800-662-4357
                     </a>
                     <a
                       href="mailto:pcrg@umb.edu"
-                      className="flex items-center gap-2 rounded-[10px] border border-[#3d5a80]/25 bg-[#3d5a80]/[0.04] px-4 py-2.5 text-[12.5px] font-medium text-[#3d5a80] transition-all hover:bg-[#3d5a80]/[0.08]"
+                      className="flex items-center gap-2 rounded-[10px] bg-[#EAF4FF] px-4 py-2.5 text-[12.5px] font-medium text-[#173B7A] transition hover:bg-[#F1F7FF]"
                     >
                       <Mail size={14} strokeWidth={1.5} />
                       pcrg@umb.edu

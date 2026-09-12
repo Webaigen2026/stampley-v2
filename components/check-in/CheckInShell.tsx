@@ -10,9 +10,22 @@ export default function CheckInShell({ children }: { children: React.ReactNode }
     <CheckInSubmitProvider>
       <WeeklyDomainSync />
       <PageTransition>{children}</PageTransition>
-      <div className="fixed bottom-6 left-0 right-0 z-30 flex justify-center px-4 pointer-events-none">
-        <div className="pointer-events-auto">
-          <StepDock />
+      <div className="pointer-events-none fixed inset-x-0 bottom-0 z-30">
+        <div
+          className="
+            pointer-events-auto
+            
+           
+            px-5
+            py-4
+          
+            sm:px-8
+            lg:pr-30
+          "
+        >
+          <div className="mx-auto flex justify-end">
+            <StepDock />
+          </div>
         </div>
       </div>
     </CheckInSubmitProvider>

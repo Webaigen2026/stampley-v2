@@ -19,7 +19,7 @@ export const STEPS = [
     },
     {
       id: "04",
-      label: "Weekly Domain",
+      label: "Weekly Focus",
       path: "/check-in/weekly-domain",
       description: "Your focus area",
     },
