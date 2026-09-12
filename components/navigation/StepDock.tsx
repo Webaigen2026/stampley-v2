@@ -96,7 +96,7 @@ export default function StepDock() {
     <div className="flex w-full max-w-[920px] flex-col items-stretch gap-2 font-['Outfit',system-ui,sans-serif]">
       {continueBlockedMessage ? (
         <p
-          className="px-1 text-center text-sm font-medium leading-snug text-blue-500"
+          className="px-1 text-center text-sm font-medium leading-snug "
           role="status"
         >
           {continueBlockedMessage}
