@@ -175,7 +175,7 @@ export default function StepSidebar({ collapsed = false }: StepSidebarProps) {
                       rounded-[12px]
                       px-2
                       py-1.5
-                      ${isActive ? "bg-[#F7FAFD]" : ""}
+                      ${isActive ? "" : ""}
                     `}
                   >
                     <p
