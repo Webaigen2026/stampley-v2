@@ -127,18 +127,19 @@ export default function CollapsibleSidebar() {
         </div>
       </div>
 
-
-    <div className="flex justify-center py-4">
-      <img
-        src="/dashboard/doctor.png"
-        alt="Doctor illustration"
-       
-        loading="lazy"
-        draggable={false}
-        width={120}
-        height={120}
-      />
-    </div>
+      {/* Hide the image when sidebar is collapsed */}
+      {!isCollapsed && (
+        <div className="flex justify-center py-4">
+          <img
+            src="/dashboard/doctor.png"
+            alt="Doctor illustration"
+            loading="lazy"
+            draggable={false}
+            width={120}
+            height={120}
+          />
+        </div>
+      )}
 
     </aside>
   )

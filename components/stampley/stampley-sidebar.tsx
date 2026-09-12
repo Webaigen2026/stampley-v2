@@ -10,6 +10,9 @@ import {
   CheckCircle2,
   Circle,
   CircleDot,
+  ChevronRight,
+  BarChart3,
+  HeartPulse,
 } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
@@ -197,16 +200,23 @@ function SidebarCard({
 }) {
   return (
     <motion.div
-      className={` border-b border-black/[0.07] bg-white p-3.5  ${className}`}
+      className={`rounded-[16px] bg-white p-4 shadow-[0_10px_30px_rgba(15,45,80,0.07)] ${className}`}
     >
       {children}
     </motion.div>
   )
 }
 
-function MonoLabel({ children }: { children: React.ReactNode }) {
+function MonoLabel({
+  children,
+  icon,
+}: {
+  children: React.ReactNode
+  icon?: React.ReactNode
+}) {
   return (
-    <p className="mb-4  text-[16px] font-['Poppins',sans-serif]   font-bold text-black">
+    <p className="mb-4 flex items-center gap-2 text-[13px] font-semibold uppercase tracking-[0.14em] text-[#173B7A]">
+      {icon}
       {children}
     </p>
   )
@@ -263,19 +273,13 @@ export function StampleySidebar({
         initial={false}
         animate={{ width: isCollapsed ? 68 : 272 }}
         transition={{ type: "spring", stiffness: 400, damping: 40 }}
-        className="relative z-50 flex h-full min-h-0 shrink-0 select-none flex-col overflow-hidden"
-        style={{
-          background: "#ffffff",
-          borderRight: "1px solid rgba(10,10,5,0.07)",
-          fontFamily: "'Outfit', system-ui, sans-serif",
-        }}
+        className="relative z-50 flex h-full min-h-0 shrink-0 select-none flex-col overflow-hidden border-r border-slate-100 bg-white font-['Outfit',system-ui,sans-serif]"
       >
         {/* Header */}
         <div
-          className={`flex h-16 shrink-0 items-center px-3 ${
+          className={`flex h-[72px] shrink-0 items-center px-3 ${
             isCollapsed ? "justify-center" : "justify-between"
           }`}
-          style={{ borderBottom: "1px solid rgba(10,10,5,0.05)" }}
         >
           {!isCollapsed && (
             // <span className="px-1 font-[JetBrains_Mono,monospace] text-[10px] uppercase tracking-[0.22em] text-black">
@@ -291,7 +295,7 @@ export function StampleySidebar({
           <button
             type="button"
             onClick={() => setIsCollapsed(!isCollapsed)}
-            className="flex h-8 w-8 items-center justify-center rounded-[9px] border border-black/[0.07] text-black transition-all duration-200"
+            className="flex h-8 w-8 items-center justify-center rounded-[10px] text-slate-400 transition hover:bg-slate-50 hover:text-slate-700"
             aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
           >
             {isCollapsed ? (
@@ -333,16 +337,12 @@ export function StampleySidebar({
             }}
           >
 
-<SidebarCard className="p-4">
-     {/* DDS focus */}
-     {(dayNumber || weekNumber || subscale) && (
-                <p className="mt-2.5 font-['Poppins',sans-serif] text-[16px]   tracking-[0.12em] text-black">
-                  {weekNumber ? `Week ${weekNumber}` : ""}
-                  {dayNumber ? ` · Day ${dayNumber}` : ""}
-                  {/* {subscale ? ` · ${subscale}` : ""} */}
-                </p>
-              )}
-</SidebarCard>
+            {(dayNumber || weekNumber) && (
+              <p className="px-1 text-sm font-medium text-[#0B2857]">
+                {weekNumber ? `Week ${weekNumber}` : ""}
+                {dayNumber ? ` · Day ${dayNumber}` : ""}
+              </p>
+            )}
 
 
             {/* DDS focus */}
@@ -371,7 +371,9 @@ export function StampleySidebar({
 </SidebarCard> */}
 
 <SidebarCard className="p-4">
-  <MonoLabel>DDS Summary</MonoLabel>
+  <MonoLabel icon={<BarChart3 size={14} strokeWidth={1.8} className="text-[#1473E6]" />}>
+    DDS Summary
+  </MonoLabel>
 
   {ddsSummary ? (
     <div className="space-y-3">
@@ -421,8 +423,8 @@ export function StampleySidebar({
       </div> */}
     </div>
   ) : (
-    <div className="rounded-[12px] border border-dashed border-black/[0.08] bg-black/[0.02] p-4">
-      <p className="text-[16px] font-['Poppins',sans-serif] leading-[1.65] text-black/50">
+    <div className="rounded-[12px] bg-[#F7FAFD] p-4">
+      <p className="text-sm leading-relaxed text-slate-500">
         DDS results will appear here after the DDS-17 survey is completed.
       </p>
     </div>
@@ -440,16 +442,19 @@ export function StampleySidebar({
 
             {/* Today's status */}
             <SidebarCard className="p-4">
-              <MonoLabel>Today&apos;s status</MonoLabel>
-              <motion.div className="space-y-2">
-                <MetricRow label="Stress" value={`${distress}/10`}  />
-                <MetricRow label="Mood" value={`${mood}/10`} />
-                <MetricRow label="Energy" value={`${energy}/10`} />
-                <MetricRow
-                  label="Focus domain"
-                  value={currentDomain ?? "—"}
-                  accent
-                />
+              <MonoLabel icon={<HeartPulse size={14} strokeWidth={1.8} className="text-[#1473E6]" />}>
+                Today&apos;s Status
+              </MonoLabel>
+              <motion.div className="space-y-3">
+                <MetricRow label="Stress" value={`${distress}/10`} score={distress} />
+                <MetricRow label="Mood" value={`${mood}/10`} score={mood} />
+                <MetricRow label="Energy" value={`${energy}/10`} score={energy} />
+                <div className="flex items-center justify-between gap-3 pt-1">
+                  <span className="text-sm text-slate-500">Focus domain</span>
+                  <span className="inline-flex items-center rounded-full bg-[#EAF4FF] px-2.5 py-1 text-xs font-medium text-[#173B7A]">
+                    {currentDomain ?? "—"}
+                  </span>
+                </div>
               </motion.div>
              
             </SidebarCard>
@@ -593,21 +598,22 @@ export function StampleySidebar({
             </SidebarCard> */}
 
             {setActiveView && (
-              <div className="absolute bottom-0 left-0 right-0 z-10 bg-white/90 pt-4 pb-3 px-0 " style={{marginLeft: '-12px', marginRight: '-12px'}}>
-                <button
-                  type="button"
-                  onClick={() => setActiveView("results")}
-                  className="flex w-full py-10 items-center cursor-pointer justify-center gap-2 rounded-[10px] border border-black/[0.08] bg-white px-3 py-2.5 text-[14px]  tracking-[0.12em] text-black/45 transition-all hover:border-black/20 hover:text-black"
-                  style={{ fontFamily: 'Poppins, sans-serif' }}
-                >
-                  <FileBarChart size={13} strokeWidth={1.5} />
-                  View results summary
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={() => setActiveView("results")}
+                className="flex w-full cursor-pointer items-center gap-2 rounded-[12px] bg-white px-3 py-3 text-sm text-[#173B7A] shadow-[0_8px_20px_rgba(15,45,80,0.06)] transition hover:bg-[#F7FAFD]"
+              >
+                <FileBarChart size={15} strokeWidth={1.6} />
+                <span className="flex-1 text-left">View results summary</span>
+                <ChevronRight size={15} strokeWidth={1.6} className="text-slate-400" />
+              </button>
             )}
        
           </div>
         )}
+
+
+        
       </motion.aside>
     </>
   )
@@ -616,24 +622,35 @@ function MetricRow({
   label,
   value,
   accent = false,
+  score,
 }: {
   label: string
   value: string
   accent?: boolean
+  score?: number
 }) {
-  return (
-    <div className="flex items-center justify-between gap-3">
-      <span className="text-[16px] font-['Poppins',sans-serif] text-black">
-        {label}
-      </span>
+  const fill = typeof score === "number" ? Math.min(Math.max(score, 0), 10) * 10 : null
 
-      <span
-        className={`text-[16px] font-['Poppins',sans-serif] ${
-          accent ? "font-medium text-black" : "text-black"
-        }`}
-      >
-        {value}
-      </span>
+  return (
+    <div className="space-y-1.5">
+      <div className="flex items-center justify-between gap-3">
+        <span className="text-sm text-slate-500">{label}</span>
+        <span
+          className={`text-sm ${
+            accent ? "font-medium text-[#0B2857]" : "text-[#0B2857]"
+          }`}
+        >
+          {value}
+        </span>
+      </div>
+      {fill !== null ? (
+        <div className="h-1.5 overflow-hidden rounded-full bg-[#EAF4FF]">
+          <div
+            className="h-full rounded-full bg-[#1473E6]"
+            style={{ width: `${fill}%` }}
+          />
+        </div>
+      ) : null}
     </div>
   )
 }

@@ -15,13 +15,16 @@ import {
   Activity,
   ShieldCheck,
   ArrowUp,
+  ArrowRight,
   Menu,
   SquarePen,
   Trash2,
+  Calendar,
 } from "lucide-react"
 import CheckInStepFrame from "@/components/check-in/CheckInStepFrame"
 import { useCheckInStore } from "@/store/checkin-store"
 import { useCheckInSubmit } from "@/components/check-in/CheckInSubmitContext"
+import { useCheckInSidebarVisibility } from "@/components/check-in/CheckInSidebarVisibility"
 import {
   getConversations,
   saveConversations,
@@ -134,6 +137,7 @@ export default function StampleySupportPage() {
   const router = useRouter()
   const store = useCheckInStore()
   const { register } = useCheckInSubmit()
+  const { setHideOuterSidebar } = useCheckInSidebarVisibility()
   const submitInFlightRef = useRef(false)
   const startChatInFlightRef = useRef(false)
   const skipDraftPersistRef = useRef(true)
@@ -612,6 +616,11 @@ export default function StampleySupportPage() {
     chatStarted,
   ])
 
+  useEffect(() => {
+    setHideOuterSidebar(chatStarted)
+    return () => setHideOuterSidebar(false)
+  }, [chatStarted, setHideOuterSidebar])
+
   async function handleSend() {
     if (!inputText.trim() || loading || !chatSnapshot) return
 
@@ -789,17 +798,16 @@ export default function StampleySupportPage() {
   }
 
   return (
-    <>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=JetBrains+Mono:wght@300;400;500&family=Outfit:wght@300;400;500;600&display=swap');
-      `}</style>
+    <div className="relative isolate flex h-full min-h-0 w-full overflow-hidden bg-white font-['Outfit',system-ui,sans-serif]">
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 -z-10 overflow-hidden"
+      >
+        <div className="absolute -right-[160px] -top-[80px] h-[420px] w-[420px] rounded-full bg-[#EAF4FF]/60 blur-[120px]" />
+        <div className="absolute -bottom-[120px] -left-[140px] h-[380px] w-[380px] rounded-full bg-[#F1F7FF]/80 blur-[110px]" />
+        <div className="absolute bottom-[40px] right-[-80px] h-[260px] w-[260px] rounded-full bg-[#F7FAFD]/90 blur-[90px]" />
+      </div>
 
-<div
-  className="flex h-full min-h-0 w-full overflow-hidden bg-white"
-  style={{
-    fontFamily: "'Outfit', system-ui, sans-serif",
-  }}
->
         <StampleySidebar
           isOpen={isSidebarOpen}
           setIsOpen={setIsSidebarOpen}
@@ -823,60 +831,36 @@ export default function StampleySupportPage() {
 
         
 <main className="flex h-full min-h-0 flex-1 flex-col overflow-hidden">
-            <header
-            className="flex h-16 shrink-0 items-center justify-between border-b border-slate-100 bg-white px-4"
-          >
+            <header className="flex h-[72px] shrink-0 items-center justify-between bg-white px-4 shadow-[0_1px_0_rgba(15,45,80,0.06)]">
             <button
               type="button"
               onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-              className="flex h-8 w-8 items-center justify-center rounded-[9px] transition-all duration-200 md:hidden"
-              style={{
-                border: "1px solid rgba(10,10,5,0.07)",
-                color: "rgba(10,10,5,0.38)",
-                fontFamily: "'Poppins', sans-serif",
-              }}
+              className="flex h-9 w-9 items-center justify-center rounded-[10px] text-slate-400 transition hover:bg-slate-50 hover:text-slate-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#173B7A] md:hidden"
               aria-label="Toggle sidebar"
             >
               <Menu size={15} strokeWidth={1.5} />
             </button>
 
             <motion.div className="hidden min-w-0 md:block">
-          
-              <p className="font-['Poppins', sans-serif] text-[16px]  text-black">
+              <p className="text-base font-medium text-[#0B2857]">
                 {subscale
                   ? `Week ${weekNumber} · Day ${dayNumber} · ${subscale}`
                   : "Chat in progress · not saved yet"}
               </p>
+              <p className="mt-0.5 text-xs text-slate-500">Stampley Support</p>
             </motion.div>
 
-            <div
-              className="flex items-center gap-0.5 rounded-full p-1"
-              style={{
-                background: "rgba(10,10,5,0.04)",
-                border: "1px solid rgba(10,10,5,0.06)",
-              }}
-            >
+            <div className="flex items-center gap-0.5 rounded-full bg-[#F7FAFD] p-1">
               {(["chat", "results"] as const).map((view) => (
                 <button
                   key={view}
                   type="button"
                   onClick={() => setActiveView(view)}
-                  className="rounded-full px-4 py-1.5 text-[11px] font-medium uppercase tracking-[0.08em] transition-all duration-200"
-                  style={{
-                    fontFamily: "'JetBrains Mono', monospace",
-                    background:
-                      activeView === view
-                        ? "white"
-                        : "transparent",
-                    color:
-                      activeView === view
-                        ? "rgba(10,10,5,0.7)"
-                        : "rgba(10,10,5,0.35)",
-                    boxShadow:
-                      activeView === view
-                        ? "0 1px 4px rgba(10,10,5,0.08)"
-                        : "none",
-                  }}
+                  className={`rounded-full px-4 py-1.5 text-[11px] font-medium uppercase tracking-[0.08em] transition ${
+                    activeView === view
+                      ? "bg-white text-[#173B7A] shadow-[0_4px_12px_rgba(23,59,122,0.10)]"
+                      : "text-slate-400"
+                  }`}
                 >
                   {view === "chat" ? "Chat" : "Results"}
                 </button>
@@ -907,26 +891,21 @@ export default function StampleySupportPage() {
             <div className="relative">
               <button
                 type="button"
-                className="flex h-8 w-8 items-center justify-center rounded-[9px] transition-all duration-200"
-                style={{ color: "rgba(10,10,5,0.35)" }}
+                className="flex h-8 w-8 items-center justify-center rounded-[9px] text-slate-400 transition hover:bg-slate-50 hover:text-slate-700"
                 aria-label="Show explanation"
                 onClick={() => setShowExplanation((prev: boolean) => !prev)}
               >
                 <BookOpen size={14} strokeWidth={1.5} />
               </button>
               {showExplanation && (
-                <div
-                  className="absolute z-10 top-10 right-0 rounded-md shadow-lg border border-black/5 bg-white px-4 py-3 text-[13px] leading-normal text-black w-64"
-                  style={{ fontFamily: "'Outfit', system-ui, sans-serif" }}
-                >
+                <div className="absolute top-10 right-0 z-10 w-64 rounded-[14px] bg-white px-4 py-3 text-[13px] leading-normal text-slate-600 shadow-[0_10px_30px_rgba(15,45,80,0.12)]">
                   <span>
-                    <strong>What&apos;s this?</strong>
+                    <strong className="text-[#0B2857]">What&apos;s this?</strong>
                     <br />
                     The chat is where you can interact with Stampley to reflect on your check-in. Your responses help tailor the conversation and support you receive.
                   </span>
                   <button
-                    className="absolute top-1 right-2 text-[11px] px-1 py-0.5 rounded hover:bg-gray-100"
-                    style={{ color: "#666" }}
+                    className="absolute top-1 right-2 rounded px-1 py-0.5 text-[11px] text-slate-400 hover:bg-slate-50"
                     onClick={() => setShowExplanation((prev: boolean) => !prev)}
                     aria-label="Close explanation"
                   >
@@ -951,14 +930,14 @@ export default function StampleySupportPage() {
                 className="flex min-h-0 flex-1 flex-col overflow-hidden"
               >
                 <div
-              className="flex-1 min-h-0 overflow-y-auto  bg-[#ffffff]"
+              className="min-h-0 flex-1 overflow-y-auto"
                   style={{
                     scrollbarWidth: "thin",
-                    scrollbarColor: "rgba(10,10,5,0.1) transparent",
+                    scrollbarColor: "rgba(15,45,80,0.12) transparent",
                   }}
                 >
-                  <div className="mx-auto flex max-w-3xl flex-col gap-6 px-4 pb-52 pt-6 md:px-6">
-                    <MetricsBar metrics={metrics} />
+                  <div className="mx-auto flex w-full max-w-[960px] flex-col gap-6 px-4 pb-8 pt-6 md:px-8">
+                    
 
                     {inChatSafety && (
                       <SafetyCard
@@ -986,17 +965,21 @@ export default function StampleySupportPage() {
                         animate={{ opacity: 1 }}
                         className="flex items-center gap-3"
                       >
-                        <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-[9px] border border-black/[0.08] bg-white">
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white shadow-[0_6px_16px_rgba(15,45,80,0.08)]">
                           <Image
                             src="/images/stampleyLogo.png"
                             alt="Stampley"
                             width={18}
                             height={18}
-                            className="object-contain opacity-40 grayscale"
+                            className="object-contain"
                           />
                         </div>
-                        <div className="flex items-center gap-2 text-[13.5px] font-light text-black">
-                          <Loader2 size={13} className="animate-spin" />
+                        <div className="flex items-center gap-2 text-sm text-slate-500">
+                          <span className="flex items-center gap-1" aria-hidden="true">
+                            <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[#1473E6] [animation-delay:-0.2s]" />
+                            <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[#1473E6] [animation-delay:-0.1s]" />
+                            <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[#1473E6]" />
+                          </span>
                           <span>Stampley is thinking…</span>
                         </div>
                       </motion.div>
@@ -1036,19 +1019,14 @@ export default function StampleySupportPage() {
              
              >
              
-               <div className="mx-auto w-full max-w-2xl space-y-5 px-5 py-8 sm:px-6">
+               <div className="mx-auto w-full max-w-[960px] space-y-5 px-4 py-8 md:px-8">
                  <div className="space-y-2">
-                   <h2
-                     className="text-[24px] font-light tracking-[-0.03em] text-black"
-                     style={{
-                       fontFamily: "'Fraunces', Georgia, serif",
-                     }}
-                   >
+                   <h2 className="text-2xl font-light tracking-tight text-[#0B2857]">
                      Today&apos;s check-in
                    </h2>
              
              
-               <p className="text-[15px] font-['Poppins',sans-serif] leading-[1.7] text-black">
+               <p className="text-[15px] leading-relaxed text-slate-600">
                  Review your responses below. When you&apos;re ready, return to the
                  chat to complete today&apos;s check-in.
                </p>
@@ -1078,20 +1056,13 @@ export default function StampleySupportPage() {
                ].map((item) => (
                  <div
                    key={item.label}
-                   className="rounded-[18px] border border-black/[0.06] bg-white px-5 py-4 shadow-[0_1px_4px_rgba(10,10,15,0.03)] transition-all duration-200"
+                   className="rounded-[18px] bg-white px-5 py-4 shadow-[0_10px_30px_rgba(15,45,80,0.07)]"
                  >
-                   <p
-                     className="mb-2 text-[10px] uppercase tracking-[0.18em] text-black/35"
-                     style={{
-                       fontFamily: "'JetBrains Mono', monospace",
-                     }}
-                   >
+                   <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#1473E6]">
                      {item.label}
                    </p>
              
-                   <p
-                     className="text-[16px] font-['Poppins',sans-serif] leading-[1.75] text-black/75"
-                   >
+                   <p className="text-base leading-relaxed text-[#0B2857]">
                      {item.value}
                    </p>
                  </div>
@@ -1101,10 +1072,7 @@ export default function StampleySupportPage() {
              <button
                type="button"
                onClick={() => setActiveView("chat")}
-               className="mt-2 flex h-12 w-full items-center justify-center rounded-[10px] bg-[#173B7A] px-5 text-sm font-normal text-white shadow-[0_8px_20px_rgba(23,59,122,0.14)] transition hover:bg-[#122E60] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#173B7A]"
-               style={{
-                 fontFamily: "'Outfit', system-ui, sans-serif",
-               }}
+               className="mt-2 flex h-12 w-full items-center justify-center rounded-[12px] bg-[#173B7A] px-5 text-sm font-normal text-white shadow-[0_8px_20px_rgba(23,59,122,0.14)] transition hover:bg-[#122E60] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#173B7A]"
              >
                Return to Chat to Complete Check-in
              </button>
@@ -1118,7 +1086,6 @@ export default function StampleySupportPage() {
           </div>
         </main>
       </div>
-    </>
   )
 }
 
@@ -1199,23 +1166,29 @@ function ErrorBanner({ message }: { message: string }) {
 
 function MetricsBar({ metrics }: { metrics: SavedMetrics }) {
   return (
-    <div className="flex items-center gap-3 rounded-[16px] bg-white px-4 py-3 shadow-[0_10px_30px_rgba(15,45,80,0.07)]">
-      <motion.div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#EAF4FF] text-[#173B7A]">
-        <Activity size={14} strokeWidth={1.5} />
-      </motion.div>
-      <div>
-        <p className="mb-0.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#1473E6]">
-          Today&apos;s metrics
-        </p>
-        <p className="text-sm text-slate-600">
-          Distress {metrics.distress} · Mood {metrics.mood} · Energy{" "}
-          {metrics.energy}
-          {metrics.domain ? (
-            <span className="ml-2 text-xs text-slate-400">
-              · {metrics.domain}
-            </span>
-          ) : null}
-        </p>
+    <div className="flex flex-col gap-3 rounded-[18px] bg-white px-5 py-4 shadow-[0_10px_30px_rgba(15,45,80,0.07)] sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex min-w-0 items-center gap-3">
+        <motion.div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#EAF4FF] text-[#173B7A]">
+          <Activity size={16} strokeWidth={1.5} />
+        </motion.div>
+        <div className="min-w-0">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#1473E6]">
+            Today&apos;s metrics
+          </p>
+          <p className="mt-1 text-sm text-[#0B2857] sm:text-base">
+            Distress {metrics.distress} · Mood {metrics.mood} · Energy{" "}
+            {metrics.energy}
+            {metrics.domain ? (
+              <span className="text-slate-500"> · {metrics.domain}</span>
+            ) : null}
+          </p>
+        </div>
+      </div>
+      <div className="flex shrink-0 items-center gap-2 text-sm text-slate-500">
+        <Calendar size={15} strokeWidth={1.6} className="text-[#1473E6]" />
+        <span>
+          Week {metrics.weekNumber} · Day {metrics.dayNumber}
+        </span>
       </div>
     </div>
   )
@@ -1295,16 +1268,16 @@ function ChatInputDock({
   const inputHintActive = !inputText.trim() && !inputDisabled
 
   return (
-    <div className="shrink-0 w-full  bg-white px-4 pb-4 pt-3 md:px-6 md:pb-6">
-      <div className="mx-auto w-full max-w-3xl">
+    <div className="w-full shrink-0 bg-white/95 px-4 pb-5 pt-3 md:px-8 md:pb-6">
+      <div className="mx-auto w-full max-w-[760px] lg:mr-60">
         <div
-          className={`rounded-[16px] bg-white transition-all duration-300 ${
+          className={`min-h-[58px] rounded-full bg-white shadow-[0_10px_30px_rgba(15,45,80,0.07)] transition ${
             inputHintActive
-              ? "ring-1 ring-[#1473E6]/30 shadow-[0_10px_30px_rgba(15,45,80,0.07)]"
-              : "shadow-[0_10px_30px_rgba(15,45,80,0.07)] focus-within:ring-1 focus-within:ring-[#173B7A]/25"
+              ? "ring-1 ring-[#1473E6]/30"
+              : "focus-within:ring-1 focus-within:ring-[#173B7A]/30"
           }`}
         >
-        <div className="flex items-center gap-3 px-4 py-3">
+        <div className="flex min-h-[58px] items-center gap-3 px-4 py-2">
   <input
     type="text"
     value={inputText}
@@ -1313,21 +1286,20 @@ function ChatInputDock({
     placeholder="Reply to Stampley..."
     disabled={inputDisabled}
     aria-label="Reply to Stampley"
-    className={`h-9 flex-1 bg-transparent text-base font-light text-[#0B2857] caret-[#1473E6] outline-none transition-all duration-300 disabled:opacity-40 ${
+    className={`h-10 flex-1 bg-transparent text-base text-[#0B2857] caret-[#1473E6] outline-none transition disabled:opacity-40 ${
       inputHintActive
         ? "placeholder:animate-pulse placeholder:text-slate-400"
         : "placeholder:text-slate-400"
     }`}
-    style={{ fontFamily: "'Outfit', system-ui, sans-serif" }}
   />
 
   <button
     type="button"
     onClick={onSend}
     disabled={!inputText.trim() || inputDisabled}
-    className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-all duration-150 ${
+    className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition ${
       inputText.trim() && !inputDisabled
-        ? "bg-[#173B7A] text-white hover:bg-[#122E60] active:scale-[0.98]"
+        ? "bg-[#1473E6] text-white hover:bg-[#1266cc] active:scale-[0.98]"
         : "cursor-not-allowed bg-[#F7FAFD] text-slate-300"
     }`}
     aria-label="Send message"
@@ -1340,21 +1312,20 @@ function ChatInputDock({
   </button>
 </div>
         </div>
-        <p className="mt-2 text-center text-[18px] leading-[1.5] text-black " style={{ fontFamily: "'Poppins', sans-serif" }}>
+        <p className="mt-3 text-center text-sm text-slate-500">
           {!canComplete
-            ? "Reply once to unlock Complete Check-in. You can keep chatting after that."
+            ? "Reply once to unlock Complete Check-In. You can keep chatting after that."
             : "You can complete today\u2019s check-in when you\u2019re ready\u2014or keep chatting with Stampley."}
         </p>
         <button
           type="button"
           onClick={onComplete}
           disabled={inputDisabled || !canComplete}
-          className={`mt-3 flex h-12 w-full items-center justify-center gap-2 rounded-[10px] px-6 text-sm font-normal transition-all duration-200 ${
+          className={`mt-3 flex min-h-12 w-full items-center justify-center gap-2 rounded-full px-6 text-sm font-normal transition ${
             inputDisabled || !canComplete
-              ? "cursor-not-allowed bg-[#F7FAFD] text-slate-400"
+              ? "cursor-not-allowed bg-[#F1F7FF] text-slate-400"
               : "bg-[#173B7A] text-white shadow-[0_8px_20px_rgba(23,59,122,0.14)] hover:bg-[#122E60]"
           }`}
-          style={{ fontFamily: "'Outfit', system-ui, sans-serif" }}
         >
           {completingCheckIn ? (
             <>
@@ -1362,16 +1333,18 @@ function ChatInputDock({
               Completing check-in…
             </>
           ) : (
-            "Complete Check-in"
+            <>
+              Complete Check-In
+              {canComplete && !inputDisabled ? (
+                <ArrowRight size={15} strokeWidth={1.8} />
+              ) : null}
+            </>
           )}
         </button>
   
      
   
-        <p
-          className="mt-3 hidden select-none text-center text-[8.5px] uppercase tracking-[0.16em] text-black/25 md:block"
-          style={{ fontFamily: "'JetBrains Mono', monospace" }}
-        >
+        <p className="mt-4 hidden select-none text-center text-[10px] uppercase tracking-[0.16em] text-slate-400 md:block">
           Stampley may make mistakes · not a substitute for professional care
         </p>
       </div>
@@ -1400,25 +1373,11 @@ function ChatMessage({
         transition={materialSpring}
         className="flex w-full justify-end"
       >
-        <div className="flex max-w-[78%] flex-col items-end gap-1">
-          <div
-            className="rounded-[18px] rounded-tr-[5px] px-5 py-3 text-[13.5px] font-light leading-relaxed"
-            style={{
-              background: "white",
-              border: "1px solid rgba(10,10,5,0.08)",
-              color: "rgba(10,10,5,0.78)",
-              boxShadow: "0 1px 4px rgba(10,10,5,0.06)",
-            }}
-          >
+        <div className="flex max-w-[70%] flex-col items-end gap-1">
+          <div className="rounded-[18px] bg-[#1473E6] px-5 py-3 text-[16px] leading-relaxed text-white shadow-[0_8px_20px_rgba(20,115,230,0.16)]">
             {msg.content}
           </div>
-          <span
-            className="px-2 text-[9px]"
-            style={{
-              color: "rgba(10,10,5,0.22)",
-              fontFamily: "'JetBrains Mono', monospace",
-            }}
-          >
+          <span className="px-2 text-[11px] text-slate-400">
             {msg.timestamp}
           </span>
         </div>
@@ -1431,9 +1390,9 @@ function ChatMessage({
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={materialSpring}
-      className="flex w-full gap-3"
+      className="flex w-full max-w-[760px] gap-3"
     >
-      <motion.div className="mt-1 flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-[9px] border border-black/[0.08] bg-white shadow-[0_1px_3px_rgba(10,10,15,0.06)]">
+      <motion.div className="mt-1 flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white shadow-[0_6px_16px_rgba(15,45,80,0.08)]">
         <Image
           src="/images/stampleyLogo.png"
           alt="Stampley"
@@ -1445,22 +1404,10 @@ function ChatMessage({
 
       <div className="min-w-0 flex-1 space-y-3">
         <div className="flex items-center gap-2">
-          <span
-            className="text-[14px] uppercase "
-            style={{
-              color: "black",
-              fontFamily: "'Poppins', sans-serif",
-            }}
-          >
+          <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#173B7A]">
             Stampley
           </span>
-          <span
-            className="text-[9px]"
-            style={{
-              color: "black",
-              fontFamily: "'Poppins', sans-serif",
-            }}
-          >
+          <span className="text-[11px] text-slate-400">
             {msg.timestamp}
           </span>
         </div>
@@ -1480,22 +1427,22 @@ function ChatMessage({
               return (
                 <>
                   {hasBody ? (
-                    <div className="space-y-3 text-[18px] font-['Poppins', sans-serif] font-light leading-[1.72] text-black">
+                    <div className="space-y-3 rounded-[18px] bg-[#F4F8FD] px-5 py-4 text-[16px] leading-relaxed text-[#0B2857] sm:text-[17px]">
                       {hasStampleyFieldText(data.greeting) ? (
                         <p>{data.greeting}</p>
                       ) : null}
                       {hasStampleyFieldText(data.validation) ? (
-                        <p className="text-black font-['Poppins', sans-serif] text-[18px] font-light">
+                        <p>
                           {data.validation}
                         </p>
                       ) : null}
                       {hasStampleyFieldText(data.reflection_question) ? (
-                        <p className="text-[20px] leading-[1.5] text-black font-['Poppins', sans-serif]">
+                        <p className="text-[17px] leading-relaxed text-[#173B7A] sm:text-[18px]">
                           {data.reflection_question}
                         </p>
                       ) : null}
                       {hasStampleyFieldText(data.closure) ? (
-                        <p className="text-[16px] leading-[1.6] text-black/70">
+                        <p className="text-[15px] leading-relaxed text-slate-600">
                           {data.closure}
                         </p>
                       ) : null}
@@ -1536,7 +1483,7 @@ function ChatMessage({
                       <button
                         type="button"
                         onClick={() => onCopy(msg)}
-                        className="rounded-full p-1.5 text-black/30 transition-all hover:text-black/55"
+                        className="rounded-full p-1.5 text-slate-400 transition hover:text-[#173B7A]"
                         aria-label="Copy response"
                       >
                         {copiedId === msg.id ? (
@@ -1557,7 +1504,7 @@ function ChatMessage({
                       <button
                         type="button"
                         onClick={() => onCopy(msg)}
-                        className="rounded-full p-1.5 text-black/30 transition-all hover:text-black/55"
+                        className="rounded-full p-1.5 text-slate-400 transition hover:text-[#173B7A]"
                         aria-label="Copy response"
                       >
                         {copiedId === msg.id ? (
@@ -1616,15 +1563,11 @@ function ChipButton({
     <button
       type="button"
       onClick={onClick}
-      className="flex cursor-pointer font-['Poppins', sans-serif] items-center gap-1.5  px-3 py-1.5 text-[11px] uppercase tracking-[0.1em] transition-all duration-200"
-      style={{
-        fontFamily: "'JetBrains Mono', monospace",
-        fontWeight: active ? "bold" : "normal",
-        border: active
-          ? "1px solid slate-200"
-          : "1px solid slate-200",
-        color: active ? "black" : "black",
-      }}
+      className={`flex cursor-pointer items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] uppercase tracking-[0.1em] transition ${
+        active
+          ? "bg-[#EAF4FF] font-semibold text-[#173B7A]"
+          : "bg-white text-slate-500 shadow-[0_4px_12px_rgba(15,45,80,0.06)]"
+      }`}
     >
       {icon}
       {label}
@@ -1650,24 +1593,14 @@ function ExpandableCard({
       exit={{ opacity: 0, height: 0 }}
       className="overflow-hidden"
     >
-      <div
-        className="mt-1  p-4"
-        style={{
-          background: "white",
-          border: "1px solid rgba(10,10,5,0.07)",
-          boxShadow: "0 1px 4px rgba(10,10,5,0.04)",
-        }}
-      >
-        <div className="mb-2 flex items-center gap-2 text-black">
+      <div className="mt-1 rounded-[14px] bg-white p-4 shadow-[0_8px_20px_rgba(15,45,80,0.06)]">
+        <div className="mb-2 flex items-center gap-2 text-[#173B7A]">
           {icon}
-          <span
-            className="text-[11px] font-semibold uppercase tracking-[0.14em]"
-            style={{ fontFamily: "'JetBrains Mono', monospace" }}
-          >
+          <span className="text-[11px] font-semibold uppercase tracking-[0.14em]">
             {title}
           </span>
         </div>
-        <p className="text-[16px] font-['Poppins', sans-serif] font-light leading-relaxed text-black">
+        <p className="text-base leading-relaxed text-[#0B2857]">
           {value}
         </p>
       </div>
@@ -1693,7 +1626,7 @@ function SafetyCard({
           initial={{ opacity: 0, height: 0 }}
           animate={{ opacity: 1, height: "auto" }}
           exit={{ opacity: 0, height: 0 }}
-          className="relative flex items-start gap-4 overflow-hidden rounded-[16px] bg-[#F7FAFD] p-5"
+          className="relative flex items-start gap-4 overflow-hidden rounded-[16px] bg-amber-50 p-5 shadow-[0_10px_30px_rgba(15,45,80,0.06)]"
         >
           <button
             type="button"

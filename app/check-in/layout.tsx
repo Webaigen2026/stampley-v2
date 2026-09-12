@@ -1,8 +1,11 @@
 import { auth } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import Link from "next/link"
-import CollapsibleSidebar from "@/components/check-in/CollapsibleSidebar"
 import CheckInShell from "@/components/check-in/CheckInShell"
+import {
+  CheckInOuterSidebar,
+  CheckInSidebarVisibilityProvider,
+} from "@/components/check-in/CheckInSidebarVisibility"
 import { redirectIfOnboardingIncomplete } from "@/lib/check-in-flow-guard"
 
 import Image from "next/image"
@@ -24,8 +27,9 @@ export default async function CheckInLayout({
         
       </header> */}
   
+      <CheckInSidebarVisibilityProvider>
       <div className="flex min-h-0 flex-1 overflow-hidden">
-        <CollapsibleSidebar />
+        <CheckInOuterSidebar />
   
         <main className="flex min-h-0 flex-1 flex-col overflow-hidden">
           <div className="flex min-h-0 w-full flex-1 flex-col overflow-y-auto ">
@@ -34,6 +38,7 @@ export default async function CheckInLayout({
           </div>
         </main>
       </div>
+      </CheckInSidebarVisibilityProvider>
     </main>
   )
 }
