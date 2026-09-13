@@ -191,6 +191,23 @@ type Props = {
             "
           />
 
+          <img
+            src="/dashboard/brain.png"
+            alt=""
+            width={220}
+            height={260}
+            className="
+              absolute
+              bottom-4
+              right-[6px]
+              z-10
+              h-[100px]
+              w-auto
+              max-w-none
+              object-contain
+              object-bottom
+            "
+          />
 
     
         </div>

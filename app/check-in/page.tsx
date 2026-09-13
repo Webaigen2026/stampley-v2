@@ -406,7 +406,7 @@ export default async function CheckInEntryPage() {
           "
         >
           You&apos;ve completed your check-in for today.
-          See you tomorrow! 👋
+          See you tomorrow! 
         </p>
 
         <DashboardButton />
