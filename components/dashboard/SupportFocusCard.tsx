@@ -191,23 +191,6 @@ type Props = {
             "
           />
 
-          <img
-            src="/dashboard/nurse.png"
-            alt=""
-            width={220}
-            height={260}
-            className="
-              absolute
-              bottom-0
-              right-[-6px]
-              z-10
-              h-[168px]
-              w-auto
-              max-w-none
-              object-contain
-              object-bottom
-            "
-          />
 
     
         </div>
