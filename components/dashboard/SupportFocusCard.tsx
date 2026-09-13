@@ -199,7 +199,7 @@ type Props = {
             className="
               absolute
               bottom-4
-              right-[6px]
+              right-[-2px]
               z-10
               h-[100px]
               w-auto
