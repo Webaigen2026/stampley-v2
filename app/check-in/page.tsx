@@ -193,21 +193,23 @@ function StatusIcon({
         "
       />
 
-      <Image
-        src="/dashboard/checksurvey.png"
-        alt=""
-        width={70}
-        height={70}
-        priority
-        aria-hidden="true"
-        className="
-          relative
-          z-10
-          h-[68px]
-          w-[68px]
-          object-contain
-        "
-      />
+<img
+          src="/dashboard/checksurvey.png"
+          alt=""
+          width={120}
+          height={160}
+          className="
+            absolute
+            bottom-0
+           
+            z-10
+            h-[168px]
+            w-auto
+            max-w-none
+            object-contain
+            object-bottom
+          "
+        />
     </div>
   )
 }
