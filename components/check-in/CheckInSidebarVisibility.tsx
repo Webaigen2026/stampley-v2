@@ -7,6 +7,7 @@ import {
   useMemo,
   useState,
 } from "react"
+import { usePathname } from "next/navigation"
 import CollapsibleSidebar from "./CollapsibleSidebar"
 
 type CheckInSidebarVisibilityValue = {
@@ -52,6 +53,9 @@ export function useCheckInSidebarVisibility() {
 
 export function CheckInOuterSidebar() {
   const { hideOuterSidebar } = useCheckInSidebarVisibility()
-  if (hideOuterSidebar) return null
+  const pathname = usePathname()
+  const isRootCheckIn = pathname === "/check-in"
+
+  if (hideOuterSidebar || isRootCheckIn) return null
   return <CollapsibleSidebar />
 }

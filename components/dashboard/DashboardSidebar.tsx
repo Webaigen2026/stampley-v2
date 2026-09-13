@@ -165,17 +165,19 @@ export default function DashboardSidebar() {
           <div
             className="
               relative
-              h-[140px]
+              h-[250px]
               overflow-hidden
-              bg-[#eef4f8]
+            
               bg-cover
               bg-no-repeat
               transition-transform
               duration-500
             "
             style={{
-              backgroundImage: "url('/dashboard/women.png')",
-              backgroundPosition: "62% center",
+              backgroundImage: "url('/dashboard/nurse2.png')",
+              backgroundPosition: "40% center",
+              backgroundSize: "cover",
+             
             }}
           >
             <div
