@@ -189,6 +189,7 @@ export default async function DashboardPage() {
             <DashboardTopbar
               today={today}
               formattedName={formattedName}
+              email={session.user.email ?? ""}
             />
             <DashboardReveal>
               <DashboardWelcome
