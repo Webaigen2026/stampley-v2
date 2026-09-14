@@ -562,63 +562,189 @@ export default function HeroSection() {
                 }
               `}
             >
-              <Link
-                href={isAuthenticated ? "/dashboard" : "/register"}
-                className="
-                  group
-                  flex
-                  h-[50px]
-                  w-full
-                  items-center
-                  justify-between
-                  rounded-full
-                  bg-[#173B7A]
-                  px-5
-                  text-[12px]
-                  font-normal
-                  uppercase
-                  tracking-[0.10em]
-                  text-white
-                  shadow-[0_10px_30px_rgba(37,99,235,0.18),0_2px_6px_rgba(0,0,0,0.12)]
-                  transition-all
-                  duration-200
-                  hover:-translate-y-0.5
-                  hover:bg-[#122E60]
-                  active:translate-y-0
-                  sm:w-[220px]
-                "
-              >
-                <span>
-                  {status === "loading"
-                    ? "\u00A0"
-                    : isAuthenticated
-                      ? "Dashboard"
-                      : "Register"}
-                </span>
-
-                <span
+              {status === "loading" ? (
+                <div
+                  aria-hidden="true"
                   className="
-                    flex
-                    h-8
-                    w-8
-                    items-center
-                    justify-center
+                    h-[50px]
+                    w-full
+                    animate-pulse
                     rounded-full
-                    border
-                    border-white/70
+                    bg-slate-100
+                    sm:w-[220px]
+                  "
+                />
+              ) : isAuthenticated ? (
+                <Link
+                  href="/dashboard"
+                  className="
+                    group
+                    flex
+                    h-[50px]
+                    w-full
+                    items-center
+                    justify-between
+                    rounded-full
+                    bg-[#173B7A]
+                    px-5
+                    text-[12px]
+                    font-normal
+                    uppercase
+                    tracking-[0.10em]
                     text-white
-                    transition-transform
+                    shadow-[0_10px_30px_rgba(37,99,235,0.18),0_2px_6px_rgba(0,0,0,0.12)]
+                    transition-all
                     duration-200
-                    group-hover:translate-x-1
+                    hover:-translate-y-0.5
+                    hover:bg-[#122E60]
+                    active:translate-y-0
+                    focus-visible:outline-none
+                    focus-visible:ring-2
+                    focus-visible:ring-[#1473E6]
+                    focus-visible:ring-offset-2
+                    sm:w-[220px]
                   "
                 >
-                  <ArrowRight
-                    aria-hidden="true"
-                    strokeWidth={1.8}
-                    className="h-[15px] w-[15px]"
-                  />
-                </span>
-              </Link>
+                  <span>Dashboard</span>
+
+                  <span
+                    className="
+                      flex
+                      h-8
+                      w-8
+                      items-center
+                      justify-center
+                      rounded-full
+                      border
+                      border-white/70
+                      text-white
+                      transition-transform
+                      duration-200
+                      group-hover:translate-x-1
+                    "
+                  >
+                    <ArrowRight
+                      aria-hidden="true"
+                      strokeWidth={1.8}
+                      className="h-[15px] w-[15px]"
+                    />
+                  </span>
+                </Link>
+              ) : (
+                <>
+                  <Link
+                    href="/register"
+                    className="
+                      group
+                      flex
+                      h-[50px]
+                      w-full
+                      items-center
+                      justify-between
+                      rounded-full
+                      bg-[#173B7A]
+                      px-5
+                      text-[12px]
+                      font-normal
+                      uppercase
+                      tracking-[0.10em]
+                      text-white
+                      shadow-[0_10px_30px_rgba(37,99,235,0.18),0_2px_6px_rgba(0,0,0,0.12)]
+                      transition-all
+                      duration-200
+                      hover:-translate-y-0.5
+                      hover:bg-[#122E60]
+                      active:translate-y-0
+                      focus-visible:outline-none
+                      focus-visible:ring-2
+                      focus-visible:ring-[#1473E6]
+                      focus-visible:ring-offset-2
+                      sm:w-[220px]
+                    "
+                  >
+                    <span>Register</span>
+
+                    <span
+                      className="
+                        flex
+                        h-8
+                        w-8
+                        items-center
+                        justify-center
+                        rounded-full
+                        border
+                        border-white/70
+                        text-white
+                        transition-transform
+                        duration-200
+                        group-hover:translate-x-1
+                      "
+                    >
+                      <ArrowRight
+                        aria-hidden="true"
+                        strokeWidth={1.8}
+                        className="h-[15px] w-[15px]"
+                      />
+                    </span>
+                  </Link>
+
+                  <Link
+                    href="/login"
+                    className="
+                      group
+                      flex
+                      h-[50px]
+                      w-full
+                      items-center
+                      justify-between
+                      rounded-full
+                      bg-white
+                      px-5
+                      text-[12px]
+                      font-normal
+                      uppercase
+                      tracking-[0.10em]
+                      text-[#173B7A]
+                      shadow-[0_7px_24px_rgba(23,59,122,0.07),inset_0_0_0_1px_rgba(23,59,122,0.16)]
+                      transition-all
+                      duration-200
+                      hover:-translate-y-0.5
+                      hover:bg-[#F7FAFD]
+                      active:translate-y-0
+                      focus-visible:outline-none
+                      focus-visible:ring-2
+                      focus-visible:ring-[#1473E6]
+                      focus-visible:ring-offset-2
+                      sm:w-[180px]
+                    "
+                  >
+                    <span>Log in</span>
+
+                    <span
+                      className="
+                        flex
+                        h-8
+                        w-8
+                        items-center
+                        justify-center
+                        rounded-full
+                        border
+                        border-[#173B7A]/30
+                        text-[#173B7A]
+                        transition-transform
+                        duration-200
+                        group-hover:translate-x-1
+                      "
+                    >
+                      <ArrowRight
+                        aria-hidden="true"
+                        strokeWidth={1.8}
+                        className="h-[15px] w-[15px]"
+                      />
+                    </span>
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -834,7 +960,7 @@ export default function HeroSection() {
     @media (min-width: 1024px) {
       div[aria-hidden="true"].pointer-events-none.z-30 {
         height: 245px !important; /* right (lg) a bit higher */
-        bottom: 90px !important;
+        bottom: 80px !important;
       }
     }
     @media (min-width: 640px) and (max-width: 1023px) {
@@ -863,7 +989,7 @@ export default function HeroSection() {
     ease-out
     sm:bottom-[50px]
     sm:h-[340px]
-    lg:bottom-[70px]
+    lg:bottom-[60px]
     lg:h-[270px]
     ${
       inView
