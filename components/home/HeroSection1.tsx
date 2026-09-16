@@ -9,6 +9,7 @@ import { useSession } from "next-auth/react"
 export default function HeroSection() {
   const sectionRef = useRef<HTMLElement>(null)
   const [inView, setInView] = useState(false)
+
   const { status } = useSession()
   const isAuthenticated = status === "authenticated"
 
@@ -43,10 +44,14 @@ export default function HeroSection() {
       <div
         className="
           grid
-          min-h-[680px]
+          min-h-[640px]
           w-full
           grid-cols-1
-          pb-[90px]
+          pb-12
+          sm:min-h-[680px]
+          sm:pb-16
+          md:pb-20
+          lg:min-h-[680px]
           lg:grid-cols-[0.94fr_1.06fr]
           lg:pb-[115px]
         "
@@ -62,9 +67,18 @@ export default function HeroSection() {
             items-center
             overflow-hidden
             bg-white
-            pl-20
-            py-16
+            px-5
+            py-12
+            sm:px-8
+            sm:py-14
+            md:px-12
+            md:py-16
+            lg:px-0
             lg:py-20
+            lg:pl-20
+            lg:pr-10
+            xl:pl-24
+            xl:pr-12
           "
         >
           {/* Soft blue ambient wash */}
@@ -92,16 +106,20 @@ export default function HeroSection() {
             className={`
               pointer-events-none
               absolute
-              -bottom-[180px]
-              -right-[160px]
-              h-[420px]
-              w-[420px]
+              -bottom-[150px]
+              -right-[180px]
+              h-[340px]
+              w-[340px]
               rounded-full
               bg-blue-500/[0.035]
               blur-3xl
               transition-all
               duration-[1600ms]
               ease-out
+              sm:h-[420px]
+              sm:w-[420px]
+              lg:-bottom-[180px]
+              lg:-right-[160px]
               ${
                 inView
                   ? "scale-100 opacity-100"
@@ -116,16 +134,21 @@ export default function HeroSection() {
             className={`
               pointer-events-none
               absolute
-              -right-[210px]
-              top-[80px]
-              h-[520px]
-              w-[520px]
+              -right-[250px]
+              top-[90px]
+              hidden
+              h-[440px]
+              w-[440px]
               rounded-full
               border
               border-blue-900/[0.055]
               transition-all
               duration-[1200ms]
               ease-out
+              sm:block
+              md:-right-[210px]
+              md:h-[520px]
+              md:w-[520px]
               ${
                 inView
                   ? "translate-x-0 scale-100 opacity-100"
@@ -139,10 +162,11 @@ export default function HeroSection() {
             className={`
               pointer-events-none
               absolute
-              -right-[135px]
-              top-[155px]
-              h-[370px]
-              w-[370px]
+              -right-[170px]
+              top-[150px]
+              hidden
+              h-[310px]
+              w-[310px]
               rounded-full
               border
               border-blue-900/[0.035]
@@ -150,6 +174,11 @@ export default function HeroSection() {
               delay-100
               duration-[1200ms]
               ease-out
+              sm:block
+              md:-right-[135px]
+              md:top-[155px]
+              md:h-[370px]
+              md:w-[370px]
               ${
                 inView
                   ? "translate-x-0 scale-100 opacity-100"
@@ -164,15 +193,18 @@ export default function HeroSection() {
             className={`
               pointer-events-none
               absolute
-              right-[8%]
-              top-[9%]
-              grid
+              right-[6%]
+              top-[6%]
+              hidden
               grid-cols-4
               gap-[9px]
               transition-all
               delay-200
               duration-1000
               ease-out
+              sm:grid
+              md:right-[8%]
+              md:top-[9%]
               ${
                 inView
                   ? "translate-y-0 opacity-[0.12]"
@@ -194,20 +226,31 @@ export default function HeroSection() {
           </div>
 
           {/* Content */}
-          <div className="relative z-10 w-full max-w-[570px]">
+          <div
+            className="
+              relative
+              z-10
+              mx-auto
+              w-full
+              max-w-[570px]
+              lg:mx-0
+            "
+          >
             {/* Heading */}
             <h1
               className={`
-                whitespace-nowrap
-                text-[30px]
+                max-w-full
+                text-[29px]
                 font-normal
-                leading-[1.08]
+                leading-[1.1]
                 tracking-[-0.03em]
                 text-blue-900
                 transition-all
                 duration-700
                 ease-out
+                min-[420px]:text-[31px]
                 sm:text-[34px]
+                md:text-[36px]
                 lg:text-[38px]
                 xl:text-[42px]
                 ${
@@ -226,18 +269,21 @@ export default function HeroSection() {
             {/* Intro */}
             <p
               className={`
-                mt-7
+                mt-6
                 max-w-[530px]
-                text-[16px]
+                text-[15px]
                 font-normal
-                leading-[1.8]
+                leading-[1.75]
                 tracking-[-0.01em]
                 text-black/75
                 transition-all
                 delay-100
                 duration-700
                 ease-out
-                sm:text-[17px]
+                sm:mt-7
+                sm:text-[16px]
+                sm:leading-[1.8]
+                md:text-[17px]
                 ${
                   inView
                     ? "translate-x-0 opacity-100"
@@ -253,14 +299,16 @@ export default function HeroSection() {
             {/* Main commitment */}
             <div
               className={`
-                mt-9
+                mt-8
                 border-l-[3px]
                 border-blue-900
-                pl-5
+                pl-4
                 transition-all
                 delay-200
                 duration-700
                 ease-out
+                sm:mt-9
+                sm:pl-5
                 ${
                   inView
                     ? "translate-x-0 opacity-100"
@@ -270,37 +318,33 @@ export default function HeroSection() {
             >
               <p
                 className="
-                  text-[19px]
+                  text-[18px]
                   font-normal
-                  leading-[1.35]
+                  leading-[1.4]
                   tracking-[-0.02em]
                   text-blue-900
-                  sm:text-[21px]
+                  sm:text-[20px]
+                  md:text-[21px]
                 "
               >
                 Complete at least five study sessions each week.
               </p>
+
               <p
-              className={`
-                mt-7
-                max-w-[530px]
-                text-[16px]
-                font-normal
-                leading-[1.8]
-                tracking-[-0.01em]
-                text-black/75
-                transition-all
-                delay-100
-                duration-700
-                ease-out
-                sm:text-[17px]
-                ${
-                  inView
-                    ? "translate-x-0 opacity-100"
-                    : "-translate-x-12 opacity-0"
-                }
-              `}
-            >
+                className="
+                  mt-4
+                  max-w-[530px]
+                  text-[15px]
+                  font-normal
+                  leading-[1.75]
+                  tracking-[-0.01em]
+                  text-black/75
+                  sm:mt-5
+                  sm:text-[16px]
+                  sm:leading-[1.8]
+                  md:text-[17px]
+                "
+              >
                 A session includes a brief check-in and a conversation with
                 Stampley.
               </p>
@@ -311,11 +355,12 @@ export default function HeroSection() {
             ================================================== */}
             <div
               className="
-                mt-9
+                mt-8
                 grid
                 grid-cols-1
                 gap-3
-                sm:grid-cols-2
+                sm:mt-9
+                md:grid-cols-2
               "
             >
               {/* Time */}
@@ -337,7 +382,6 @@ export default function HeroSection() {
                   }
                 `}
               >
-                {/* Moving blue light */}
                 <div
                   aria-hidden="true"
                   className="
@@ -354,9 +398,9 @@ export default function HeroSection() {
                     relative
                     z-10
                     flex
-                    min-h-[92px]
+                    min-h-[88px]
                     items-center
-                    gap-4
+                    gap-3
                     rounded-[13px]
                     bg-white/95
                     px-4
@@ -366,17 +410,21 @@ export default function HeroSection() {
                     transition-all
                     duration-300
                     group-hover:shadow-[0_10px_32px_rgba(30,64,175,0.10)]
+                    sm:min-h-[92px]
+                    sm:gap-4
                   "
                 >
                   <div
                     className="
                       relative
                       flex
-                      h-[58px]
-                      w-[58px]
+                      h-[52px]
+                      w-[52px]
                       shrink-0
                       items-center
                       justify-center
+                      sm:h-[58px]
+                      sm:w-[58px]
                     "
                   >
                     <Image
@@ -386,12 +434,14 @@ export default function HeroSection() {
                       height={58}
                       aria-hidden="true"
                       className="
-                        h-[54px]
-                        w-[54px]
+                        h-[48px]
+                        w-[48px]
                         object-contain
                         transition-transform
                         duration-300
                         group-hover:scale-[1.04]
+                        sm:h-[54px]
+                        sm:w-[54px]
                       "
                     />
                   </div>
@@ -410,20 +460,17 @@ export default function HeroSection() {
                     </p>
 
                     <p
-              className={`
-              
-                text-[16px]
-                font-normal
-                leading-[1.8]
-                tracking-[-0.01em]
-                text-black/75
-                transition-all
-               
-                sm:text-[17px]
-               
-              `}
-            >
-                       per session
+                      className="
+                        mt-0.5
+                        text-[14px]
+                        font-normal
+                        leading-5
+                        tracking-[-0.01em]
+                        text-black/60
+                        sm:text-[15px]
+                      "
+                    >
+                      per session
                     </p>
                   </div>
                 </div>
@@ -448,27 +495,25 @@ export default function HeroSection() {
                   }
                 `}
               >
-                {/* Moving blue light */}
-               {/* Moving Stampley orange light */}
-<div
-  aria-hidden="true"
-  className="
-    pointer-events-none
-    absolute
-    inset-[-140%]
-    animate-[spin_4.5s_linear_infinite]
-    bg-[conic-gradient(from_180deg,transparent_0deg,transparent_245deg,rgba(242,177,52,0.08)_280deg,rgba(242,177,52,0.55)_315deg,rgba(255,196,76,1)_336deg,rgba(242,177,52,0.55)_348deg,transparent_360deg)]
-  "
-/>
+                <div
+                  aria-hidden="true"
+                  className="
+                    pointer-events-none
+                    absolute
+                    inset-[-140%]
+                    animate-[spin_4.5s_linear_infinite]
+                    bg-[conic-gradient(from_180deg,transparent_0deg,transparent_245deg,rgba(242,177,52,0.08)_280deg,rgba(242,177,52,0.55)_315deg,rgba(255,196,76,1)_336deg,rgba(242,177,52,0.55)_348deg,transparent_360deg)]
+                  "
+                />
 
                 <div
                   className="
                     relative
                     z-10
                     flex
-                    min-h-[92px]
+                    min-h-[88px]
                     items-center
-                    gap-4
+                    gap-3
                     rounded-[13px]
                     bg-white/95
                     px-4
@@ -478,17 +523,21 @@ export default function HeroSection() {
                     transition-all
                     duration-300
                     group-hover:shadow-[0_10px_32px_rgba(30,64,175,0.10)]
+                    sm:min-h-[92px]
+                    sm:gap-4
                   "
                 >
                   <div
                     className="
                       relative
                       flex
-                      h-[58px]
-                      w-[70px]
+                      h-[52px]
+                      w-[62px]
                       shrink-0
                       items-center
                       justify-center
+                      sm:h-[58px]
+                      sm:w-[70px]
                     "
                   >
                     <Image
@@ -498,41 +547,41 @@ export default function HeroSection() {
                       height={58}
                       aria-hidden="true"
                       className="
-                        h-[54px]
-                        w-[68px]
+                        h-[48px]
+                        w-[60px]
                         object-contain
                         transition-transform
                         duration-300
                         group-hover:scale-[1.04]
+                        sm:h-[54px]
+                        sm:w-[68px]
                       "
                     />
                   </div>
 
                   <div className="min-w-0">
-                  <p
-              className={`
-              
-                text-[16px]
-                font-normal
-                leading-[1.8]
-                tracking-[-0.01em]
-                text-black/75
-                transition-all
-               
-                sm:text-[17px]
-               
-              `}
-            >
+                    <p
+                      className="
+                        text-[14px]
+                        font-normal
+                        leading-5
+                        tracking-[-0.01em]
+                        text-black/80
+                        sm:text-[15px]
+                        md:text-[16px]
+                      "
+                    >
                       Participate anywhere
                     </p>
 
                     <p
                       className="
                         mt-0.5
-                        text-[11.5px]
+                        text-[11px]
                         font-normal
                         leading-4
                         text-black/50
+                        sm:text-[11.5px]
                       "
                     >
                       Phone, tablet, or computer
@@ -542,19 +591,25 @@ export default function HeroSection() {
               </div>
             </div>
 
-            {/* CTA */}
+            {/* =================================================
+                CTA
+                Mobile: Register + Log in stay in one row
+            ================================================== */}
             <div
               className={`
-                mt-9
+                mt-8
                 flex
-                flex-col
-                gap-5
+                w-full
+                flex-row
+                items-center
+                gap-3
                 transition-all
                 delay-[460ms]
                 duration-700
                 ease-out
-                sm:flex-row
-                sm:items-center
+                sm:mt-9
+                sm:gap-4
+                md:gap-5
                 ${
                   inView
                     ? "translate-y-0 opacity-100"
@@ -612,6 +667,7 @@ export default function HeroSection() {
                       flex
                       h-8
                       w-8
+                      shrink-0
                       items-center
                       justify-center
                       rounded-full
@@ -632,22 +688,24 @@ export default function HeroSection() {
                 </Link>
               ) : (
                 <>
+                  {/* Register */}
                   <Link
                     href="/register"
                     className="
                       group
                       flex
                       h-[50px]
-                      w-full
+                      min-w-0
+                      flex-1
                       items-center
                       justify-between
                       rounded-full
                       bg-[#173B7A]
-                      px-5
-                      text-[12px]
+                      px-3.5
+                      text-[10px]
                       font-normal
                       uppercase
-                      tracking-[0.10em]
+                      tracking-[0.06em]
                       text-white
                       shadow-[0_10px_30px_rgba(37,99,235,0.18),0_2px_6px_rgba(0,0,0,0.12)]
                       transition-all
@@ -659,16 +717,27 @@ export default function HeroSection() {
                       focus-visible:ring-2
                       focus-visible:ring-[#1473E6]
                       focus-visible:ring-offset-2
+                      min-[380px]:px-4
+                      min-[380px]:text-[11px]
+                      min-[380px]:tracking-[0.08em]
                       sm:w-[220px]
+                      sm:flex-none
+                      sm:px-5
+                      sm:text-[12px]
+                      sm:tracking-[0.10em]
                     "
                   >
-                    <span>Register</span>
+                    <span className="truncate">
+                      Register
+                    </span>
 
                     <span
                       className="
+                        ml-2
                         flex
-                        h-8
-                        w-8
+                        h-7
+                        w-7
+                        shrink-0
                         items-center
                         justify-center
                         rounded-full
@@ -677,33 +746,43 @@ export default function HeroSection() {
                         text-white
                         transition-transform
                         duration-200
-                        group-hover:translate-x-1
+                        group-hover:translate-x-0.5
+                        min-[380px]:h-8
+                        min-[380px]:w-8
+                        sm:group-hover:translate-x-1
                       "
                     >
                       <ArrowRight
                         aria-hidden="true"
                         strokeWidth={1.8}
-                        className="h-[15px] w-[15px]"
+                        className="
+                          h-[14px]
+                          w-[14px]
+                          min-[380px]:h-[15px]
+                          min-[380px]:w-[15px]
+                        "
                       />
                     </span>
                   </Link>
 
+                  {/* Log in */}
                   <Link
                     href="/login"
                     className="
                       group
                       flex
                       h-[50px]
-                      w-full
+                      min-w-0
+                      flex-1
                       items-center
                       justify-between
                       rounded-full
                       bg-white
-                      px-5
-                      text-[12px]
+                      px-3.5
+                      text-[10px]
                       font-normal
                       uppercase
-                      tracking-[0.10em]
+                      tracking-[0.06em]
                       text-[#173B7A]
                       shadow-[0_7px_24px_rgba(23,59,122,0.07),inset_0_0_0_1px_rgba(23,59,122,0.16)]
                       transition-all
@@ -715,16 +794,27 @@ export default function HeroSection() {
                       focus-visible:ring-2
                       focus-visible:ring-[#1473E6]
                       focus-visible:ring-offset-2
+                      min-[380px]:px-4
+                      min-[380px]:text-[11px]
+                      min-[380px]:tracking-[0.08em]
                       sm:w-[180px]
+                      sm:flex-none
+                      sm:px-5
+                      sm:text-[12px]
+                      sm:tracking-[0.10em]
                     "
                   >
-                    <span>Log in</span>
+                    <span className="truncate">
+                      Log in
+                    </span>
 
                     <span
                       className="
+                        ml-2
                         flex
-                        h-8
-                        w-8
+                        h-7
+                        w-7
+                        shrink-0
                         items-center
                         justify-center
                         rounded-full
@@ -733,13 +823,21 @@ export default function HeroSection() {
                         text-[#173B7A]
                         transition-transform
                         duration-200
-                        group-hover:translate-x-1
+                        group-hover:translate-x-0.5
+                        min-[380px]:h-8
+                        min-[380px]:w-8
+                        sm:group-hover:translate-x-1
                       "
                     >
                       <ArrowRight
                         aria-hidden="true"
                         strokeWidth={1.8}
-                        className="h-[15px] w-[15px]"
+                        className="
+                          h-[14px]
+                          w-[14px]
+                          min-[380px]:h-[15px]
+                          min-[380px]:w-[15px]
+                        "
                       />
                     </span>
                   </Link>
@@ -751,17 +849,18 @@ export default function HeroSection() {
 
         {/* =====================================================
             RIGHT — REALISTIC PARTICIPANT IMAGE
+            Desktop only
         ====================================================== */}
         <div
           className={`
             relative
-            min-h-[420px]
+            hidden
+            min-h-full
             overflow-hidden
             transition-all
             duration-[1100ms]
             ease-out
-            sm:min-h-[520px]
-            lg:min-h-full
+            lg:block
             ${
               inView
                 ? "translate-x-0 opacity-100"
@@ -788,7 +887,7 @@ export default function HeroSection() {
               alt="A woman sitting comfortably at home using her phone"
               fill
               priority
-              sizes="(min-width: 1024px) 53vw, 100vw"
+              sizes="(min-width: 1280px) 53vw, (min-width: 1024px) 50vw, 0px"
               className="
                 object-cover
                 object-center
@@ -803,9 +902,7 @@ export default function HeroSection() {
               pointer-events-none
               absolute
               inset-0
-              hidden
-              lg:block
-              lg:bg-[linear-gradient(90deg,#ffffff_0%,rgba(255,255,255,0.96)_5%,rgba(255,255,255,0.82)_13%,rgba(255,255,255,0.60)_23%,rgba(255,255,255,0.34)_34%,rgba(255,255,255,0.15)_44%,rgba(255,255,255,0.04)_53%,rgba(255,255,255,0)_63%)]
+              bg-[linear-gradient(90deg,#ffffff_0%,rgba(255,255,255,0.96)_5%,rgba(255,255,255,0.82)_13%,rgba(255,255,255,0.60)_23%,rgba(255,255,255,0.34)_34%,rgba(255,255,255,0.15)_44%,rgba(255,255,255,0.04)_53%,rgba(255,255,255,0)_63%)]
             "
           />
 
@@ -816,9 +913,7 @@ export default function HeroSection() {
               pointer-events-none
               absolute
               inset-0
-              hidden
-              lg:block
-              lg:bg-[radial-gradient(circle_at_8%_50%,rgba(255,255,255,0.48)_0%,rgba(255,255,255,0.18)_26%,rgba(255,255,255,0)_56%)]
+              bg-[radial-gradient(circle_at_8%_50%,rgba(255,255,255,0.48)_0%,rgba(255,255,255,0.18)_26%,rgba(255,255,255,0)_56%)]
             "
           />
 
@@ -830,29 +925,10 @@ export default function HeroSection() {
               absolute
               inset-x-0
               bottom-0
-              hidden
               h-[24%]
-              lg:block
-              lg:bg-gradient-to-t
-              lg:from-black/[0.04]
-              lg:to-transparent
-            "
-          />
-
-          {/* Mobile transition */}
-          <div
-            aria-hidden="true"
-            className="
-              pointer-events-none
-              absolute
-              inset-x-0
-              top-0
-              h-32
-              bg-gradient-to-b
-              from-white
-              via-white/60
+              bg-gradient-to-t
+              from-black/[0.04]
               to-transparent
-              lg:hidden
             "
           />
 
@@ -860,8 +936,8 @@ export default function HeroSection() {
           <div
             className={`
               absolute
-              bottom-[110px]
-              left-5
+              bottom-[135px]
+              left-8
               z-10
               rounded-[12px]
               border
@@ -875,9 +951,6 @@ export default function HeroSection() {
               delay-[500ms]
               duration-700
               ease-out
-              sm:left-7
-              lg:bottom-[135px]
-              lg:left-8
               ${
                 inView
                   ? "translate-y-0 scale-100 opacity-100"
@@ -912,112 +985,107 @@ export default function HeroSection() {
         </div>
       </div>
 
-{/* =====================================================
-    BOTTOM ORANGE CURVE — BEHIND WHITE CURVE — TURNED UP
-====================================================== */}
-<div
-  aria-hidden="true"
-  className={`
-    pointer-events-none
-    absolute
-    inset-x-0
-    bottom-[60px]
-    z-30
-    transition-all
-    duration-[1200ms]
-    ease-out
-    ${
-      inView
-        ? "translate-y-0 opacity-100"
-        : "translate-y-16 opacity-0"
-    }
-  `}
-  style={{
-    height: '265px', // a bit smaller default (LEFT)
-    // Responsive overrides for right side (greater height)
-  }}
->
-  <svg
-    viewBox="0 0 1440 134"
-    preserveAspectRatio="none"
-    className="block h-full w-full -scale-y-100"
-  >
-    <path
-      d="
-        M0 0
-        L1440 0
-        L1440 74
-        C1355 90 1275 100 1170 82
-        C1045 60 935 28 795 35
-        C665 41 590 58 445 60
-        C310 61 170 37 0 8
-        Z
-      "
-      fill="#F2B134"
-    />
-  </svg>
-  <style jsx>{`
-    @media (min-width: 1024px) {
-      div[aria-hidden="true"].pointer-events-none.z-30 {
-        height: 245px !important; /* right (lg) a bit higher */
-        bottom: 80px !important;
-      }
-    }
-    @media (min-width: 640px) and (max-width: 1023px) {
-      div[aria-hidden="true"].pointer-events-none.z-30 {
-        height: 320px !important;
-        bottom: 70px !important;
-      }
-    }
-  `}</style>
-</div>
+      {/* =====================================================
+          BOTTOM ORANGE CURVE — desktop/tablet decorative layer
+      ====================================================== */}
+      <div
+        aria-hidden="true"
+        className={`
+          pointer-events-none
+          absolute
+          inset-x-0
+          bottom-[50px]
+          z-30
+          hidden
+          h-[245px]
+          transition-all
+          duration-[1200ms]
+          ease-out
+          sm:block
+          sm:bottom-[60px]
+          sm:h-[260px]
+          md:bottom-[70px]
+          md:h-[290px]
+          lg:bottom-[80px]
+          lg:h-[245px]
+          ${
+            inView
+              ? "translate-y-0 opacity-100"
+              : "translate-y-16 opacity-0"
+          }
+        `}
+      >
+        <svg
+          viewBox="0 0 1440 134"
+          preserveAspectRatio="none"
+          className="block h-full w-full -scale-y-100"
+        >
+          <path
+            d="
+              M0 0
+              L1440 0
+              L1440 74
+              C1355 90 1275 100 1170 82
+              C1045 60 935 28 795 35
+              C665 41 590 58 445 60
+              C310 61 170 37 0 8
+              Z
+            "
+            fill="#F2B134"
+          />
+        </svg>
+      </div>
 
-{/* =====================================================
-    BOTTOM S-CURVE — ORIGINAL — DO NOT MODIFY
-====================================================== */}
-<div
-  aria-hidden="true"
-  className={`
-    pointer-events-none
-    absolute
-    inset-x-0
-    bottom-[40px]
-    z-40
-    h-[300px]
-    transition-all
-    duration-[1200ms]
-    ease-out
-    sm:bottom-[50px]
-    sm:h-[340px]
-    lg:bottom-[60px]
-    lg:h-[270px]
-    ${
-      inView
-        ? "translate-y-0 opacity-100"
-        : "translate-y-16 opacity-0"
-    }
-  `}
->
-  <svg
-    viewBox="0 0 1440 120"
-    preserveAspectRatio="none"
-    className="block h-full w-full"
-  >
-    <path
-      d="
-        M0 110
-        C170 78 310 62 445 68
-        C590 74 665 92 795 94
-        C935 96 1045 66 1170 54
-        C1275 44 1355 47 1440 58
-        L1440 120
-        L0 120
-        Z
-      "
-      fill="white"
-    />
-  </svg>
-</div>
+      {/* =====================================================
+          BOTTOM S-CURVE
+      ====================================================== */}
+      <div
+        aria-hidden="true"
+        className={`
+          pointer-events-none
+          absolute
+          inset-x-0
+          bottom-[30px]
+          z-40
+          hidden
+          h-[230px]
+          transition-all
+          duration-[1200ms]
+          ease-out
+          sm:block
+          sm:bottom-[40px]
+          sm:h-[270px]
+          md:bottom-[50px]
+          md:h-[300px]
+          lg:bottom-[60px]
+          lg:h-[270px]
+          ${
+            inView
+              ? "translate-y-0 opacity-100"
+              : "translate-y-16 opacity-0"
+          }
+        `}
+      >
+        <svg
+          viewBox="0 0 1440 120"
+          preserveAspectRatio="none"
+          className="block h-full w-full"
+        >
+          <path
+            d="
+              M0 110
+              C170 78 310 62 445 68
+              C590 74 665 92 795 94
+              C935 96 1045 66 1170 54
+              C1275 44 1355 47 1440 58
+              L1440 120
+              L0 120
+              Z
+            "
+            fill="white"
+          />
+        </svg>
+      </div>
     </section>
   )
 }
