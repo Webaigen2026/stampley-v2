@@ -156,8 +156,8 @@ export default function DomainConfirmation({
 
                     ${
                       selected
-                        ? "bg-[#EDF6FF]"
-                        : "bg-[#F7FAFD]"
+                        ? "bg-[#EDF6FF] h-[280px] rounded-l-[16px]"
+                        : "bg-[#F7FAFD] h-[280px] rounded-l-[16px]"
                     }
                   `}
                 >
@@ -246,8 +246,8 @@ export default function DomainConfirmation({
                         {recommended ? (
                           <span
                             className="
-                              rounded-full
-                              bg-[#EEF6FF]
+                              
+                    
                               px-3
                               py-1.5
                               text-xs
@@ -376,7 +376,7 @@ export default function DomainConfirmation({
           flex
           flex-col
           gap-4
-          rounded-[16px]
+          
           bg-[#F7FAFD]
           px-5
           py-5
@@ -436,6 +436,7 @@ export default function DomainConfirmation({
             disabled:cursor-not-allowed
             disabled:bg-slate-300
             disabled:shadow-none
+            cursor-pointer
           "
         >
           {loading

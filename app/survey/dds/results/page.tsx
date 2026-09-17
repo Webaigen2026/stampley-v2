@@ -3,6 +3,7 @@ import { redirect } from "next/navigation"
 import { prisma } from "@/lib/prisma"
 
 import DomainConfirmation from "./domain-confirmation"
+import { Header } from "@/components/survey/dds/results/header"
 
 function getSeverity(score: number) {
   if (score >= 4) {
@@ -99,91 +100,8 @@ export default async function DDSResultsPage() {
           HEADER
       ====================================================== */}
 
-      <header
-        className="
-          sticky
-          top-0
-          z-50
-          bg-white/92
-          backdrop-blur-xl
-          shadow-[0_1px_0_rgba(15,45,80,0.06),0_8px_24px_rgba(15,45,80,0.035)]
-        "
-      >
-        <div
-          className="
-            mx-auto
-            flex
-            h-[72px]
-            w-full
-            max-w-[1200px]
-            items-center
-            justify-between
-            px-5
-            sm:px-8
-            lg:px-10
-          "
-        >
-          <div>
-            <p
-              className="
-                text-[10px]
-                font-semibold
-                uppercase
-                tracking-[0.22em]
-                text-slate-400
-              "
-            >
-              AIDES-T2D Research Study
-            </p>
 
-            <p
-              className="
-                mt-1
-                text-sm
-                font-medium
-                text-[#173B7A]
-              "
-            >
-              DDS-17 Results
-            </p>
-          </div>
-
-          <div
-            className="
-              hidden
-              items-center
-              gap-2.5
-            
-              px-4
-              py-2
-    
-              sm:flex
-            "
-          >
-            <span
-              className="
-                h-1.5
-                w-1.5
-                rounded-full
-                bg-[#1473E6]
-              "
-            />
-
-            <span
-              className="
-                text-[11px]
-                font-semibold
-                uppercase
-                tracking-[0.16em]
-                text-[#173B7A]
-              "
-            >
-              Results Ready
-            </span>
-          </div>
-        </div>
-      </header>
-
+<Header />
       {/* =====================================================
           SOFT BACKGROUND
       ====================================================== */}
@@ -250,12 +168,12 @@ export default async function DDSResultsPage() {
           className="
             mx-auto
             w-full
-            max-w-[1080px]
+            max-w-7xl
             px-5
             pb-24
-            pt-12
+         
             sm:px-8
-            sm:pt-16
+           
             lg:px-10
           "
         >
@@ -628,7 +546,7 @@ export default async function DDSResultsPage() {
 <p
   className="
     mt-4
-    max-w-[720px]
+    max-w-3xl
     text-base
     leading-relaxed
     text-slate-600

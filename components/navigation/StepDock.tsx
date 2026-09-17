@@ -95,12 +95,35 @@ export default function StepDock() {
   return (
     <div className="flex w-full max-w-[920px] flex-col items-stretch gap-2 font-['Outfit',system-ui,sans-serif]">
       {continueBlockedMessage ? (
-        <p
-          className="px-1 text-center text-sm font-medium leading-snug "
-          role="status"
-        >
-          {continueBlockedMessage}
-        </p>
+     
+<div className="flex justify-center px-4">
+  <div className="relative inline-block max-w-[620px]">
+    <p
+      role="status"
+      className="
+        relative
+        z-10
+        rounded-[24px]
+        bg-white
+        px-6
+        py-3.5
+        text-center
+        text-[15px]
+        font-medium
+        leading-6
+      text-blue-900
+        shadow-[0_8px_24px_rgba(20,115,230,0.16)]
+        sm:px-7
+      "
+    >
+      {continueBlockedMessage}
+    </p>
+
+ 
+  </div>
+</div>
+
+
       ) : null}
 
       <div className="flex items-center justify-between gap-4">

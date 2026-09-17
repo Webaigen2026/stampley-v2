@@ -35,11 +35,12 @@ export default function ContextualFactorsPage() {
   }
 
   return (
-    <CheckInStepFrame
+  <main className="bg-white mt-10">
+      <CheckInStepFrame
       title="Contextual Factors"
       description="Select all that applied to your day with diabetes."
     >
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-2 ">
         {CONTEXT_TAGS.map((tag) => {
           const selected = contextTags.includes(tag.id)
           const Icon = tag.icon
@@ -98,7 +99,7 @@ export default function ContextualFactorsPage() {
                   flex-1
                   text-base
                   leading-snug
-                  ${selected ? "font-medium text-[#0B2857]" : "text-slate-600"}
+                  ${selected ? "font-medium text-[#0B2857]" : "text-black"}
                 `}
               >
                 {tag.label}
@@ -129,11 +130,12 @@ export default function ContextualFactorsPage() {
       </div>
 
       {contextTags.length === 0 ? (
-        <p className="mt-6 text-center text-sm text-slate-400">
+        <p className="mt-6 text-center text-sm text-black/70">
           Nothing applied today? That&apos;s okay — you can continue without
           selecting anything.
         </p>
       ) : null}
     </CheckInStepFrame>
+  </main>
   )
 }

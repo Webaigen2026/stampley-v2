@@ -35,7 +35,7 @@ function NarrativeBox({
   return (
     <section
       className="
-        rounded-[18px]
+        
         bg-white
         px-5
         py-6
@@ -48,7 +48,7 @@ function NarrativeBox({
       <p
         id={`${id}-label`}
         className="
-          text-[11px]
+          text-[14px]
           font-semibold
           uppercase
           tracking-[0.18em]
@@ -73,7 +73,7 @@ function NarrativeBox({
           min-h-[160px]
           w-full
           resize-none
-          rounded-[14px]
+       
           bg-[#F7FAFD]
           px-4
           py-4
@@ -96,7 +96,7 @@ function NarrativeBox({
               ? "text-[#c65b4b]"
               : nearLimit
                 ? "text-amber-600"
-                : "text-slate-400"
+                : "text-black"
           }`}
         >
           {remaining} characters remaining
@@ -108,7 +108,7 @@ function NarrativeBox({
               ? "text-[#c65b4b]"
               : nearLimit
                 ? "text-amber-600"
-                : "text-slate-400"
+                : "text-black"
           }`}
         >
           {value.length}/{maxLength}
@@ -155,8 +155,9 @@ export default function ClinicalNarrativePage() {
           flex
           items-start
           gap-3
-          rounded-[16px]
+         
           bg-[#F7FAFD]
+            border-l-2 border-blue-900
           px-5
           py-4
         "
@@ -170,8 +171,8 @@ export default function ClinicalNarrativePage() {
             shrink-0
             items-center
             justify-center
-            rounded-full
-            bg-[#EAF4FF]
+         rounded-full
+           
             text-[#1473E6]
           "
         >

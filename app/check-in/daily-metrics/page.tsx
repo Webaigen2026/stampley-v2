@@ -281,8 +281,10 @@ export default function DailyMetricsPage() {
             flex
             items-start
             gap-3
-            rounded-[16px]
+            
             bg-[#F7FAFD]
+            border-l-4
+            border-blue-900
             px-5
             py-4
           "
@@ -296,8 +298,9 @@ export default function DailyMetricsPage() {
               shrink-0
               items-center
               justify-center
-              rounded-full
-              bg-[#EAF4FF]
+             
+             
+           
               text-[#1473E6]
             "
           >
