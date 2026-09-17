@@ -7,7 +7,7 @@ const resend = new Resend(process.env.RESEND_API_KEY)
 ============================================================ */
 
 const EMAIL_COLORS = {
-  canvas: "#F5F8FC",
+  canvas: "#FFFFFF",
   white: "#FFFFFF",
 
   navy: "#173B7A",
@@ -15,7 +15,6 @@ const EMAIL_COLORS = {
 
   blue: "#1473E6",
   cyan: "#0E7490",
-
   gold: "#F2B134",
 
   text: "#334155",
@@ -27,7 +26,6 @@ const EMAIL_COLORS = {
   blueSoft: "#EEF6FF",
   goldSoft: "#FFF8E8",
   slateSoft: "#F7F9FC",
-
   dangerSoft: "#FFF5F5",
 } as const
 
@@ -69,15 +67,19 @@ function emailShell({
     <html lang="en">
       <head>
         <meta charset="UTF-8" />
+
         <meta
           name="viewport"
           content="width=device-width, initial-scale=1.0"
         />
+
         <meta name="color-scheme" content="light" />
+
         <meta
           name="supported-color-schemes"
           content="light"
         />
+
         <title>${title}</title>
       </head>
 
@@ -85,7 +87,7 @@ function emailShell({
         style="
           margin: 0;
           padding: 0;
-          background-color: ${EMAIL_COLORS.canvas};
+          background-color: #FFFFFF;
           font-family: ${EMAIL_FONT};
           color: ${EMAIL_COLORS.text};
           -webkit-font-smoothing: antialiased;
@@ -119,7 +121,7 @@ function emailShell({
           border="0"
           style="
             width: 100%;
-            background-color: ${EMAIL_COLORS.canvas};
+            background-color: #FFFFFF;
             border-collapse: collapse;
           "
         >
@@ -128,6 +130,7 @@ function emailShell({
               align="center"
               style="
                 padding: 36px 18px;
+                background-color: #FFFFFF;
               "
             >
               <table
@@ -142,9 +145,9 @@ function emailShell({
                   border-collapse: separate;
                   border-spacing: 0;
                   overflow: hidden;
-                  background-color: ${EMAIL_COLORS.white};
-                  border-radius: 18px;
-                  box-shadow: 0 18px 50px rgba(15, 45, 80, 0.08);
+                  background-color: #FFFFFF;
+                 
+                  box-shadow: 0 18px 50px rgba(15, 45, 80, 0.07);
                 "
               >
                 <!-- Brand accent -->
@@ -168,7 +171,8 @@ function emailShell({
                 <tr>
                   <td
                     style="
-                      padding: 32px 40px 20px 40px;
+                      padding: 32px 40px 26px 40px;
+                      background-color: #FFFFFF;
                     "
                   >
                     <table
@@ -177,7 +181,10 @@ function emailShell({
                       cellspacing="0"
                       cellpadding="0"
                       border="0"
-                      style="border-collapse: collapse;"
+                      style="
+                        width: 100%;
+                        border-collapse: collapse;
+                      "
                     >
                       <tr>
                         <td valign="middle">
@@ -212,15 +219,16 @@ function emailShell({
                           <div
                             style="
                               display: inline-block;
-                              padding: 6px 10px;
+                              padding: 7px 11px;
                               border-radius: 999px;
-                              background-color: ${EMAIL_COLORS.blueSoft};
+                              
                               font-size: 10px;
                               line-height: 1;
                               font-weight: 600;
                               letter-spacing: 0.12em;
                               text-transform: uppercase;
                               color: ${EMAIL_COLORS.navy};
+                              white-space: nowrap;
                             "
                           >
                             Study Portal
@@ -231,11 +239,29 @@ function emailShell({
                   </td>
                 </tr>
 
+                <!-- Header divider -->
+                <tr>
+                  <td
+                    style="
+                      padding: 0 40px;
+                      background-color: #FFFFFF;
+                    "
+                  >
+                    <div
+                      style="
+                        height: 1px;
+                        background-color: ${EMAIL_COLORS.line};
+                      "
+                    ></div>
+                  </td>
+                </tr>
+
                 <!-- Main content -->
                 <tr>
                   <td
                     style="
-                      padding: 16px 40px 40px 40px;
+                      padding: 38px 40px 42px 40px;
+                      background-color: #FFFFFF;
                     "
                   >
                     <div
@@ -295,7 +321,7 @@ function emailShell({
                     style="
                       padding: 26px 40px 30px 40px;
                       border-top: 1px solid ${EMAIL_COLORS.line};
-                      background-color: #FBFCFE;
+                      background-color: #FFFFFF;
                     "
                   >
                     <p
@@ -303,7 +329,8 @@ function emailShell({
                         margin: 0;
                         font-size: 12px;
                         line-height: 1.7;
-                        color: ${EMAIL_COLORS.muted};
+                        font-weight: 500;
+                        color: ${EMAIL_COLORS.navyDark};
                       "
                     >
                       AIDES-T2D Research Study
@@ -314,7 +341,7 @@ function emailShell({
                         margin: 2px 0 0 0;
                         font-size: 12px;
                         line-height: 1.7;
-                        color: ${EMAIL_COLORS.subtle};
+                        color: ${EMAIL_COLORS.muted};
                       "
                     >
                       University of Massachusetts Boston
@@ -422,6 +449,7 @@ function primaryButton({
             "
           >
             ${label}
+
             <span
               style="
                 display: inline-block;
@@ -437,6 +465,14 @@ function primaryButton({
   `
 }
 
+/*
+ * Clean security notice.
+ *
+ * IMPORTANT:
+ * No border.
+ * No tinted background.
+ * Pure white.
+ */
 function securityNotice(text: string) {
   return `
     <table
@@ -447,52 +483,47 @@ function securityNotice(text: string) {
       border="0"
       style="
         width: 100%;
-        margin: 26px 0 0 0;
-        border-collapse: separate;
-        border-spacing: 0;
+        margin: 34px 0 0 0;
+        border-collapse: collapse;
+        background-color: #FFFFFF;
       "
     >
       <tr>
         <td
+          valign="top"
           style="
-            padding: 15px 16px;
-            border-radius: 10px;
-            background-color: ${EMAIL_COLORS.slateSoft};
+            width: 32px;
+            padding: 1px 14px 0 0;
+            background-color: #FFFFFF;
           "
         >
-          <table
-            role="presentation"
-            width="100%"
-            cellspacing="0"
-            cellpadding="0"
-            border="0"
-            style="border-collapse: collapse;"
+          <div
+            style="
+              font-size: 19px;
+              line-height: 1;
+              color: ${EMAIL_COLORS.gold};
+            "
           >
-            <tr>
-              <td
-                valign="top"
-                style="
-                  width: 24px;
-                  padding-top: 1px;
-                  font-size: 14px;
-                  color: ${EMAIL_COLORS.navy};
-                "
-              >
-                &#128274;
-              </td>
+            &#128274;
+          </div>
+        </td>
 
-              <td
-                valign="top"
-                style="
-                  font-size: 12px;
-                  line-height: 1.65;
-                  color: ${EMAIL_COLORS.muted};
-                "
-              >
-                ${text}
-              </td>
-            </tr>
-          </table>
+        <td
+          valign="top"
+          style="
+            padding: 0;
+            background-color: #FFFFFF;
+          "
+        >
+          <div
+            style="
+              font-size: 12px;
+              line-height: 1.7;
+              color: ${EMAIL_COLORS.muted};
+            "
+          >
+            ${text}
+          </div>
         </td>
       </tr>
     </table>
@@ -548,15 +579,20 @@ export async function sendPasswordResetEmail(
   email: string,
   token: string
 ) {
-  const resetUrl = `${process.env.NEXTAUTH_URL}/reset-password?token=${token}`
+  const resetUrl =
+    `${process.env.NEXTAUTH_URL}/reset-password?token=${token}`
 
   const html = emailShell({
     eyebrow: "Account security",
+
     title: "Reset your password",
+
     description:
       "We received a request to reset the password for your AIDES-T2D account.",
+
     preheader:
       "Use this secure link to create a new password for your AIDES-T2D account.",
+
     content: `
       <p
         style="
@@ -589,8 +625,11 @@ export async function sendPasswordResetEmail(
     from:
       process.env.EMAIL_FROM ||
       "AIDES-T2D <onboarding@resend.dev>",
+
     to: email,
+
     subject: "Reset your AIDES-T2D password",
+
     html,
   })
 
@@ -627,11 +666,15 @@ export async function sendStudyKeyEmail({
 
   const html = emailShell({
     eyebrow: "You're invited",
+
     title: "Your AIDES-T2D Study ID",
+
     description:
       "A member of the AIDES-T2D study team has created a Study ID for you.",
+
     preheader:
       "Your AIDES-T2D Study ID is ready. Use it when creating your participant account.",
+
     content: `
       <p
         style="
@@ -653,19 +696,17 @@ export async function sendStudyKeyEmail({
         border="0"
         style="
           width: 100%;
-          margin: 28px 0 22px 0;
-          border-collapse: separate;
-          border-spacing: 0;
+          margin: 34px 0 24px 0;
+          border-collapse: collapse;
+          background-color: #FFFFFF;
         "
       >
         <tr>
           <td
             align="center"
             style="
-              padding: 24px 20px;
-              border-radius: 12px;
-              background-color: ${EMAIL_COLORS.blueSoft};
-              border: 1px solid #D9E9FB;
+              padding: 0;
+              background-color: #FFFFFF;
             "
           >
             <div
@@ -685,7 +726,7 @@ export async function sendStudyKeyEmail({
             <div
               style="
                 font-family: ${MONO_FONT};
-                font-size: 24px;
+                font-size: 26px;
                 line-height: 1.25;
                 font-weight: 700;
                 letter-spacing: 0.08em;
@@ -728,9 +769,7 @@ export async function sendStudyKeyEmail({
         <div
           style="
             margin-top: 26px;
-            padding: 16px;
-            border-radius: 10px;
-            background-color: ${EMAIL_COLORS.slateSoft};
+            background-color: #FFFFFF;
           "
         >
           <p
@@ -758,8 +797,11 @@ export async function sendStudyKeyEmail({
     from:
       process.env.EMAIL_FROM ||
       "AIDES-T2D <onboarding@resend.dev>",
+
     to: email,
+
     subject: "Your AIDES-T2D Study ID",
+
     html,
   })
 
@@ -787,12 +829,16 @@ export async function sendRegistrationVerificationEmail({
   code: string
 }) {
   const html = emailShell({
-    eyebrow: "Verify your email",
+    eyebrow: "",
+
     title: "Finish creating your account",
+
     description:
       "Use the verification code below to finish creating your AIDES-T2D participant account.",
+
     preheader:
       "Your AIDES-T2D email verification code is ready.",
+
     content: `
       <!-- Verification code -->
       <table
@@ -803,43 +849,42 @@ export async function sendRegistrationVerificationEmail({
         border="0"
         style="
           width: 100%;
-          margin: 28px 0 22px 0;
-          border-collapse: separate;
-          border-spacing: 0;
+          margin: 38px 0 24px 0;
+          border-collapse: collapse;
+          background-color: #FFFFFF;
         "
       >
         <tr>
           <td
             align="center"
             style="
-              padding: 26px 20px;
-              border-radius: 12px;
-              background-color: ${EMAIL_COLORS.blueSoft};
-              border: 1px solid #D9E9FB;
+              padding: 0;
+              background-color: #FFFFFF;
             "
           >
             <div
               style="
-                margin-bottom: 10px;
+                margin-bottom: 11px;
                 font-size: 10px;
                 line-height: 1.4;
                 font-weight: 700;
                 letter-spacing: 0.2em;
                 text-transform: uppercase;
-                color: ${EMAIL_COLORS.blue};
+                color: ${EMAIL_COLORS.muted};
               "
             >
-              Verification code
+              Verification Code
             </div>
 
             <div
               style="
                 font-family: ${MONO_FONT};
-                font-size: 32px;
+                font-size: 38px;
                 line-height: 1.2;
                 font-weight: 700;
                 letter-spacing: 0.24em;
                 color: ${EMAIL_COLORS.navyDark};
+                white-space: nowrap;
               "
             >
               ${code}
@@ -860,15 +905,15 @@ export async function sendRegistrationVerificationEmail({
       </table>
 
       ${securityNotice(
-        "Do not share this verification code with anyone. If you did not request this, you can safely ignore this email."
+        "<strong style=\"color:#0B2857;font-weight:600;\">Do not share this verification code with anyone.</strong><br />If you did not request this, you can safely ignore this email."
       )}
 
       <p
         style="
-          margin: 24px 0 0 0;
+          margin: 34px 0 0 0;
           font-size: 12px;
           line-height: 1.65;
-          color: ${EMAIL_COLORS.subtle};
+          color: ${EMAIL_COLORS.muted};
         "
       >
         Return to the AIDES-T2D verification page and enter the
@@ -881,8 +926,11 @@ export async function sendRegistrationVerificationEmail({
     from:
       process.env.EMAIL_FROM ||
       "AIDES-T2D <onboarding@resend.dev>",
+
     to: email,
+
     subject: "Verify your email",
+
     html,
   })
 

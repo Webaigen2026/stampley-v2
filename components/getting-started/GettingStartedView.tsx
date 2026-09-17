@@ -884,7 +884,7 @@ export default function GettingStartedView() {
             className="
               flex
               gap-4
-              rounded-[12px]
+             
               border-l-4
               border-l-blue-900
               bg-white
@@ -915,6 +915,7 @@ export default function GettingStartedView() {
               }}
               className="
                 flex
+              
                 h-9
                 w-9
                 shrink-0

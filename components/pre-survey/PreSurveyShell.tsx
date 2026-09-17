@@ -5,7 +5,6 @@ import Link from "next/link"
 
 import PreSurveySidebar from "./PreSurveySidebar"
 
-
 export default function PreSurveyShell({
   currentStep,
   children,
@@ -33,7 +32,7 @@ export default function PreSurveyShell({
           z-40
           hidden
           w-[340px]
-          overflow-y-auto
+          overflow-hidden
           border-r
           border-slate-100
           bg-white
@@ -42,69 +41,72 @@ export default function PreSurveyShell({
           lg:block
         "
       >
-        <PreSurveySidebar currentStep={currentStep} />
+        {/* Survey steps */}
+        <div className="relative z-20">
+          <PreSurveySidebar currentStep={currentStep} />
+        </div>
 
+        {/* =================================================
+            FIXED NURSE DECORATION
+        ================================================== */}
         <div
-    aria-hidden="true"
-    className="
-      pointer-events-none
-    flex
-    justify-center
-      bottom-0
-    
-      z-10
-      h-[285px]
-      w-full
-      overflow-hidden
-    "
-  >
-    {/* Soft background circle */}
-    <div
-      className="
-        absolute
-        -bottom-[100px]
-        
-        h-[300px]
-        w-[300px]
-        rounded-full
-        bg-[radial-gradient(circle_at_center,#eef7ff_0%,#f7fbff_62%,transparent_100%)]
-      "
-    />
+          aria-hidden="true"
+          className="
+            pointer-events-none
+            absolute
+            bottom-0
+            left-0
+            z-10
+            flex
+            h-[285px]
+            w-full
+            justify-center
+            overflow-hidden
+          "
+        >
+          {/* Soft background circle */}
+          <div
+            className="
+              absolute
+              -bottom-[100px]
+              h-[300px]
+              w-[300px]
+              rounded-full
+              bg-[radial-gradient(circle_at_center,#eef7ff_0%,#f7fbff_62%,transparent_100%)]
+            "
+          />
 
-    {/* Secondary ring */}
-    <div
-      className="
-        absolute
-        bottom-[18px]
-        
-        h-[180px]
-        w-[180px]
-        rounded-full
-        border
-        border-[#d8e9f8]
-        opacity-70
-      "
-    />
+          {/* Secondary ring */}
+          <div
+            className="
+              absolute
+              bottom-[18px]
+              h-[180px]
+              w-[180px]
+              rounded-full
+              border
+              border-[#d8e9f8]
+              opacity-70
+            "
+          />
 
-  
-<img
-  src="/dashboard/nurse.png"
-  alt=""
-  width={120}
-  height={160}
-  className="
-    absolute
-    bottom-0
-   
-    z-10
-    h-[168px]
-    w-auto
-    max-w-none
-    object-contain
-    object-bottom
-  "
-/>
-  </div>
+          <img
+            src="/dashboard/nurse.png"
+            alt=""
+            width={100}
+            height={100}
+            className="
+              absolute
+              bottom-0
+              z-10
+              h-[168px]
+              w-auto
+              max-w-none
+              object-contain
+              object-bottom
+            "
+          />
+        </div>
       </aside>
 
       {/* =====================================================
@@ -122,9 +124,7 @@ export default function PreSurveyShell({
             bg-white/92
             backdrop-blur-xl
             shadow-[0_1px_0_rgba(15,45,80,0.06),0_8px_24px_rgba(15,45,80,0.035)]
-          
-          
-            "
+          "
         >
           <div
             className="
@@ -163,7 +163,6 @@ export default function PreSurveyShell({
                 className="
                   h-auto
                   w-[40px]
-
                   object-contain
                   transition-opacity
                   duration-200
@@ -178,10 +177,8 @@ export default function PreSurveyShell({
                 hidden
                 items-center
                 gap-2.5
-              
                 px-4
                 py-2
-                
                 sm:flex
               "
             >
@@ -191,33 +188,25 @@ export default function PreSurveyShell({
                   h-1.5
                   w-1.5
                   rounded-full
-                 
                 "
               />
-
-
-
 
               <span
                 className="
                   text-[24px]
                   font-bold
-                 
                 "
                 style={{
-                  fontFamily: `'Playfair Display', 'Cinzel', 'Dancing Script', 'Caveat', 'Great Vibes', cursive, serif, system-ui, sans-serif`,
-                  letterSpacing: '0.01em',
+                  fontFamily:
+                    "'Playfair Display', 'Cinzel', 'Dancing Script', 'Caveat', 'Great Vibes', cursive, serif, system-ui, sans-serif",
+                  letterSpacing: "0.01em",
                 }}
               >
                 Pre-Survey
               </span>
-         
             </div>
           </div>
-          
         </header>
-
-       
 
         {/* ===================================================
             PAGE CONTENT
