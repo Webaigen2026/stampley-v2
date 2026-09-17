@@ -156,7 +156,8 @@ export default function HealthLiteracyStep({
               max-w-[820px]
               items-start
               gap-4
-              rounded-[14px]
+              border-l-4
+              border-blue-900
               bg-white
               px-5
               py-5
@@ -232,6 +233,8 @@ export default function HealthLiteracyStep({
               </p>
             </motion.div>
           </motion.div>
+
+          
         </motion.div>
 
         {/* =====================================================

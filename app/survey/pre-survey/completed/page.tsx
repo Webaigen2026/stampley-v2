@@ -1,16 +1,13 @@
 import Image from "next/image"
 import Link from "next/link"
 import { redirect } from "next/navigation"
-
 import {
   ArrowRight,
-  Check,
-  ClipboardCheck,
-  FileText,
 } from "lucide-react"
 
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
+
 import PreSurveyCelebration from "@/components/pre-survey/PreSurveyCelebration"
 
 export default async function PreSurveyCompletedPage() {
@@ -57,125 +54,19 @@ export default async function PreSurveyCompletedPage() {
       "
     >
       {/* =====================================================
-          HEADER
-      ====================================================== */}
-
-      {/* <header
-        className="
-          relative
-          z-40
-          bg-white/95
-          backdrop-blur-xl
-          shadow-[0_1px_0_rgba(15,45,80,0.06)]
-        "
-      >
-        <div
-          className="
-            mx-auto
-            flex
-            h-[76px]
-            w-full
-            max-w-[1280px]
-            items-center
-            justify-between
-            px-5
-            sm:px-8
-            lg:px-10
-          "
-        >
-          <Link
-            href="/"
-            className="
-              inline-flex
-              items-center
-              rounded-[10px]
-              focus-visible:outline-2
-              focus-visible:outline-offset-4
-              focus-visible:outline-[#1473E6]
-            "
-          >
-            <Image
-              src="/images/stampleyLogo.png"
-              alt="AIDES-T2D"
-              width={156}
-              height={52}
-              priority
-              className="
-                h-auto
-                w-[150px]
-                object-contain
-              "
-            />
-          </Link>
-
-          <div
-            className="
-              hidden
-              items-center
-              gap-2.5
-              rounded-full
-              bg-[#F4F8FD]
-              px-4
-              py-2
-              shadow-[inset_0_0_0_1px_rgba(219,234,254,0.8)]
-              sm:flex
-            "
-          >
-            <span
-              className="
-                flex
-                h-7
-                w-7
-                items-center
-                justify-center
-                rounded-full
-                bg-white
-                text-[#173B7A]
-                shadow-[0_3px_10px_rgba(15,45,80,0.06)]
-              "
-            >
-              <Check
-                size={14}
-                strokeWidth={2}
-              />
-            </span>
-
-            <span
-              className="
-                text-[11px]
-                font-semibold
-                uppercase
-                tracking-[0.16em]
-                text-[#173B7A]
-              "
-            >
-              Pre-Survey Complete
-            </span>
-          </div>
-        </div>
-      </header> */}
-
-      {/* =====================================================
           PAGE BACKGROUND
       ====================================================== */}
-
       <section
         className="
           relative
           isolate
-          min-h-[calc(100dvh-76px)]
+          min-h-dvh
           overflow-hidden
         "
       >
         {/* ===================================================
-            SOFT CLINICAL BACKGROUND
+            TOP BLUE CELEBRATION WAVE
         ==================================================== */}
-
-        
-        {/* ===================================================
-            TOP SOFT BLUE CELEBRATION WAVE
-        ==================================================== */}
-
         <div
           aria-hidden="true"
           className="
@@ -188,6 +79,7 @@ export default async function PreSurveyCompletedPage() {
             overflow-hidden
           "
         >
+          {/* Main blue wave */}
           <div
             className="
               absolute
@@ -196,9 +88,11 @@ export default async function PreSurveyCompletedPage() {
               h-[300px]
               w-[112%]
               rounded-[0_0_50%_50%/0_0_100%_100%]
-              bg-blue-900    "
+              bg-blue-900
+            "
           />
 
+          {/* Soft center highlight */}
           <div
             className="
               absolute
@@ -213,6 +107,7 @@ export default async function PreSurveyCompletedPage() {
             "
           />
 
+          {/* Soft right highlight */}
           <div
             className="
               absolute
@@ -230,7 +125,6 @@ export default async function PreSurveyCompletedPage() {
         {/* ===================================================
             MAIN CONTENT
         ==================================================== */}
-
         <div
           className="
             relative
@@ -249,7 +143,6 @@ export default async function PreSurveyCompletedPage() {
           {/* =================================================
               MEDAL
           ================================================== */}
-
           <div className="relative mt-15 mb-6 flex justify-center">
             <PreSurveyCelebration />
           </div>
@@ -257,10 +150,7 @@ export default async function PreSurveyCompletedPage() {
           {/* =================================================
               CONGRATULATIONS
           ================================================== */}
-
           <div className="mt-4 text-center">
-           
-
             <h1
               className="
                 mt-3
@@ -270,133 +160,42 @@ export default async function PreSurveyCompletedPage() {
                 text-[#0B2857]
                 sm:text-5xl
               "
-              style={{ fontFamily: "'Papyrus', 'Brush Script MT', 'Comic Sans MS', cursive, fantasy, 'Copperplate', 'Lucida Handwriting', 'Dancing Script', 'Great Vibes', sans-serif" }}
+              style={{
+                fontFamily:
+                  "'Papyrus', 'Brush Script MT', 'Comic Sans MS', cursive, fantasy, 'Copperplate', 'Lucida Handwriting', 'Dancing Script', 'Great Vibes', sans-serif",
+              }}
             >
-               You&apos;ve completed the pre-survey.
+              You&apos;ve completed the pre-survey.
             </h1>
-       
-
-
-          
           </div>
 
           {/* =================================================
-              PROGRESS
+              STEP CARDS + DIRECTION ARROW
           ================================================== */}
-
-          {/* <section
-            className="
-              mt-8
-              rounded-[18px]
-              bg-white/90
-              px-6
-              py-5
-              shadow-[0_10px_30px_rgba(15,45,80,0.07)]
-              backdrop-blur-sm
-            "
-          >
-            <div
-              className="
-                flex
-                items-center
-                justify-between
-                gap-5
-              "
-            >
-              <div>
-                <p
-                  className="
-                    text-base
-                    font-medium
-                    text-[#173B7A]
-                  "
-                >
-                  Study setup progress
-                </p>
-
-                <p
-                  className="
-                    mt-1
-                    text-sm
-                    text-slate-500
-                  "
-                >
-                  1 of 2 setup surveys completed
-                </p>
-              </div>
-
-              <span
-                className="
-                  text-lg
-                  font-semibold
-                  text-[#1473E6]
-                "
-              >
-                50%
-              </span>
-            </div>
-
-            <div
-              className="
-                mt-4
-                h-2.5
-                overflow-hidden
-                rounded-full
-                bg-[#E6EEF7]
-              "
-            >
-              <div
-                className="
-                  h-full
-                  w-1/2
-                  rounded-full
-                  bg-[linear-gradient(90deg,#1473E6_0%,#2688F2_100%)]
-                "
-              />
-            </div>
-          </section> */}
-
-          {/* =================================================
-              STEP CARDS
-          ================================================== */}
-
           <div
             className="
+              relative
               mt-20
               grid
-              gap-4
-              md:grid-cols-2
+              gap-5
+              md:grid-cols-[minmax(0,1fr)_72px_minmax(0,1fr)]
+              md:items-stretch
+              md:gap-0
             "
           >
-            {/* Completed card */}
+            {/* ===============================================
+                COMPLETED CARD
+            ================================================ */}
             <section
               className="
-              
+                relative
+                z-10
                 bg-white
                 p-6
                 shadow-[0_8px_26px_rgba(15,45,80,0.07)]
               "
             >
               <div className="flex items-start gap-4">
-                {/* <div
-                  className="
-                    flex
-                    h-12
-                    w-12
-                    shrink-0
-                    items-center
-                    justify-center
-                    rounded-full
-                    bg-[#E9F8EF]
-                    text-emerald-600
-                  "
-                >
-                  <ClipboardCheck
-                    size={21}
-                    strokeWidth={1.8}
-                  />
-                </div> */}
-
                 <div
                   className="
                     flex
@@ -405,7 +204,6 @@ export default async function PreSurveyCompletedPage() {
                     shrink-0
                     items-center
                     justify-center
-                    
                   "
                 >
                   <img
@@ -414,7 +212,6 @@ export default async function PreSurveyCompletedPage() {
                     className="h-full w-full object-contain"
                   />
                 </div>
-          
 
                 <div className="min-w-0">
                   <p
@@ -455,11 +252,107 @@ export default async function PreSurveyCompletedPage() {
               </div>
             </section>
 
-            {/* Next step card */}
+            {/* ===============================================
+                DIRECTION ARROW
+            ================================================ */}
+            <div
+              aria-hidden="true"
+              className="
+                relative
+                z-20
+                flex
+                h-[54px]
+                items-center
+                justify-center
+                md:h-auto
+              "
+            >
+              {/* Mobile vertical connector */}
+              <div
+                className="
+                  absolute
+                  left-1/2
+                  top-0
+                  h-full
+                  -translate-x-1/2
+                  border-l
+                  border-dashed
+                  border-[#CFE2F8]
+                  md:hidden
+                "
+              />
+
+              {/* Desktop left connector */}
+              <div
+                className="
+                  absolute
+                  left-0
+                  top-1/2
+                  hidden
+                  w-1/2
+                  -translate-y-1/2
+                  border-t
+                  border-dashed
+                  border-[#CFE2F8]
+                  md:block
+                "
+              />
+
+              {/* Desktop right connector */}
+              <div
+                className="
+                  absolute
+                  right-0
+                  top-1/2
+                  hidden
+                  w-1/2
+                  -translate-y-1/2
+                  border-t
+                  border-dashed
+                  border-[#CFE2F8]
+                  md:block
+                "
+              />
+
+              {/* Arrow circle */}
+              <div
+                className="
+                  relative
+                  z-10
+                  flex
+                  h-12
+                  w-12
+                  items-center
+                  justify-center
+                  rounded-full
+                  bg-[#EEF6FF]
+                  text-[#1473E6]
+                  shadow-[0_6px_20px_rgba(20,115,230,0.10)]
+                  ring-4
+                  ring-white
+                  md:h-14
+                  md:w-14
+                "
+              >
+                <ArrowRight
+                  size={25}
+                  strokeWidth={2}
+                  className="
+                    rotate-90
+                    md:rotate-0
+                  "
+                />
+              </div>
+            </div>
+
+            {/* ===============================================
+                NEXT STEP CARD
+            ================================================ */}
             <section
               className="
-             
-                
+                relative
+                z-10
+                bg-white
                 p-6
                 shadow-[0_8px_26px_rgba(20,115,230,0.08)]
               "
@@ -468,12 +361,10 @@ export default async function PreSurveyCompletedPage() {
                 <img
                   src="/dashboard/glucometer.png"
                   alt="Glucometer"
-                  className="w-20 h-20 "
-
+                  className="h-20 w-20 shrink-0 object-contain"
                   width={80}
                   height={80}
                 />
-          
 
                 <div className="min-w-0">
                   <p
@@ -518,7 +409,6 @@ export default async function PreSurveyCompletedPage() {
           {/* =================================================
               SUPPORT MESSAGE
           ================================================== */}
-
           <div
             className="
               mt-5
@@ -545,7 +435,6 @@ export default async function PreSurveyCompletedPage() {
           {/* =================================================
               CTA
           ================================================== */}
-
           <div
             className="
               mt-8
@@ -574,10 +463,8 @@ export default async function PreSurveyCompletedPage() {
                 shadow-[0_8px_22px_rgba(23,59,122,0.18)]
                 transition-all
                 duration-200
-
                 hover:bg-[#123568]
                 hover:shadow-[0_10px_26px_rgba(23,59,122,0.22)]
-
                 focus-visible:outline-none
                 focus-visible:ring-2
                 focus-visible:ring-[#1473E6]

@@ -188,10 +188,12 @@ export default function PHQStep({
               max-w-[900px]
               items-start
               gap-4
-              rounded-[14px]
+              
               bg-white
               px-5
               py-5
+              border-l-4
+              border-blue-900
               shadow-[0_10px_32px_rgba(15,45,80,0.08)]
               sm:px-6
             "

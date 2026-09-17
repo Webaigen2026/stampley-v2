@@ -1,13 +1,11 @@
 "use client"
 
 import { useState } from "react"
-
 import {
   motion,
   useReducedMotion,
   type Variants,
 } from "framer-motion"
-
 import { CheckCircle2 } from "lucide-react"
 
 import { submitPreSurvey } from "@/actions/pre-survey"
@@ -28,7 +26,6 @@ const fadeUp: Variants = {
     opacity: 1,
     y: 0,
     filter: "blur(0px)",
-
     transition: {
       duration: 0.7,
       ease: easeOut,
@@ -47,7 +44,6 @@ const fadeLeft: Variants = {
     opacity: 1,
     x: 0,
     filter: "blur(0px)",
-
     transition: {
       duration: 0.75,
       ease: easeOut,
@@ -105,6 +101,7 @@ export default function ReviewStep({
       window.location.href = "/survey/pre-survey/completed"
     } catch (error) {
       console.error("Pre-survey submit failed:", error)
+
       setIsSubmitting(false)
     }
   }
@@ -204,7 +201,8 @@ export default function ReviewStep({
               max-w-[820px]
               items-start
               gap-4
-              rounded-[14px]
+              border-l-4
+              border-blue-900
               bg-white
               px-5
               py-5
@@ -224,7 +222,6 @@ export default function ReviewStep({
                   opacity: 1,
                   scale: 1,
                   rotate: 0,
-
                   transition: {
                     duration: 0.65,
                     ease: easeOut,
@@ -301,13 +298,13 @@ export default function ReviewStep({
           }}
           variants={rowsContainer}
           className="
-            space-y-5
             px-6
             pb-12
             sm:px-8
             lg:px-10
           "
         >
+          {/* Section heading */}
           <motion.div
             variants={fadeUp}
             className="max-w-[820px]"
@@ -336,47 +333,67 @@ export default function ReviewStep({
             </p>
           </motion.div>
 
-          <ReviewRow
-            label="Consent Status"
-            value={formData.consent_status}
-            reduceMotion={reduceMotion}
-          />
+          {/* =================================================
+              SINGLE REVIEW CARD
+          ================================================== */}
+          <motion.div
+            variants={fadeUp}
+            whileHover={
+              reduceMotion
+                ? undefined
+                : {
+                    y: -2,
+                  }
+            }
+            transition={{
+              duration: 0.25,
+              ease: easeOut,
+            }}
+            className="
+              mt-6
+              max-w-[820px]
+              overflow-hidden
+              rounded-[16px]
+              bg-white
+              shadow-[0_10px_32px_rgba(15,45,80,0.08)]
+            "
+          >
+            <ReviewRow
+              label="Consent Status"
+              value={formData.consent_status}
+            />
 
-          <ReviewRow
-            label="Age"
-            value={formData.age}
-            reduceMotion={reduceMotion}
-          />
+            <ReviewRow
+              label="Age"
+              value={formData.age}
+            />
 
-          <ReviewRow
-            label="Gender"
-            value={formData.gender}
-            reduceMotion={reduceMotion}
-          />
+            <ReviewRow
+              label="Gender"
+              value={formData.gender}
+            />
 
-          <ReviewRow
-            label="Diagnosis Duration"
-            value={formData.diagnosis_duration}
-            reduceMotion={reduceMotion}
-          />
+            <ReviewRow
+              label="Diagnosis Duration"
+              value={formData.diagnosis_duration}
+            />
 
-          <ReviewRow
-            label="Health Insurance"
-            value={formData.insurance_type}
-            reduceMotion={reduceMotion}
-          />
+            <ReviewRow
+              label="Health Insurance"
+              value={formData.insurance_type}
+            />
 
-          <ReviewRow
-            label="Internet Usage"
-            value={formData.internet_usage}
-            reduceMotion={reduceMotion}
-          />
+            <ReviewRow
+              label="Internet Usage"
+              value={formData.internet_usage}
+            />
 
-          <ReviewRow
-            label="Communication Preference"
-            value={formData.communication_preference}
-            reduceMotion={reduceMotion}
-          />
+            <ReviewRow
+              label="Communication Preference"
+              value={formData.communication_preference}
+              last
+            />
+          </motion.div>
         </motion.div>
 
         {/* =====================================================
@@ -416,14 +433,18 @@ export default function ReviewStep({
   )
 }
 
+/* ============================================================
+   REVIEW ROW
+============================================================ */
+
 function ReviewRow({
   label,
   value,
-  reduceMotion,
+  last = false,
 }: {
   label: string
   value: any
-  reduceMotion?: boolean | null
+  last?: boolean
 }) {
   const displayValue = Array.isArray(value)
     ? value.length > 0
@@ -431,63 +452,72 @@ function ReviewRow({
       : "Not answered"
     : value || "Not answered"
 
-  const unanswered =
-    displayValue === "Not answered"
+  const unanswered = displayValue === "Not answered"
 
   return (
-    <motion.div
-      variants={fadeUp}
-      whileHover={
-        reduceMotion
-          ? undefined
-          : {
-              y: -2,
-            }
-      }
-      transition={{
-        duration: 0.25,
-        ease: easeOut,
-      }}
-      className="
+    <div
+      className={`
         group
-        max-w-[820px]
-        rounded-[16px]
-        bg-white
+        relative
         px-5
         py-5
-        shadow-[0_10px_30px_rgba(15,45,80,0.07)]
+        transition-colors
+        duration-200
+        hover:bg-slate-50/60
         sm:px-6
-        sm:py-6
-      "
+        sm:py-5
+
+        ${
+          last
+            ? ""
+            : "border-b border-slate-100"
+        }
+      `}
     >
       <div
         className="
           flex
           flex-col
-          gap-3
+          gap-2
           sm:flex-row
-          sm:items-start
+          sm:items-center
           sm:justify-between
           sm:gap-8
         "
       >
-        <div className="min-w-0">
-          <p
-            className="
-              text-lg
-              font-medium
-              text-slate-500
-            "
-          >
-            {label}
-          </p>
+        {/* Label */}
+        <p
+          className="
+            min-w-0
+            text-sm
+            font-medium
+            text-slate-500
+            sm:w-[42%]
+          "
+        >
+          {label}
+        </p>
 
+        {/* Value */}
+        <div
+          className="
+            flex
+            min-w-0
+            flex-1
+            items-center
+            justify-between
+            gap-4
+            sm:justify-end
+          "
+        >
           <p
             className={`
-              mt-2
-              text-lg
+              min-w-0
+              text-base
               font-medium
               leading-relaxed
+              sm:text-right
+
               ${
                 unanswered
                   ? "text-slate-400"
@@ -497,30 +527,39 @@ function ReviewRow({
           >
             {displayValue}
           </p>
-        </div>
 
-        {!unanswered ? (
-          <div
-            className="
-              flex
-              h-8
-              w-8
-              shrink-0
-              items-center
-              justify-center
-              rounded-full
-              bg-[#EEF6FF]
-              text-[#1473E6]
-            "
-          >
-            <CheckCircle2
+          {!unanswered ? (
+            <div
+              className="
+                flex
+                h-7
+                w-7
+                shrink-0
+                items-center
+                justify-center
+                rounded-full
+                bg-[#EEF6FF]
+                text-[#1473E6]
+              "
+            >
+              <CheckCircle2
+                aria-hidden="true"
+                size={15}
+                strokeWidth={1.9}
+              />
+            </div>
+          ) : (
+            <div
               aria-hidden="true"
-              size={17}
-              strokeWidth={1.9}
+              className="
+                h-7
+                w-7
+                shrink-0
+              "
             />
-          </div>
-        ) : null}
+          )}
+        </div>
       </div>
-    </motion.div>
+    </div>
   )
 }

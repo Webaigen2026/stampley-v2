@@ -159,8 +159,10 @@ export default function DiabetesHistoryStep({
               max-w-[820px]
               items-start
               gap-4
-              rounded-[14px]
+          
               bg-white
+               border-l-4
+              border-blue-900
               px-5
               py-5
               shadow-[0_10px_32px_rgba(15,45,80,0.08)]

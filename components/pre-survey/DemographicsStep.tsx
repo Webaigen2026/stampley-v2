@@ -173,7 +173,7 @@ export default function DemographicsStep({
               max-w-[820px]
               items-start
               gap-4
-              rounded-[14px]
+             
               bg-white
               px-5
               py-5

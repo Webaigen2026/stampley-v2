@@ -154,10 +154,12 @@ export default function TechnologyStep({
               max-w-[820px]
               items-start
               gap-4
-              rounded-[14px]
+            
               bg-white
               px-5
               py-5
+              border-l-4
+              border-blue-900
               shadow-[0_10px_32px_rgba(15,45,80,0.08)]
               sm:px-6
             "
@@ -729,7 +731,7 @@ function ScaleField({
             gap-4
             text-xs
             font-normal
-            text-slate-500
+            text-black
           "
         >
           <span>
