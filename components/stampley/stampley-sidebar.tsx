@@ -222,6 +222,7 @@ function MonoLabel({
   )
 }
 
+// Sidebar will be expanded (not collapsed) by default
 export function StampleySidebar({
   isOpen,
   setIsOpen,
@@ -242,7 +243,7 @@ export function StampleySidebar({
   weekNumber,
   ddsSummary = null,
 }: StampleySidebarProps) {
-  const [isCollapsed, setIsCollapsed] = useState(true)
+  const [isCollapsed, setIsCollapsed] = useState(false) // not collapsed by default
 
   const domainFocus = isDomainKey(currentDomain)
     ? DDS_FOCUS[currentDomain]
@@ -292,8 +293,19 @@ export function StampleySidebar({
 
           <div className="w-full h-full  flex items-center justify-start my-2 px-2">
             {/* <img src="/dashboard/bannerlogo.png" alt="Stampley" width={50} height={50} /> */}
-         <span className="text-lg font-medium text-[#173B7A]">Daily Check-in</span>
-          </div> 
+         {/* <span className="text-lg font-medium text-[#173B7A]">Daily Check-in</span>
+          */}
+         <Image
+           src={isCollapsed ? "/images/stampleyLogo.png" : "/images/stampleylogomain.webp"}
+           alt="Stampley"
+           width={isCollapsed ? 30 : 120}
+           height={isCollapsed ? 30 : 40}
+           priority
+         />
+   
+         
+         
+         </div> 
           
           )}
           <button
