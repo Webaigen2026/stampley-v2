@@ -904,21 +904,21 @@ export default function StampleySupportPage() {
             <div className="relative">
               <button
                 type="button"
-                className="flex h-8 w-8 items-center justify-center rounded-[9px] text-slate-400 transition hover:bg-slate-50 hover:text-slate-700"
+                className="flex cursor-pointer h-8 w-8 items-center justify-center rounded-[9px] text-slate-400 transition hover:bg-slate-50 hover:text-slate-700"
                 aria-label="Show explanation"
                 onClick={() => setShowExplanation((prev: boolean) => !prev)}
               >
-                <BookOpen size={14} strokeWidth={1.5} />
+                <BookOpen size={18} strokeWidth={1.5} />
               </button>
               {showExplanation && (
-                <div className="absolute top-10 right-0 z-10 w-64 rounded-[14px] bg-white px-4 py-3 text-[13px] leading-normal text-slate-600 shadow-[0_10px_30px_rgba(15,45,80,0.12)]">
+                <div className="absolute top-10 right-0 z-10 w-74 rounded-[14px] bg-white px-4 py-3 text-[14px] leading-normal text-slate-600 shadow-[0_10px_30px_rgba(15,45,80,0.12)]">
                   <span>
                     <strong className="text-[#0B2857]">What&apos;s this?</strong>
                     <br />
                     The chat is where you can interact with Stampley to reflect on your check-in. Your responses help tailor the conversation and support you receive.
                   </span>
                   <button
-                    className="absolute top-1 right-2 rounded px-1 py-0.5 text-[11px] text-slate-400 hover:bg-slate-50"
+                    className="absolute top-1 right-2 rounded px-1 py-0.5 text-[18px] text-slate-400 cursor-pointer hover:scale-115 transition-all duration-200"
                     onClick={() => setShowExplanation((prev: boolean) => !prev)}
                     aria-label="Close explanation"
                   >
@@ -1160,6 +1160,7 @@ export default function StampleySupportPage() {
                 font-semibold
                 uppercase
                 tracking-[0.14em]
+                text-[#0B2857]
                
               "
             >
@@ -1214,7 +1215,7 @@ export default function StampleySupportPage() {
                   font-bold
                   uppercase
                   tracking-[0.18em]
-                  text-black
+                 text-[#0B2857]
                 "
               >
                 {item.label}
@@ -1227,7 +1228,7 @@ export default function StampleySupportPage() {
                     font-medium
                     leading-none
                     tracking-[-0.04em]
-                    text-black
+                   text-[#0B2857]
                   "
                 >
                   {item.value}
@@ -1237,7 +1238,7 @@ export default function StampleySupportPage() {
                   className="
                     pb-[2px]
                     text-xs
-                    text-black/70
+                   text-[#0B2857]/70
                   "
                 >
                   / 10
@@ -1274,7 +1275,7 @@ export default function StampleySupportPage() {
                 font-bold
                 uppercase
                 tracking-[0.18em]
-                text-black
+               text-[#0B2857]
               "
             >
               Focus domain
@@ -1309,7 +1310,7 @@ export default function StampleySupportPage() {
                 font-bold
                 uppercase
                 tracking-[0.18em]
-                text-black
+               text-[#0B2857]
               "
             >
               Context factors
@@ -1374,7 +1375,7 @@ export default function StampleySupportPage() {
                   font-bold
                   uppercase
                   tracking-[0.18em]
-                  text-black
+                 text-[#0B2857]
                 "
               >
                 Reflection
@@ -1437,7 +1438,7 @@ export default function StampleySupportPage() {
                   font-bold
                   uppercase
                   tracking-[0.18em]
-                  text-black
+                text-[#0B2857]
                 "
               >
                 Coping action
@@ -1470,6 +1471,7 @@ export default function StampleySupportPage() {
           mt-6
           flex
           h-12
+         
           w-full
           items-center
           justify-center
@@ -1697,8 +1699,7 @@ function ChatInputDock({
       className="
         w-full
         shrink-0
-        border-t
-        border-slate-100/80
+       
         bg-white/95
         px-4
         pb-5
@@ -1708,7 +1709,7 @@ function ChatInputDock({
         md:pb-6
       "
     >
-      <div className="mx-auto w-full max-w-[760px]">
+      <div className="mx-auto w-full max-w-[720px] -translate-x-[40px] ">
         <div
           className={`
             min-h-[58px]
@@ -1805,6 +1806,7 @@ function ChatInputDock({
             mt-3
             flex
             min-h-12
+            cursor-pointer
             w-full
             items-center
             justify-center
@@ -1888,12 +1890,12 @@ function ChatMessage({
             className="
               rounded-[20px]
               rounded-br-[7px]
-              bg-[#1473E6]/5
+              bg-[#1473E6]/3
               px-5
               py-3
               text-[18px]
               leading-relaxed
-              
+              text-[#0B2857]
             
             "
           >
