@@ -161,7 +161,43 @@ export default function DashboardSidebar() {
             shadow-[0_8px_26px_rgba(15,45,80,0.08)]
           "
         >
-        
+          {/* Image */}
+          <div
+            className="
+              relative
+              h-[250px]
+              overflow-hidden
+            
+              bg-cover
+              bg-no-repeat
+              transition-transform
+              duration-500
+            "
+            style={{
+              backgroundImage: "url('/dashboard/nurse2.png')",
+              backgroundPosition: "40% center",
+              backgroundSize: "cover",
+             
+            }}
+          >
+            <div
+              aria-hidden="true"
+              className="absolute inset-0 bg-[#0b2857]/[0.02]"
+            />
+
+            <div
+              aria-hidden="true"
+              className="
+                absolute
+                inset-x-0
+                bottom-0
+                h-12
+                bg-gradient-to-t
+                from-white
+                to-transparent
+              "
+            />
+          </div>
 
           {/* Content */}
           <div className="px-4 pb-5 pt-3">
