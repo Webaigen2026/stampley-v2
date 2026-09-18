@@ -25,6 +25,7 @@ import CheckInStepFrame from "@/components/check-in/CheckInStepFrame"
 import { useCheckInStore } from "@/store/checkin-store"
 import { useCheckInSubmit } from "@/components/check-in/CheckInSubmitContext"
 import { useCheckInSidebarVisibility } from "@/components/check-in/CheckInSidebarVisibility"
+
 import {
   getConversations,
   saveConversations,
@@ -838,16 +839,28 @@ export default function StampleySupportPage() {
               className="flex h-9 w-9 items-center justify-center rounded-[10px] text-slate-400 transition hover:bg-slate-50 hover:text-slate-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#173B7A] md:hidden"
               aria-label="Toggle sidebar"
             >
+  
+
               <Menu size={15} strokeWidth={1.5} />
             </button>
-
+        
             <motion.div className="hidden min-w-0 md:block">
-              <p className="text-base font-medium text-[#0B2857]">
+
+
+
+              <p className="text-base font-medium text-[#0B2857]/80">
                 {subscale
-                  ? `Week ${weekNumber} · Day ${dayNumber} · ${subscale}`
+                  ? (
+                    <>
+                      {`Week ${weekNumber} · Day ${dayNumber}`}
+                      <br />
+                      {subscale}
+                    </>
+                  )
+             
                   : "Chat in progress · not saved yet"}
               </p>
-              <p className="mt-0.5 text-xs text-slate-500">Stampley Support</p>
+              {/* <p className="mt-0.5 text-xs text-slate-500">Stampley Support</p> */}
             </motion.div>
 
             <div className="flex items-center gap-0.5 rounded-full bg-[#F7FAFD] p-1">
@@ -856,9 +869,9 @@ export default function StampleySupportPage() {
                   key={view}
                   type="button"
                   onClick={() => setActiveView(view)}
-                  className={`rounded-full px-4 py-1.5 text-[11px] font-medium uppercase tracking-[0.08em] transition ${
+                  className={`rounded-full px-4 py-1.5 text-[14px] cursor-pointer font-medium uppercase tracking-[0.08em] transition ${
                     activeView === view
-                      ? "bg-white text-[#173B7A] shadow-[0_4px_12px_rgba(23,59,122,0.10)]"
+                      ? "bg-white text-black shadow-[0_4px_12px_rgba(23,59,122,0.10)]"
                       : "text-slate-400"
                   }`}
                 >
@@ -1007,81 +1020,493 @@ export default function StampleySupportPage() {
                 />
               </motion.div>
             )}
+{activeView === "results" && (
+  <motion.div
+    key="results"
+    initial={{ opacity: 0, y: 10 }}
+    animate={{ opacity: 1, y: 0 }}
+    exit={{ opacity: 0, y: -10 }}
+    transition={{ duration: 0.24, ease: "easeOut" }}
+    className="flex min-h-0 flex-1 flex-col overflow-y-auto"
+  >
+    <div
+      className="
+        mx-auto
+        w-full
+        max-w-[960px]
+        px-4
+        py-8
+        md:px-8
+      "
+    >
+      {/* =====================================================
+          PAGE HEADING
+      ====================================================== */}
+      <div className="my-10">
+     
+{/* 
+        <h2
+          className="
+            mt-2
+            text-2xl
+            font-light
+            tracking-[-0.03em]
+            text-[#0B2857]
+            sm:text-4xl
+          "
+        >
+          Today&apos;s check-in
+        </h2> */}
+{/* 
+        <p
+          className="
+            mt-2
+            max-w-[720px]
+            text-xl
+            leading-relaxed
+            text-black
+          "
+        >
+          Review your responses below. When you&apos;re ready, return to the
+          chat to complete today&apos;s check-in.
+        </p> */}
+   
+      </div>
 
-            {activeView === "results" && (
-             <motion.div
-             key="results"
-             initial={{ opacity: 0, y: 10 }}
-             animate={{ opacity: 1, y: 0 }}
-             exit={{ opacity: 0, y: -10 }}
-             transition={{ duration: 0.24, ease: "easeOut" }}
-             className="flex min-h-0 flex-1 flex-col overflow-y-auto"
+      {/* =====================================================
+          SINGLE SUMMARY CARD
+      ====================================================== */}
+      <motion.section
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{
+          duration: 0.34,
+          ease: "easeOut",
+        }}
+        className="
+          overflow-hidden
+          
+          bg-white
+          shadow-[0_18px_55px_rgba(15,45,80,0.09)]
+          ring-1
+          ring-slate-100
+        "
+      >
+        {/* ===================================================
+            CARD HEADER
+        ==================================================== */}
+        <div
+          className="
+            flex
+            flex-col
+            gap-4
+            border-b
+            border-slate-100
+            px-5
+            py-5
+            sm:flex-row
+            sm:items-center
+            sm:justify-between
+            sm:px-7
+          "
+        >
+          <div className="flex min-w-0 items-center gap-3.5">
+           
+
+            <div className="min-w-0">
+              {/* <p
+                className="
+                  text-[11px]
+                  font-semibold
+                  uppercase
+                  tracking-[0.18em]
+                  text-[#1473E6]
+                "
+              >
+                Your responses
+              </p> */}
+
+              <p
+                className="
+                  mt-1.5
+                  text-[20px]
+                  font-medium
+                  tracking-[-0.02em]
+                  text-[#0B2857]
+                "
+              >
+                Daily check-in overview
+              </p>
+         
+            </div>
+          </div>
+
+          <div
+            className="
+              inline-flex
+              w-fit
+              items-center
+              gap-2
              
-             >
-             
-               <div className="mx-auto w-full max-w-[960px] space-y-5 px-4 py-8 md:px-8">
-                 <div className="space-y-2">
-                   <h2 className="text-2xl font-light tracking-tight text-[#0B2857]">
-                     Today&apos;s check-in
-                   </h2>
-             
-             
-               <p className="text-[15px] leading-relaxed text-slate-600">
-                 Review your responses below. When you&apos;re ready, return to the
-                 chat to complete today&apos;s check-in.
-               </p>
-             </div>
-             
-             <div className="space-y-3">
-               {[
-                 { label: "Distress", value: `${metrics.distress} / 10` },
-                 { label: "Mood", value: `${metrics.mood} / 10` },
-                 { label: "Energy", value: `${metrics.energy} / 10` },
-                 { label: "Focus domain", value: metrics.domain ?? "—" },
-                 {
-                   label: "Context tags",
-                   value:
-                     metrics.contextTags.length > 0
-                       ? `${metrics.contextTags.length} selected`
-                       : "None selected",
-                 },
-                 {
-                   label: "Reflection",
-                   value: metrics.reflection || "No reflection added",
-                 },
-                 {
-                   label: "Coping action",
-                   value: metrics.copingAction || "No coping action added",
-                 },
-               ].map((item) => (
-                 <div
-                   key={item.label}
-                   className="rounded-[18px] bg-white px-5 py-4 shadow-[0_10px_30px_rgba(15,45,80,0.07)]"
-                 >
-                   <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#1473E6]">
-                     {item.label}
-                   </p>
-             
-                   <p className="text-base leading-relaxed text-[#0B2857]">
-                     {item.value}
-                   </p>
-                 </div>
-               ))}
-             </div>
-             
-             <button
-               type="button"
-               onClick={() => setActiveView("chat")}
-               className="mt-2 flex h-12 w-full items-center justify-center rounded-[12px] bg-[#173B7A] px-5 text-sm font-normal text-white shadow-[0_8px_20px_rgba(23,59,122,0.14)] transition hover:bg-[#122E60] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#173B7A]"
-             >
-               Return to Chat to Complete Check-in
-             </button>
-             
-             
-               </div>
-             </motion.div>
-             
-            )}
+              px-3
+              py-1.5
+            "
+          >
+          
+
+            <span
+              className="
+                text-[14px]
+                font-semibold
+                uppercase
+                tracking-[0.14em]
+               
+              "
+            >
+              In progress
+            </span>
+          </div>
+        </div>
+
+        {/* ===================================================
+            CORE METRICS
+        ==================================================== */}
+        <div
+          className="
+            grid
+            grid-cols-1
+            border-b
+            border-slate-100
+            sm:grid-cols-3
+          "
+        >
+          {[
+            {
+              label: "Distress",
+              value: metrics.distress,
+            },
+            {
+              label: "Mood",
+              value: metrics.mood,
+            },
+            {
+              label: "Energy",
+              value: metrics.energy,
+            },
+          ].map((item, index) => (
+            <div
+              key={item.label}
+              className={`
+                px-5
+                py-5
+                sm:px-7
+                sm:py-6
+                ${
+                  index < 2
+                    ? "border-b border-slate-100 sm:border-b-0 sm:border-r"
+                    : ""
+                }
+              `}
+            >
+              <p
+                className="
+                  text-[10px]
+                  font-bold
+                  uppercase
+                  tracking-[0.18em]
+                  text-black
+                "
+              >
+                {item.label}
+              </p>
+
+              <div className="mt-2 flex items-end gap-1.5">
+                <span
+                  className="
+                    text-[28px]
+                    font-medium
+                    leading-none
+                    tracking-[-0.04em]
+                    text-black
+                  "
+                >
+                  {item.value}
+                </span>
+
+                <span
+                  className="
+                    pb-[2px]
+                    text-xs
+                    text-black/70
+                  "
+                >
+                  / 10
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* ===================================================
+            DOMAIN + CONTEXT
+        ==================================================== */}
+        <div
+          className="
+            grid
+            border-b
+            border-slate-100
+            md:grid-cols-2
+          "
+        >
+          <div
+            className="
+              px-5
+              py-5
+              sm:px-7
+              sm:py-6
+              md:border-r
+              md:border-slate-100
+            "
+          >
+            <p
+              className="
+                text-[10px]
+                font-bold
+                uppercase
+                tracking-[0.18em]
+                text-black
+              "
+            >
+              Focus domain
+            </p>
+
+            <p
+              className="
+                mt-2
+                text-[17px]
+                font-medium
+                text-[#0B2857]
+              "
+            >
+              {metrics.domain ?? "—"}
+            </p>
+          </div>
+
+          <div
+            className="
+              border-t
+              border-slate-100
+              px-5
+              py-5
+              sm:px-7
+              sm:py-6
+              md:border-t-0
+            "
+          >
+            <p
+              className="
+                text-[10px]
+                font-bold
+                uppercase
+                tracking-[0.18em]
+                text-black
+              "
+            >
+              Context factors
+            </p>
+
+            <p
+              className="
+                mt-2
+                text-[17px]
+                font-medium
+                text-[#0B2857]
+              "
+            >
+              {metrics.contextTags.length > 0
+                ? `${metrics.contextTags.length} selected`
+                : "None selected"}
+            </p>
+          </div>
+        </div>
+
+        {/* ===================================================
+            REFLECTION
+        ==================================================== */}
+        <div
+          className="
+            border-b
+            border-slate-100
+            px-5
+            py-5
+            sm:px-7
+            sm:py-6
+          "
+        >
+          <div className="flex items-start gap-4">
+            <div
+              className="
+                mt-0.5
+                flex
+                h-16
+                w-16
+                shrink-0
+                items-center
+                justify-center
+              
+                text-[#1473E6]
+              "
+            >
+            <img
+            src="/stampley/reflexion.png"
+            alt=""
+            width={100}
+            height={100}
+            
+          />
+          
+            </div>
+
+            <div className="min-w-0">
+              <p
+                className="
+                  text-[10px]
+                  font-bold
+                  uppercase
+                  tracking-[0.18em]
+                  text-black
+                "
+              >
+                Reflection
+              </p>
+
+              <p
+                className="
+                  mt-2
+                  max-w-[740px]
+                  text-[15px]
+                  leading-7
+                  text-[#0B2857]
+                "
+              >
+                {metrics.reflection || "No reflection added"}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* ===================================================
+            COPING ACTION
+        ==================================================== */}
+        <div
+          className="
+            px-5
+            py-5
+            sm:px-7
+            sm:py-6
+          "
+        >
+          <div className="flex items-start gap-4">
+          <div
+              className="
+                mt-0.5
+                flex
+                h-16
+                w-16
+                shrink-0
+                items-center
+                justify-center
+                
+                text-[#1473E6]
+              "
+            >
+            <img
+            src="/stampley/copyingaction.png"
+            alt=""
+            width={100}
+            height={100}
+            
+          />
+          
+            </div>
+
+            <div className="min-w-0">
+              <p
+                className="
+                  text-[10px]
+                  font-bold
+                  uppercase
+                  tracking-[0.18em]
+                  text-black
+                "
+              >
+                Coping action
+              </p>
+
+              <p
+                className="
+                  mt-2
+                  max-w-[740px]
+                  text-[15px]
+                  leading-7
+                  text-[#0B2857]
+                "
+              >
+                {metrics.copingAction || "No coping action added"}
+              </p>
+            </div>
+          </div>
+        </div>
+      </motion.section>
+
+      {/* =====================================================
+          RETURN BUTTON
+      ====================================================== */}
+      <button
+        type="button"
+        onClick={() => setActiveView("chat")}
+        className="
+          group
+          mt-6
+          flex
+          h-12
+          w-full
+          items-center
+          justify-center
+          gap-2.5
+          rounded-[12px]
+          bg-[#173B7A]
+          px-5
+          text-lg
+          font-normal
+          text-white
+          shadow-[0_8px_20px_rgba(23,59,122,0.14)]
+          transition-all
+          duration-200
+          hover:-translate-y-[1px]
+          hover:bg-[#122E60]
+          hover:shadow-[0_12px_26px_rgba(23,59,122,0.18)]
+          active:translate-y-0
+          focus-visible:outline-2
+          focus-visible:outline-offset-2
+          focus-visible:outline-[#173B7A]
+        "
+      >
+        Return to Chat to Complete Check-in
+
+        <ArrowRight
+          size={15}
+          strokeWidth={1.8}
+          className="
+            transition-transform
+            duration-200
+            group-hover:translate-x-0.5
+          "
+        />
+      </button>
+    </div>
+  </motion.div>
+)}
           </AnimatePresence>
           </div>
         </main>
@@ -1268,64 +1693,134 @@ function ChatInputDock({
   const inputHintActive = !inputText.trim() && !inputDisabled
 
   return (
-    <div className="w-full shrink-0 bg-white/95 px-4 pb-5 pt-3 md:px-8 md:pb-6">
-      <div className="mx-auto w-full max-w-[760px] lg:mr-60">
+    <div
+      className="
+        w-full
+        shrink-0
+        border-t
+        border-slate-100/80
+        bg-white/95
+        px-4
+        pb-5
+        pt-4
+        backdrop-blur-xl
+        md:px-8
+        md:pb-6
+      "
+    >
+      <div className="mx-auto w-full max-w-[760px]">
         <div
-          className={`min-h-[58px] rounded-full bg-white shadow-[0_10px_30px_rgba(15,45,80,0.07)] transition ${
-            inputHintActive
-              ? "ring-1 ring-[#1473E6]/30"
-              : "focus-within:ring-1 focus-within:ring-[#173B7A]/30"
-          }`}
+          className={`
+            min-h-[58px]
+            rounded-full
+            bg-white
+            shadow-[0_8px_30px_rgba(15,45,80,0.08)]
+            ring-1
+            transition-all
+            duration-200
+            ${
+              inputHintActive
+                ? "ring-[#1473E6]/25"
+                : "ring-slate-200 focus-within:ring-[#1473E6]/45 focus-within:shadow-[0_10px_34px_rgba(20,115,230,0.10)]"
+            }
+          `}
         >
-        <div className="flex min-h-[58px] items-center gap-3 px-4 py-2">
-  <input
-    type="text"
-    value={inputText}
-    onChange={(e) => setInputText(e.target.value)}
-    onKeyDown={(e) => e.key === "Enter" && onSend()}
-    placeholder="Reply to Stampley..."
-    disabled={inputDisabled}
-    aria-label="Reply to Stampley"
-    className={`h-10 flex-1 bg-transparent text-base text-[#0B2857] caret-[#1473E6] outline-none transition disabled:opacity-40 ${
-      inputHintActive
-        ? "placeholder:animate-pulse placeholder:text-slate-400"
-        : "placeholder:text-slate-400"
-    }`}
-  />
+          <div className="flex min-h-[58px] items-center gap-3 py-2 pl-5 pr-2">
+            <input
+              type="text"
+              value={inputText}
+              onChange={(e) => setInputText(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && onSend()}
+              placeholder="Reply to Stampley..."
+              disabled={inputDisabled}
+              aria-label="Reply to Stampley"
+              className="
+                h-10
+                min-w-0
+                flex-1
+                bg-transparent
+                text-[15px]
+                text-[#0B2857]
+                caret-[#1473E6]
+                outline-none
+                placeholder:text-slate-400
+                disabled:opacity-40
+                sm:text-base
+              "
+            />
 
-  <button
-    type="button"
-    onClick={onSend}
-    disabled={!inputText.trim() || inputDisabled}
-    className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition ${
-      inputText.trim() && !inputDisabled
-        ? "bg-[#1473E6] text-white hover:bg-[#1266cc] active:scale-[0.98]"
-        : "cursor-not-allowed bg-[#F7FAFD] text-slate-300"
-    }`}
-    aria-label="Send message"
-  >
-    {loading ? (
-      <Loader2 size={14} className="animate-spin" />
-    ) : (
-      <ArrowUp size={16} strokeWidth={2.4} />
-    )}
-  </button>
-</div>
+            <motion.button
+              type="button"
+              onClick={onSend}
+              disabled={!inputText.trim() || inputDisabled}
+              whileTap={
+                inputText.trim() && !inputDisabled
+                  ? { scale: 0.94 }
+                  : undefined
+              }
+              className={`
+                flex
+                h-10
+                w-10
+                shrink-0
+                items-center
+                justify-center
+                rounded-full
+                transition-all
+                duration-200
+                ${
+                  inputText.trim() && !inputDisabled
+                    ? "bg-[#1473E6] text-white shadow-[0_5px_14px_rgba(20,115,230,0.25)] hover:bg-[#1266CC]"
+                    : "cursor-not-allowed bg-[#F4F7FA] text-slate-300"
+                }
+              `}
+              aria-label="Send message"
+            >
+              {loading ? (
+                <Loader2 size={14} className="animate-spin" />
+              ) : (
+                <ArrowUp size={16} strokeWidth={2.4} />
+              )}
+            </motion.button>
+          </div>
         </div>
-        <p className="mt-3 text-center text-sm text-slate-500">
+
+        <p className="mt-3 text-center text-[13px] leading-relaxed text-slate-500">
           {!canComplete
             ? "Reply once to unlock Complete Check-In. You can keep chatting after that."
-            : "You can complete today\u2019s check-in when you\u2019re ready\u2014or keep chatting with Stampley."}
+            : "You can complete today’s check-in when you’re ready—or keep chatting with Stampley."}
         </p>
-        <button
+
+        <motion.button
           type="button"
           onClick={onComplete}
           disabled={inputDisabled || !canComplete}
-          className={`mt-3 flex min-h-12 w-full items-center justify-center gap-2 rounded-full px-6 text-sm font-normal transition ${
-            inputDisabled || !canComplete
-              ? "cursor-not-allowed bg-[#F1F7FF] text-slate-400"
-              : "bg-[#173B7A] text-white shadow-[0_8px_20px_rgba(23,59,122,0.14)] hover:bg-[#122E60]"
-          }`}
+          whileTap={
+            !inputDisabled && canComplete
+              ? { scale: 0.995 }
+              : undefined
+          }
+          className={`
+            group
+            mt-3
+            flex
+            min-h-12
+            w-full
+            items-center
+            justify-center
+            gap-2.5
+            rounded-full
+            px-6
+            text-sm
+            font-medium
+            transition-all
+            duration-200
+            ${
+              inputDisabled || !canComplete
+                ? "cursor-not-allowed bg-[#F1F7FF] text-slate-400"
+                : "bg-[#173B7A] text-white shadow-[0_8px_22px_rgba(23,59,122,0.16)] hover:-translate-y-[1px] hover:bg-[#122E60] hover:shadow-[0_12px_28px_rgba(23,59,122,0.20)]"
+            }
+          `}
         >
           {completingCheckIn ? (
             <>
@@ -1335,16 +1830,31 @@ function ChatInputDock({
           ) : (
             <>
               Complete Check-In
+
               {canComplete && !inputDisabled ? (
-                <ArrowRight size={15} strokeWidth={1.8} />
+                <ArrowRight
+                  size={15}
+                  strokeWidth={1.8}
+                  className="transition-transform duration-200 group-hover:translate-x-0.5"
+                />
               ) : null}
             </>
           )}
-        </button>
-  
-     
-  
-        <p className="mt-4 hidden select-none text-center text-[10px] uppercase tracking-[0.16em] text-slate-400 md:block">
+        </motion.button>
+
+        <p
+          className="
+            mt-4
+            hidden
+            select-none
+            text-center
+            text-[10px]
+            uppercase
+            tracking-[0.16em]
+            text-slate-400
+            md:block
+          "
+        >
           Stampley may make mistakes · not a substitute for professional care
         </p>
       </div>
@@ -1368,16 +1878,29 @@ function ChatMessage({
   if (msg.role === "user") {
     return (
       <motion.div
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
+        initial={{ opacity: 0, y: 8, scale: 0.985 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={materialSpring}
         className="flex w-full justify-end"
       >
-        <div className="flex max-w-[70%] flex-col items-end gap-1">
-          <div className="rounded-[18px]  px-5 py-3 text-[16px] leading-relaxed  shadow-[0_8px_20px_rgba(20,115,230,0.16)]">
+        <div className="flex max-w-[78%] flex-col items-end gap-1.5 sm:max-w-[68%]">
+          <div
+            className="
+              rounded-[20px]
+              rounded-br-[7px]
+              bg-[#1473E6]/5
+              px-5
+              py-3
+              text-[18px]
+              leading-relaxed
+              
+            
+            "
+          >
             {msg.content}
           </div>
-          <span className="px-2 text-[11px] text-slate-400">
+
+          <span className="px-1.5 text-[11px] font-normal text-slate-400">
             {msg.timestamp}
           </span>
         </div>
@@ -1427,7 +1950,7 @@ function ChatMessage({
               return (
                 <>
                   {hasBody ? (
-                    <div className="space-y-3 rounded-[18px] bg-[#F4F8FD] px-5 py-4 text-[16px] leading-relaxed text-[#0B2857] sm:text-[17px]">
+                    <div className="space-y-3 rounded-[20px] rounded-tl-[7px] bg-[#F4F8FD] px-5 py-4.5 text-[16px] leading-[1.7] text-[#0B2857] shadow-[0_1px_0_rgba(23,59,122,0.025)] sm:px-6 sm:py-5 sm:text-[17px]">
                       {hasStampleyFieldText(data.greeting) ? (
                         <p>{data.greeting}</p>
                       ) : null}
@@ -1437,7 +1960,7 @@ function ChatMessage({
                         </p>
                       ) : null}
                       {hasStampleyFieldText(data.reflection_question) ? (
-                        <p className="text-[17px] leading-relaxed text-[#173B7A] sm:text-[18px]">
+                        <p className="font-medium leading-relaxed text-[#173B7A]">
                           {data.reflection_question}
                         </p>
                       ) : null}
