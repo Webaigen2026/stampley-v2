@@ -369,7 +369,7 @@ export default async function CheckInEntryPage() {
       <StatusCard>
         <StatusIcon tone="green" />
 
-        <p
+        {/* <p
           className="
             text-[11px]
             font-semibold
@@ -378,8 +378,8 @@ export default async function CheckInEntryPage() {
             text-[#1473E6]
           "
         >
-          Daily check-in complete
-        </p>
+          Daily check-in complete.
+        </p> */}
 
         <h2
           className="

@@ -295,13 +295,16 @@ export function StampleySidebar({
             {/* <img src="/dashboard/bannerlogo.png" alt="Stampley" width={50} height={50} /> */}
          {/* <span className="text-lg font-medium text-[#173B7A]">Daily Check-in</span>
           */}
-         <Image
-           src={isCollapsed ? "/images/stampleyLogo.png" : "/images/stampleylogomain.webp"}
-           alt="Stampley"
-           width={isCollapsed ? 30 : 120}
-           height={isCollapsed ? 30 : 40}
-           priority
-         />
+        <Link href="/getting-started">
+          <Image
+            src={isCollapsed ? "/images/stampleyLogo.png" : "/images/stampleylogomain.webp"}
+            alt="Stampley"
+            width={isCollapsed ? 30 : 120}
+            height={isCollapsed ? 30 : 40}
+            priority
+          />
+          
+        </Link>
    
          
          
@@ -311,13 +314,13 @@ export function StampleySidebar({
           <button
             type="button"
             onClick={() => setIsCollapsed(!isCollapsed)}
-            className="flex h-8 w-8 items-center justify-center rounded-[10px] text-slate-400 transition hover:bg-slate-50 hover:text-slate-700"
+            className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-[10px] text-slate-400 transition  hover:text-slate-700"
             aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
           >
             {isCollapsed ? (
-              <PanelLeft size={14} strokeWidth={1.5} />
+              <PanelLeft size={18} strokeWidth={1.5} />
             ) : (
-              <PanelLeftClose size={14} strokeWidth={1.5} />
+              <PanelLeftClose size={18} strokeWidth={1.5} />
             )}
           </button>
         </div>

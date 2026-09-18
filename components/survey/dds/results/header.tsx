@@ -1,4 +1,5 @@
 import Image from "next/image"
+import Link from "next/link"
 
 export function Header() {
   return (
@@ -27,8 +28,15 @@ export function Header() {
             lg:px-10
           "
         >
- <img src="/images/stampleylogomain.webp" alt="Logo" width={150} height={150} />
- 
+ <Link href="/getting-started">
+          <Image
+            src="/images/stampleylogomain.webp"
+            alt="Stampley"
+            width={120}
+            height={40}
+            priority
+          />
+        </Link>
 {/* 
           <div>
             <p
@@ -67,14 +75,7 @@ export function Header() {
               sm:flex
             "
           >
-            <span
-              className="
-                h-1.5
-                w-1.5
-                rounded-full
-                bg-[#1473E6]
-              "
-            />
+           
 
 <span
                 className="
