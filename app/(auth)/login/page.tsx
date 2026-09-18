@@ -235,7 +235,7 @@ export default function LoginPage() {
               aria-label="Go to AIDES-T2D home"
             >
               <Image
-                src="/images/stampleyLogo.png"
+                src="/images/stampleylogomain.webp"
                 alt="AIDES-T2D"
                 width={40}
                 height={40}

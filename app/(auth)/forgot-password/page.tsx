@@ -430,7 +430,7 @@ export default function ForgotPasswordPage() {
             "
           >
             <Image
-              src="/images/stampleyLogo.png"
+              src="/images/stampleylogomain.webp"
               alt=""
               width={30}
               height={30}
