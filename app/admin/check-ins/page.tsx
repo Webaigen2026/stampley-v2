@@ -1,9 +1,11 @@
 import { prisma } from "@/lib/prisma"
 import { recordPhiPageViewOrThrow } from "@/lib/admin-phi-page"
+import { requireAdminPage } from "@/lib/admin-authz"
 
 export const dynamic = "force-dynamic"
 
 export default async function AdminCheckInsPage() {
+  await requireAdminPage("canViewCheckInNarratives")
   const result = await prisma.checkInSubmission.findMany({
     orderBy: { createdAt: "desc" },
     take: 100,

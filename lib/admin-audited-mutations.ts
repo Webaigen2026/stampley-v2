@@ -5,29 +5,40 @@ import {
   type AuditActor,
   type AuditWriteClient,
 } from "@/lib/audit"
+import {
+  LastAdminInvariantError,
+  PrivilegedMutationRejected,
+  assertCanRemovePrivilegedAdmin,
+  withAdminInvariantLock,
+  type AdminInvariantClient,
+} from "@/lib/admin-last-admin"
+import { isUserRole } from "@/lib/admin-capabilities"
 
-type MutationClient = (AuditWriteClient | object) & {
-  user: {
-    create(args: {
-      data: { email: string; password: string; role: UserRole }
-      select: { id: true }
-    }): Promise<{ id: string }>
-    deleteMany(args: { where: { id: string } }): Promise<{ count: number }>
-    updateMany(args: {
-      where: { id: string }
-      data: { role: UserRole; authVersion: { increment: 1 } }
-    }): Promise<{ count: number }>
+type MutationClient = (AuditWriteClient | object) &
+  AdminInvariantClient & {
+    user: AdminInvariantClient["user"] & {
+      create(args: {
+        data: { email: string; password: string; role: UserRole }
+        select: { id: true }
+      }): Promise<{ id: string }>
+      deleteMany(args: { where: { id: string } }): Promise<{ count: number }>
+      updateMany(args: {
+        where: { id: string }
+        data: { role: UserRole; authVersion: { increment: 1 } }
+      }): Promise<{ count: number }>
+    }
+    studyKey: {
+      create(args: {
+        data: { key: string; isUsed: boolean; createdBy: string | null }
+        select: { id: true }
+      }): Promise<{ id: string }>
+      deleteMany(args: {
+        where: { id: string; isUsed: false }
+      }): Promise<{ count: number }>
+    }
   }
-  studyKey: {
-    create(args: {
-      data: { key: string; isUsed: boolean; createdBy: string | null }
-      select: { id: true }
-    }): Promise<{ id: string }>
-    deleteMany(args: {
-      where: { id: string; isUsed: false }
-    }): Promise<{ count: number }>
-  }
-}
+
+export { LastAdminInvariantError, PrivilegedMutationRejected }
 
 export async function auditedCreateUser(
   db: MutationClient,
@@ -59,55 +70,79 @@ export async function auditedDeleteUser(
   actor: AuditActor,
   subjectUserId: string
 ): Promise<{ deleted: boolean }> {
-  const requestId = createAuditRequestId()
-  const deleted = await db.user.deleteMany({
-    where: { id: subjectUserId },
-  })
-  if (deleted.count !== 1) {
-    return { deleted: false }
+  if (actor.userId === subjectUserId) {
+    throw new PrivilegedMutationRejected()
   }
-  await appendAuditEvent(db, actor, {
-    action: "ADMIN_USER_DELETED",
-    resourceType: "USER",
-    resourceId: subjectUserId,
-    subjectUserId,
-    outcome: "SUCCESS",
-    requestId,
+
+  return withAdminInvariantLock(db, async () => {
+    await assertCanRemovePrivilegedAdmin(db, subjectUserId)
+    const requestId = createAuditRequestId()
+    const deleted = await db.user.deleteMany({
+      where: { id: subjectUserId },
+    })
+    if (deleted.count !== 1) {
+      throw new PrivilegedMutationRejected()
+    }
+    await appendAuditEvent(db, actor, {
+      action: "ADMIN_USER_DELETED",
+      resourceType: "USER",
+      resourceId: subjectUserId,
+      subjectUserId,
+      outcome: "SUCCESS",
+      requestId,
+    })
+    return { deleted: true }
   })
-  return { deleted: true }
 }
 
-export async function auditedToggleUserRole(
+export async function auditedChangeUserRole(
   db: MutationClient,
   actor: AuditActor,
-  args: { id: string; currentRole: string }
-): Promise<{ newRole: UserRole } | { deleted: false }> {
-  const requestId = createAuditRequestId()
-  const fromRole: UserRole =
-    args.currentRole === "ADMIN" ? "ADMIN" : "PARTICIPANT"
-  const toRole: UserRole = fromRole === "ADMIN" ? "PARTICIPANT" : "ADMIN"
-
-  const updated = await db.user.updateMany({
-    where: { id: args.id },
-    data: {
-      role: toRole,
-      authVersion: { increment: 1 },
-    },
-  })
-  if (updated.count !== 1) {
-    return { deleted: false }
+  args: { id: string; toRole: UserRole }
+): Promise<{ newRole: UserRole; fromRole: UserRole }> {
+  if (actor.userId === args.id) {
+    throw new PrivilegedMutationRejected()
+  }
+  if (!isUserRole(args.toRole)) {
+    throw new PrivilegedMutationRejected()
   }
 
-  await appendAuditEvent(db, actor, {
-    action: "ADMIN_ROLE_CHANGED",
-    resourceType: "USER",
-    resourceId: args.id,
-    subjectUserId: args.id,
-    outcome: "SUCCESS",
-    requestId,
-    metadata: { fromRole, toRole },
+  return withAdminInvariantLock(db, async () => {
+    const current = await db.user.findUnique({
+      where: { id: args.id },
+      select: { role: true },
+    })
+    if (!current || !isUserRole(current.role)) {
+      throw new PrivilegedMutationRejected()
+    }
+    const fromRole = current.role as UserRole
+    if (fromRole === "ADMIN" && args.toRole !== "ADMIN") {
+      await assertCanRemovePrivilegedAdmin(db, args.id)
+    }
+
+    const requestId = createAuditRequestId()
+    const updated = await db.user.updateMany({
+      where: { id: args.id },
+      data: {
+        role: args.toRole,
+        authVersion: { increment: 1 },
+      },
+    })
+    if (updated.count !== 1) {
+      throw new PrivilegedMutationRejected()
+    }
+
+    await appendAuditEvent(db, actor, {
+      action: "ADMIN_ROLE_CHANGED",
+      resourceType: "USER",
+      resourceId: args.id,
+      subjectUserId: args.id,
+      outcome: "SUCCESS",
+      requestId,
+      metadata: { fromRole, toRole: args.toRole },
+    })
+    return { newRole: args.toRole, fromRole }
   })
-  return { newRole: toRole }
 }
 
 export async function auditedCreateStudyKey(

@@ -11,6 +11,8 @@ import {
 } from "@/components/admin/post-surveys/post-survey-response-details"
 import { recordPhiPageViewOrThrow } from "@/lib/admin-phi-page"
 import { filterKeysFromFlags } from "@/lib/audit-metadata"
+import { requireAdminPage } from "@/lib/admin-authz"
+import { hasCapability } from "@/lib/admin-capabilities"
 
 export const dynamic = "force-dynamic"
 
@@ -33,6 +35,13 @@ export default async function AdminPostSurveysPage({
 }: {
   searchParams: Promise<SearchParams>
 }) {
+  const actor = await requireAdminPage([
+    "canViewOperationalParticipantData",
+    "canViewClinicalSurveyData",
+  ])
+  const canViewPhqItems = hasCapability(actor.role, "canViewPhqItem9")
+  const canViewContact = hasCapability(actor.role, "canViewContactInformation")
+  const canViewFreeText = hasCapability(actor.role, "canViewClinicalSurveyData")
   const params = await searchParams
   const q = (params.q ?? "").trim()
   const phqSeverity = (params.phqSeverity ?? "").trim()
@@ -65,17 +74,17 @@ export default async function AdminPostSurveysPage({
       completedAt: true,
       ddsAnswers: true,
       ddsScores: true,
-      phqAnswers: true,
+      phqAnswers: canViewPhqItems,
       phqTotal: true,
       phqSeverity: true,
       susAnswers: true,
       susScore: true,
       stampleyFeedback: true,
-      openReflection: true,
+      openReflection: canViewFreeText,
       futureResearchContact: true,
-      contactName: true,
-      contactEmail: true,
-      contactPhone: true,
+      contactName: canViewContact,
+      contactEmail: canViewContact,
+      contactPhone: canViewContact,
       user: { select: { email: true } },
     },
   })
@@ -87,17 +96,17 @@ export default async function AdminPostSurveysPage({
     completed_at: row.completedAt,
     dds_answers: row.ddsAnswers,
     dds_scores: row.ddsScores,
-    phq_answers: row.phqAnswers,
+    phq_answers: canViewPhqItems ? row.phqAnswers : null,
     phq_total: row.phqTotal,
     phq_severity: row.phqSeverity,
     sus_answers: row.susAnswers,
     sus_score: row.susScore != null ? Number(row.susScore) : null,
     stampley_feedback: row.stampleyFeedback,
-    open_reflection: row.openReflection,
+    open_reflection: canViewFreeText ? row.openReflection : null,
     future_research_contact: row.futureResearchContact,
-    contact_name: row.contactName,
-    contact_email: row.contactEmail,
-    contact_phone: row.contactPhone,
+    contact_name: canViewContact ? row.contactName : null,
+    contact_email: canViewContact ? row.contactEmail : null,
+    contact_phone: canViewContact ? row.contactPhone : null,
   }))
 
   const hasFilters = Boolean(q || phqSeverity || futureContact)
@@ -326,7 +335,12 @@ export default async function AdminPostSurveysPage({
                       </td>
 
                       <td className="px-5 py-4">
-                        <PostSurveyResponseDetails record={row} />
+                        <PostSurveyResponseDetails
+                          record={row}
+                          showPhqItems={canViewPhqItems}
+                          showFreeText={canViewFreeText}
+                          showContact={canViewContact}
+                        />
                       </td>
                     </tr>
                   )

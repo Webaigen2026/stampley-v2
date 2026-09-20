@@ -11,7 +11,7 @@ import {
 export type AuthUserRecord = {
   id: string;
   email: string;
-  role: "ADMIN" | "PARTICIPANT";
+  role: "ADMIN" | "STUDY_COORDINATOR" | "CLINICAL_REVIEWER" | "PARTICIPANT";
   password: string;
   authVersion: number;
 };

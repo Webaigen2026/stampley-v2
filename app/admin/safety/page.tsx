@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma"
 import { Prisma } from "@/lib/generated/prisma/client"
 import { recordPhiPageViewOrThrow } from "@/lib/admin-phi-page"
+import { requireAdminPage } from "@/lib/admin-authz"
 
 export const dynamic = "force-dynamic"
 
@@ -25,6 +26,7 @@ function serializeSafetyRow(
 }
 
 export default async function AdminSafetyPage() {
+  await requireAdminPage("canViewSafetyData")
   const [alertRows, highDistressRows, recentHighRows] = await Promise.all([
     prisma.$queryRaw<Array<Record<string, unknown>>>`
       SELECT

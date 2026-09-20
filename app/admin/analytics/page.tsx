@@ -14,6 +14,8 @@ import {
 } from "@/lib/admin-analytics-filters"
 import { recordPhiPageViewOrThrow } from "@/lib/admin-phi-page"
 import { filterKeysFromAnalytics } from "@/lib/audit-metadata"
+import { requireAdminPage } from "@/lib/admin-authz"
+import { hasCapability } from "@/lib/admin-capabilities"
 
 export const dynamic = "force-dynamic"
 
@@ -123,6 +125,10 @@ export default async function AdminAnalyticsPage({
 }: {
   searchParams: Promise<SearchParams>
 }) {
+  const actor = await requireAdminPage("canViewAggregateAnalytics")
+  const canExport = hasCapability(actor.role, "canExportCodedResearchData")
+  const canViewSummaries = hasCapability(actor.role, "canViewTranscripts")
+  const canViewSafetyRows = hasCapability(actor.role, "canViewSafetyData")
   const params = await searchParams
   const filters = parseAnalyticsFilters(params)
   const exportQs = buildAnalyticsQueryString(filters)
@@ -250,7 +256,8 @@ export default async function AdminAnalyticsPage({
         AND c.domain IN ('Emotional', 'Regimen', 'Physician', 'Interpersonal')${checkInFilter.and}
       GROUP BY domain
     `,
-    prisma.$queryRaw<Array<Record<string, unknown>>>`
+    canViewSafetyRows
+      ? prisma.$queryRaw<Array<Record<string, unknown>>>`
       SELECT
         u.email,
         c.check_in_date,
@@ -262,13 +269,14 @@ export default async function AdminAnalyticsPage({
       WHERE u.role = 'PARTICIPANT'${highStressFilter.and}
       ORDER BY c.check_in_date DESC, c.created_at DESC
       LIMIT 75
-    `,
+    `
+      : Promise.resolve([]),
     prisma.$queryRaw<Array<Record<string, unknown>>>`
       SELECT
         u.email,
         s.user_message_count,
         s.assistant_message_count,
-        s.summary,
+        ${canViewSummaries ? Prisma.sql`s.summary` : Prisma.sql`NULL AS summary`},
         c.check_in_date AS linked_check_in_date,
         s.created_at
       FROM stampley_chat_sessions s
@@ -432,6 +440,7 @@ export default async function AdminAnalyticsPage({
           </div>
         </form>
 
+        {canExport ? (
         <div className="mt-5 flex flex-wrap gap-3">
           <a
             href={`/api/admin/analytics/check-ins/export${exportQs}`}
@@ -452,6 +461,7 @@ export default async function AdminAnalyticsPage({
             Export high-stress CSV
           </a>
         </div>
+        ) : null}
       </div>
 
       <div>
@@ -592,6 +602,7 @@ export default async function AdminAnalyticsPage({
         </div>
       </Section>
 
+      {canViewSafetyRows ? (
       <Section
         title="High-stress monitoring"
         description="Check-ins with self-reported stress ≥ 9, further narrowed by your filters."
@@ -653,10 +664,15 @@ export default async function AdminAnalyticsPage({
           </table>
         </div>
       </Section>
+      ) : null}
 
       <Section
         title="Stampley engagement"
-        description="Saved session summaries and message counts for the current filters. Raw chat JSON is not displayed."
+        description={
+          canViewSummaries
+            ? "Saved session summaries and message counts for the current filters. Raw chat JSON is not displayed."
+            : "Session counts for the current filters. Summaries are restricted."
+        }
       >
         <div className="overflow-x-auto">
           <table className="min-w-full border-collapse text-left text-sm">
@@ -666,7 +682,9 @@ export default async function AdminAnalyticsPage({
                 <th className="px-5 py-3 font-semibold text-slate-600">User msgs</th>
                 <th className="px-5 py-3 font-semibold text-slate-600">Assistant msgs</th>
                 <th className="px-5 py-3 font-semibold text-slate-600">Linked check-in</th>
+                {canViewSummaries ? (
                 <th className="px-5 py-3 font-semibold text-slate-600">Session summary</th>
+                ) : null}
               </tr>
             </thead>
             <tbody>
@@ -697,6 +715,7 @@ export default async function AdminAnalyticsPage({
                     <td className="px-5 py-4 text-slate-600">
                       {formatDate(row.linked_check_in_date)}
                     </td>
+                    {canViewSummaries ? (
                     <td className="max-w-md px-5 py-4 text-slate-600">
                       {row.summary ? (
                         <span className="line-clamp-3">{String(row.summary)}</span>
@@ -704,6 +723,7 @@ export default async function AdminAnalyticsPage({
                         <span className="italic text-slate-400">No summary</span>
                       )}
                     </td>
+                    ) : null}
                   </tr>
                 ))
               )}

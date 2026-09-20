@@ -71,6 +71,8 @@ export function UsersTableToolbar({
       >
         <option value="ALL">All roles</option>
         <option value="ADMIN">Admin</option>
+        <option value="STUDY_COORDINATOR">Study Coordinator</option>
+        <option value="CLINICAL_REVIEWER">Clinical Reviewer</option>
         <option value="PARTICIPANT">Participant</option>
       </select>
 

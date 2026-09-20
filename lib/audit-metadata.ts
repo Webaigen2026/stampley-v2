@@ -16,6 +16,7 @@ export const ALLOWED_AUDIT_METADATA_KEYS = [
   "filterKeys",
   "rowCount",
   "identified",
+  "exportMode",
   "includesPhqItems",
   "includesTranscripts",
   "page",
@@ -25,12 +26,13 @@ export const ALLOWED_AUDIT_METADATA_KEYS = [
 export type AllowedAuditMetadataKey = (typeof ALLOWED_AUDIT_METADATA_KEYS)[number]
 
 export type AuditMetadata = {
-  fromRole?: "ADMIN" | "PARTICIPANT"
-  toRole?: "ADMIN" | "PARTICIPANT"
+  fromRole?: "ADMIN" | "STUDY_COORDINATOR" | "CLINICAL_REVIEWER" | "PARTICIPANT"
+  toRole?: "ADMIN" | "STUDY_COORDINATOR" | "CLINICAL_REVIEWER" | "PARTICIPANT"
   emailed?: boolean
   filterKeys?: AllowedAuditFilterKey[]
   rowCount?: number
   identified?: boolean
+  exportMode?: "CODED"
   includesPhqItems?: boolean
   includesTranscripts?: boolean
   page?: number
@@ -39,7 +41,13 @@ export type AuditMetadata = {
 
 const ALLOWED_METADATA_KEY_SET = new Set<string>(ALLOWED_AUDIT_METADATA_KEYS)
 const ALLOWED_FILTER_KEY_SET = new Set<string>(ALLOWED_AUDIT_FILTER_KEYS)
-const ALLOWED_ROLES = new Set(["ADMIN", "PARTICIPANT"])
+const ALLOWED_ROLES = new Set([
+  "ADMIN",
+  "STUDY_COORDINATOR",
+  "CLINICAL_REVIEWER",
+  "PARTICIPANT",
+])
+const ALLOWED_EXPORT_MODES = new Set(["CODED"])
 
 export class AuditMetadataRejected extends Error {
   constructor(message = "Invalid audit metadata") {
@@ -48,11 +56,14 @@ export class AuditMetadataRejected extends Error {
   }
 }
 
-function assertAllowedRole(value: unknown, key: string): "ADMIN" | "PARTICIPANT" {
+function assertAllowedRole(
+  value: unknown,
+  key: string
+): "ADMIN" | "STUDY_COORDINATOR" | "CLINICAL_REVIEWER" | "PARTICIPANT" {
   if (typeof value !== "string" || !ALLOWED_ROLES.has(value)) {
     throw new AuditMetadataRejected(`Invalid ${key}`)
   }
-  return value as "ADMIN" | "PARTICIPANT"
+  return value as "ADMIN" | "STUDY_COORDINATOR" | "CLINICAL_REVIEWER" | "PARTICIPANT"
 }
 
 export function filterKeysFromAnalytics(filters: {
@@ -110,6 +121,12 @@ export function sanitizeAuditMetadata(input: unknown): AuditMetadata | null {
         break
       case "toRole":
         sanitized.toRole = assertAllowedRole(value, "toRole")
+        break
+      case "exportMode":
+        if (typeof value !== "string" || !ALLOWED_EXPORT_MODES.has(value)) {
+          throw new AuditMetadataRejected("Invalid exportMode")
+        }
+        sanitized.exportMode = "CODED"
         break
       case "emailed":
       case "identified":

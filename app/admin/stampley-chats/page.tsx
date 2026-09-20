@@ -9,6 +9,7 @@ import { mapStampleySessionRow } from "@/lib/admin-stampley-sessions"
 import { StampleySessionCard } from "@/components/admin/stampley-chats/stampley-session-card"
 import { recordPhiPageViewOrThrow } from "@/lib/admin-phi-page"
 import { filterKeysFromAnalytics } from "@/lib/audit-metadata"
+import { requireAdminPage } from "@/lib/admin-authz"
 
 export const dynamic = "force-dynamic"
 
@@ -19,6 +20,7 @@ export default async function AdminStampleyChatsPage({
 }: {
   searchParams: Promise<SearchParams>
 }) {
+  await requireAdminPage("canViewTranscripts")
   const params = await searchParams
   const filters = parseAnalyticsFilters(params)
   const filtersActive = hasActiveAnalyticsFilters(filters)

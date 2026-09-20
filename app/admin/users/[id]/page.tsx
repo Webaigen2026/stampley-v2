@@ -8,6 +8,8 @@ import {
   PostSurveySummaryCards,
 } from "@/components/admin/post-surveys/post-survey-response-details"
 import { recordPhiPageViewOrThrow } from "@/lib/admin-phi-page"
+import { requireAdminPage } from "@/lib/admin-authz"
+import { hasCapability } from "@/lib/admin-capabilities"
 
 export const dynamic = "force-dynamic"
 
@@ -35,6 +37,13 @@ export default async function AdminUserProfilePage({
 }: {
   params: Promise<{ id: string }>
 }) {
+  const actor = await requireAdminPage("canViewParticipantDirectory")
+  const canViewPhqItems = hasCapability(actor.role, "canViewPhqItem9")
+  const canViewSafety = hasCapability(actor.role, "canViewSafetyData")
+  const canViewNarratives = hasCapability(actor.role, "canViewCheckInNarratives")
+  const canViewTranscripts = hasCapability(actor.role, "canViewTranscripts")
+  const canViewContact = hasCapability(actor.role, "canViewContactInformation")
+  const canViewClinical = hasCapability(actor.role, "canViewClinicalSurveyData")
   const { id } = await params
 
   const userRow = await prisma.user.findUnique({
@@ -65,9 +74,69 @@ export default async function AdminUserProfilePage({
   ] = await Promise.all([
     prisma.preSurveyResponse.findUnique({
       where: { userId: id },
+      select: {
+        consentStatus: true,
+        diagnosisDuration: true,
+        age: true,
+        gender: true,
+        race: true,
+        ethnicity: true,
+        maritalStatus: true,
+        education: true,
+        employmentStatus: true,
+        householdIncome: true,
+        insuranceType: true,
+        medicalFormsConfidence: true,
+        readingHelpFrequency: true,
+        diabetesDuration: true,
+        currentTreatments: true,
+        attendedDiabetesClasses: true,
+        diabetesToolsUsed: true,
+        overallHealthRating: true,
+        ownsSmartphone: true,
+        internetUsage: true,
+        appComfort: true,
+        telehealthUsed: true,
+        mentalHealthAppsUsed: true,
+        smartphoneAppComfort: true,
+        digitalHealthToolsUsed: true,
+        voiceTechComfort: true,
+        communicationPreference: true,
+        diagnosisVerified: true,
+        diagnosisFileUrl: true,
+        phq1: canViewPhqItems,
+        phq2: canViewPhqItems,
+        phq3: canViewPhqItems,
+        phq4: canViewPhqItems,
+        phq5: canViewPhqItems,
+        phq6: canViewPhqItems,
+        phq7: canViewPhqItems,
+        phq8: canViewPhqItems,
+        phq9: canViewPhqItems,
+        phqTotal: true,
+        phqSeverity: true,
+        needsMentalHealthFollowup: canViewClinical,
+        completedAt: true,
+      },
     }),
     prisma.postSurveyResponse.findFirst({
       where: { userId: id, completedAt: { not: null } },
+      select: {
+        ddsAnswers: canViewClinical,
+        ddsScores: true,
+        phqAnswers: canViewPhqItems,
+        phqTotal: true,
+        phqSeverity: true,
+        susAnswers: true,
+        susScore: true,
+        stampleyFeedback: canViewClinical,
+        openReflection: canViewClinical,
+        futureResearchContact: true,
+        contactName: canViewContact,
+        contactEmail: canViewContact,
+        contactPhone: canViewContact,
+        completedAt: true,
+      },
     }),
     prisma.userStudyProgress.findUnique({
       where: { userId: id },
@@ -76,7 +145,7 @@ export default async function AdminUserProfilePage({
         currentWeek: true,
         lastCheckinDate: true,
         studyStartDate: true,
-        consecutiveHighDistressDays: true,
+        consecutiveHighDistressDays: canViewSafety,
       },
     }),
     prisma.checkInSubmission.findMany({
@@ -86,39 +155,41 @@ export default async function AdminUserProfilePage({
       select: {
         id: true,
         checkInDate: true,
-        distress: true,
-        mood: true,
-        energy: true,
+        distress: canViewClinical,
+        mood: canViewClinical,
+        energy: canViewClinical,
         domain: true,
         subscale: true,
-        reflection: true,
-        copingAction: true,
-        contextTags: true,
-        needsSafetyEscalation: true,
-        consecutiveHighDistressDays: true,
+        reflection: canViewNarratives,
+        copingAction: canViewNarratives,
+        contextTags: canViewNarratives,
+        needsSafetyEscalation: canViewSafety,
+        consecutiveHighDistressDays: canViewSafety,
         createdAt: true,
       },
     }),
-    prisma.stampleyChatSession.findMany({
-      where: { userId: id },
-      orderBy: { createdAt: "desc" },
-      select: {
-        id: true,
-        userId: true,
-        checkInSubmissionId: true,
-        domain: true,
-        stressLevel: true,
-        mood: true,
-        energy: true,
-        userMessageCount: true,
-        assistantMessageCount: true,
-        summary: true,
-        messages: true,
-        createdAt: true,
-        user: { select: { email: true } },
-        checkInSubmission: { select: { checkInDate: true } },
-      },
-    }),
+    canViewTranscripts
+      ? prisma.stampleyChatSession.findMany({
+          where: { userId: id },
+          orderBy: { createdAt: "desc" },
+          select: {
+            id: true,
+            userId: true,
+            checkInSubmissionId: true,
+            domain: true,
+            stressLevel: true,
+            mood: true,
+            energy: true,
+            userMessageCount: true,
+            assistantMessageCount: true,
+            summary: true,
+            messages: true,
+            createdAt: true,
+            user: { select: { email: true } },
+            checkInSubmission: { select: { checkInDate: true } },
+          },
+        })
+      : Promise.resolve([]),
   ])
 
   const preSurvey = preSurveyRow
@@ -152,38 +223,40 @@ export default async function AdminUserProfilePage({
         communication_preference: preSurveyRow.communicationPreference,
         diagnosis_verified: preSurveyRow.diagnosisVerified,
         diagnosis_file_url: preSurveyRow.diagnosisFileUrl,
-        phq1: preSurveyRow.phq1,
-        phq2: preSurveyRow.phq2,
-        phq3: preSurveyRow.phq3,
-        phq4: preSurveyRow.phq4,
-        phq5: preSurveyRow.phq5,
-        phq6: preSurveyRow.phq6,
-        phq7: preSurveyRow.phq7,
-        phq8: preSurveyRow.phq8,
-        phq9: preSurveyRow.phq9,
+        phq1: canViewPhqItems ? preSurveyRow.phq1 : null,
+        phq2: canViewPhqItems ? preSurveyRow.phq2 : null,
+        phq3: canViewPhqItems ? preSurveyRow.phq3 : null,
+        phq4: canViewPhqItems ? preSurveyRow.phq4 : null,
+        phq5: canViewPhqItems ? preSurveyRow.phq5 : null,
+        phq6: canViewPhqItems ? preSurveyRow.phq6 : null,
+        phq7: canViewPhqItems ? preSurveyRow.phq7 : null,
+        phq8: canViewPhqItems ? preSurveyRow.phq8 : null,
+        phq9: canViewPhqItems ? preSurveyRow.phq9 : null,
         phq_total: preSurveyRow.phqTotal,
         phq_severity: preSurveyRow.phqSeverity,
-        needs_mental_health_followup: preSurveyRow.needsMentalHealthFollowup,
+        needs_mental_health_followup: canViewClinical
+          ? preSurveyRow.needsMentalHealthFollowup
+          : null,
         completed_at: preSurveyRow.completedAt,
       }
     : null
 
   const postSurvey = postSurveyRow
     ? {
-        dds_answers: postSurveyRow.ddsAnswers,
+        dds_answers: canViewClinical ? postSurveyRow.ddsAnswers : null,
         dds_scores: postSurveyRow.ddsScores,
-        phq_answers: postSurveyRow.phqAnswers,
+        phq_answers: canViewPhqItems ? postSurveyRow.phqAnswers : null,
         phq_total: postSurveyRow.phqTotal,
         phq_severity: postSurveyRow.phqSeverity,
         sus_answers: postSurveyRow.susAnswers,
         sus_score:
           postSurveyRow.susScore != null ? Number(postSurveyRow.susScore) : null,
-        stampley_feedback: postSurveyRow.stampleyFeedback,
-        open_reflection: postSurveyRow.openReflection,
+        stampley_feedback: canViewClinical ? postSurveyRow.stampleyFeedback : null,
+        open_reflection: canViewClinical ? postSurveyRow.openReflection : null,
         future_research_contact: postSurveyRow.futureResearchContact,
-        contact_name: postSurveyRow.contactName,
-        contact_email: postSurveyRow.contactEmail,
-        contact_phone: postSurveyRow.contactPhone,
+        contact_name: canViewContact ? postSurveyRow.contactName : null,
+        contact_email: canViewContact ? postSurveyRow.contactEmail : null,
+        contact_phone: canViewContact ? postSurveyRow.contactPhone : null,
         completed_at: postSurveyRow.completedAt,
       }
     : null
@@ -194,7 +267,9 @@ export default async function AdminUserProfilePage({
         current_week: progressRow.currentWeek,
         last_checkin_date: progressRow.lastCheckinDate,
         study_start_date: progressRow.studyStartDate,
-        consecutive_high_distress_days: progressRow.consecutiveHighDistressDays,
+        consecutive_high_distress_days: canViewSafety
+          ? progressRow.consecutiveHighDistressDays
+          : null,
       }
     : null
 
@@ -206,11 +281,13 @@ export default async function AdminUserProfilePage({
     energy: item.energy,
     domain: item.domain,
     subscale: item.subscale,
-    reflection: item.reflection,
-    coping_action: item.copingAction,
-    context_tags: item.contextTags,
-    needs_safety_escalation: item.needsSafetyEscalation,
-    consecutive_high_distress_days: item.consecutiveHighDistressDays,
+    reflection: canViewNarratives ? item.reflection : null,
+    coping_action: canViewNarratives ? item.copingAction : null,
+    context_tags: canViewNarratives ? item.contextTags : null,
+    needs_safety_escalation: canViewSafety ? item.needsSafetyEscalation : null,
+    consecutive_high_distress_days: canViewSafety
+      ? item.consecutiveHighDistressDays
+      : null,
     created_at: item.createdAt,
   }))
 
@@ -239,8 +316,8 @@ export default async function AdminUserProfilePage({
     resourceId: user.id,
     subjectUserId: user.id,
     metadata: {
-      includesPhqItems: true,
-      includesTranscripts: true,
+      includesPhqItems: canViewPhqItems,
+      includesTranscripts: canViewTranscripts,
     },
   })
 
@@ -294,10 +371,14 @@ export default async function AdminUserProfilePage({
           label="Current Week"
           value={progress?.current_week ?? "—"}
         />
+        {canViewSafety ? (
         <StatCard
           label="Safety Streak"
           value={progress?.consecutive_high_distress_days ?? 0}
         />
+        ) : (
+        <StatCard label="Study Start" value={formatDate(progress?.study_start_date)} />
+        )}
       </section>
 
       {!preSurvey ? (
@@ -432,6 +513,7 @@ export default async function AdminUserProfilePage({
             </div>
           </SectionCard>
 
+          {canViewPhqItems ? (
           <SectionCard title="PHQ-9 Detailed Responses">
             <div className="overflow-x-auto">
               <table className="min-w-full border-collapse text-left text-sm">
@@ -484,6 +566,7 @@ export default async function AdminUserProfilePage({
               </table>
             </div>
           </SectionCard>
+          ) : null}
 
           <SectionCard title="PHQ-9 Summary">
             <div className="grid gap-6 md:grid-cols-3">
@@ -505,6 +588,7 @@ export default async function AdminUserProfilePage({
                 </p>
               </div>
 
+              {canViewClinical ? (
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
                   Mental Health Follow-up
@@ -520,6 +604,7 @@ export default async function AdminUserProfilePage({
                   </span>
                 )}
               </div>
+              ) : null}
             </div>
           </SectionCard>
         </section>
@@ -550,6 +635,9 @@ export default async function AdminUserProfilePage({
               <PostSurveyResponseDetails
                 record={postSurvey}
                 summaryLabel="View detailed responses"
+                showPhqItems={canViewPhqItems}
+                showFreeText={canViewClinical}
+                showContact={canViewContact}
               />
             </div>
           </div>
@@ -604,15 +692,21 @@ export default async function AdminUserProfilePage({
                       {formatDate(item.check_in_date)}
                     </td>
                     <td className="px-5 py-4 font-medium text-slate-900">
-                      {item.distress}
+                      {canViewClinical ? item.distress : "—"}
                     </td>
-                    <td className="px-5 py-4 text-slate-700">{item.mood}</td>
-                    <td className="px-5 py-4 text-slate-700">{item.energy}</td>
+                    <td className="px-5 py-4 text-slate-700">
+                      {canViewClinical ? item.mood : "—"}
+                    </td>
+                    <td className="px-5 py-4 text-slate-700">
+                      {canViewClinical ? item.energy : "—"}
+                    </td>
                     <td className="px-5 py-4 text-slate-700">
                       {item.domain ?? "—"}
                     </td>
                     <td className="px-5 py-4">
-                      {item.needs_safety_escalation ? (
+                      {!canViewSafety ? (
+                        <span className="text-slate-400">—</span>
+                      ) : item.needs_safety_escalation ? (
                         <span className="border border-red-200 bg-red-50 px-2 py-1 text-xs font-semibold text-red-700">
                           Flagged
                         </span>
@@ -630,6 +724,7 @@ export default async function AdminUserProfilePage({
         </div>
       </section>
 
+      {canViewNarratives ? (
       <section className="grid gap-4">
         {checkIns.map((item) => (
           <div
@@ -676,7 +771,9 @@ export default async function AdminUserProfilePage({
           </div>
         ))}
       </section>
+      ) : null}
 
+      {canViewTranscripts ? (
       <section className="space-y-4">
         <div className="border border-slate-200 bg-slate-50 px-5 py-4">
           <h2 className="text-sm font-semibold text-slate-900">
@@ -699,6 +796,7 @@ export default async function AdminUserProfilePage({
           ))
         )}
       </section>
+      ) : null}
     </main>
   )
 }

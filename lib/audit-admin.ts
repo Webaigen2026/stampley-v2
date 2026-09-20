@@ -20,12 +20,27 @@ export function actorFromSession(session: AdminSessionLike): AuditActor | null {
   const id = session?.user?.id
   const role = session?.user?.role
   if (typeof id !== "string" || id.length === 0) return null
-  if (role !== "ADMIN" && role !== "PARTICIPANT") return null
+  if (
+    role !== "ADMIN" &&
+    role !== "STUDY_COORDINATOR" &&
+    role !== "CLINICAL_REVIEWER" &&
+    role !== "PARTICIPANT"
+  ) {
+    return null
+  }
   return { userId: id, role }
 }
 
 export function isAdminActor(actor: AuditActor | null): actor is AuditActor {
   return actor?.role === "ADMIN"
+}
+
+export function isStaffActor(actor: AuditActor | null): actor is AuditActor {
+  return (
+    actor?.role === "ADMIN" ||
+    actor?.role === "STUDY_COORDINATOR" ||
+    actor?.role === "CLINICAL_REVIEWER"
+  )
 }
 
 export async function recordAdminView(args: {
@@ -40,7 +55,7 @@ export async function recordAdminView(args: {
 }): Promise<void> {
   const actor = actorFromSession(args.session)
 
-  if (!isAdminActor(actor)) {
+  if (!isStaffActor(actor)) {
     if (args.policy === "fail-closed") {
       throw new AuditPersistFailed()
     }

@@ -8,6 +8,7 @@ import { KeysTable } from "@/components/admin/keys/keys-table"
 import { KeysPagination } from "@/components/admin/keys/keys-pagination"
 import { recordAdminPageView } from "@/lib/audit-admin"
 import { filterKeysFromFlags } from "@/lib/audit-metadata"
+import { requireAdminPage } from "@/lib/admin-authz"
 
 export const dynamic = "force-dynamic"
 
@@ -31,6 +32,7 @@ export default async function AdminKeysPage({
 }: {
   searchParams: Promise<SearchParams>
 }) {
+  await requireAdminPage("canManageStudyKeys")
   const params = await searchParams
 
   const q = (params.q ?? "").trim()

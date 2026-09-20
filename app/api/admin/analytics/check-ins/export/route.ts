@@ -11,27 +11,19 @@ import {
   formatCsvBoolean,
   formatCsvDate,
   formatCsvTimestamp,
-  requireAdminApi,
+  requireCodedExportApi,
 } from "@/lib/admin-csv-export"
+import { genericExportRejectedResponse } from "@/lib/admin-export-response"
+import { buildPrismaCheckInFilter } from "@/lib/admin-analytics-filters"
 import {
-  buildPrismaCheckInFilter,
-  parseAnalyticsFilters,
-} from "@/lib/admin-analytics-filters"
+  CHECK_IN_EXPORT_HEADERS,
+  CODED_EXPORT_MAX_ROWS,
+  GENERIC_EXPORT_LIMIT_ERROR,
+  codedStudyId,
+  parseCodedExportFilters,
+} from "@/lib/admin-export-filters"
+import { codedAffectBand, codedStressBand } from "@/lib/admin-coded-scores"
 import { filterKeysFromAnalytics } from "@/lib/audit-metadata"
-
-const HEADERS = [
-  "user_email",
-  "check_in_date",
-  "stress_level",
-  "mood",
-  "energy",
-  "domain",
-  "subscale",
-  "week_number",
-  "day_number",
-  "needs_safety_escalation",
-  "created_at",
-]
 
 function forCsv(value: unknown): unknown {
   if (typeof value === "bigint") return Number(value)
@@ -40,15 +32,19 @@ function forCsv(value: unknown): unknown {
 }
 
 export async function GET(req: NextRequest) {
-  const admin = await requireAdminApi()
+  const admin = await requireCodedExportApi()
   if (!admin.ok) return admin.response
 
-  const filters = parseAnalyticsFilters(new URL(req.url).searchParams)
+  const parsed = parseCodedExportFilters(new URL(req.url).searchParams)
+  if (!parsed.ok) {
+    return genericExportRejectedResponse(parsed.error)
+  }
+  const filters = parsed.filters
   const checkInFilter = buildPrismaCheckInFilter(filters)
 
   const result = await prisma.$queryRaw<Array<Record<string, unknown>>>`
     SELECT
-      u.email AS user_email,
+      u.study_id,
       c.check_in_date,
       c.distress AS stress_level,
       c.mood,
@@ -63,14 +59,19 @@ export async function GET(req: NextRequest) {
     JOIN users u ON u.id = c.user_id
     WHERE u.role = 'PARTICIPANT'${checkInFilter.and}
     ORDER BY c.check_in_date DESC, c.created_at DESC
+    LIMIT ${CODED_EXPORT_MAX_ROWS + 1}
   `
 
+  if (result.length > CODED_EXPORT_MAX_ROWS) {
+    return genericExportRejectedResponse(GENERIC_EXPORT_LIMIT_ERROR)
+  }
+
   const rows = result.map((row) => [
-    forCsv(row.user_email),
+    codedStudyId(row.study_id),
     formatCsvDate(row.check_in_date),
-    forCsv(row.stress_level),
-    forCsv(row.mood),
-    forCsv(row.energy),
+    codedStressBand(row.stress_level),
+    codedAffectBand(row.mood),
+    codedAffectBand(row.energy),
     forCsv(row.domain),
     forCsv(row.subscale),
     forCsv(row.week_number),
@@ -79,7 +80,7 @@ export async function GET(req: NextRequest) {
     formatCsvTimestamp(row.created_at),
   ])
 
-  const csv = buildCsv(HEADERS, rows)
+  const csv = buildCsv([...CHECK_IN_EXPORT_HEADERS], rows)
   return finalizeAdminCsvExport({
     actor: admin.actor,
     action: "ADMIN_CHECKIN_EXPORTED",
@@ -88,7 +89,8 @@ export async function GET(req: NextRequest) {
     metadata: {
       filterKeys: filterKeysFromAnalytics(filters),
       rowCount: rows.length,
-      identified: true,
+      identified: false,
+      exportMode: "CODED",
     },
   })
 }

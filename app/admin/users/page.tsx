@@ -1,12 +1,17 @@
 import { prisma } from "@/lib/prisma"
 import type { Prisma, UserRole } from "@/lib/generated/prisma/client"
-import { deleteUser, toggleUserRole } from "@/actions/admin"
 import { AddUserForm } from "@/components/admin/add-user-form"
 import { UsersTableToolbar } from "@/components/admin/users/users-table-toolbar"
 import { UsersTable } from "@/components/admin/users/users-table"
 import { UsersPagination } from "@/components/admin/users/users-pagination"
 import { recordAdminPageView } from "@/lib/audit-admin"
 import { filterKeysFromFlags } from "@/lib/audit-metadata"
+import { requireAdminPage } from "@/lib/admin-authz"
+import {
+  creatableRolesFor,
+  hasCapability,
+  isUserRole,
+} from "@/lib/admin-capabilities"
 
 export const dynamic = "force-dynamic"
 
@@ -30,6 +35,7 @@ export default async function AdminUsersPage({
 }: {
   searchParams: Promise<SearchParams>
 }) {
+  const actor = await requireAdminPage("canViewParticipantDirectory")
   const params = await searchParams
 
   const q = (params.q ?? "").trim()
@@ -47,7 +53,7 @@ export default async function AdminUsersPage({
     ]
   }
 
-  if (role !== "ALL") {
+  if (role !== "ALL" && isUserRole(role)) {
     where.role = role as UserRole
   }
 
@@ -110,7 +116,7 @@ export default async function AdminUsersPage({
         </p>
       </div>
 
-      <AddUserForm />
+      <AddUserForm creatableRoles={creatableRolesFor(actor.role)} />
 
       <section className="overflow-hidden  border border-gray-200/80 bg-white">
         <div className="border-b border-gray-100 bg-gradient-to-b from-gray-50 to-white px-6 py-5">
@@ -135,14 +141,9 @@ export default async function AdminUsersPage({
 
         <UsersTable
           users={rows}
-          deleteUser={async (id: string) => {
-            "use server"
-            await deleteUser(id)
-          }}
-          toggleUserRole={async (id: string, role: string) => {
-            "use server"
-            await toggleUserRole(id, role)
-          }}
+          actorUserId={actor.userId}
+          canManageRoles={hasCapability(actor.role, "canManagePrivilegedUsers")}
+          canDeleteUsers={hasCapability(actor.role, "canDeleteUsers")}
         />
 
         <UsersPagination

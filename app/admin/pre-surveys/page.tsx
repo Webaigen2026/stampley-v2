@@ -1,9 +1,14 @@
 import { prisma } from "@/lib/prisma"
 import { recordPhiPageViewOrThrow } from "@/lib/admin-phi-page"
+import { requireAdminPage } from "@/lib/admin-authz"
 
 export const dynamic = "force-dynamic"
 
 export default async function AdminPreSurveysPage() {
+  await requireAdminPage([
+    "canViewOperationalParticipantData",
+    "canViewClinicalSurveyData",
+  ])
   const users = await prisma.user.findMany({
     where: { role: "PARTICIPANT" },
     orderBy: [

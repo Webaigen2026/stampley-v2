@@ -1,13 +1,32 @@
 import Link from "next/link"
+import { changeUserRole, deleteUser } from "@/actions/admin"
+import type { AppUserRole } from "@/lib/admin-capabilities"
+
+const ROLE_OPTIONS: Array<{ value: AppUserRole; label: string }> = [
+  { value: "PARTICIPANT", label: "Participant" },
+  { value: "STUDY_COORDINATOR", label: "Study Coordinator" },
+  { value: "CLINICAL_REVIEWER", label: "Clinical Reviewer" },
+  { value: "ADMIN", label: "Admin" },
+]
 
 export function UsersTable({
   users,
-  deleteUser,
-  toggleUserRole,
+  actorUserId,
+  canManageRoles,
+  canDeleteUsers,
 }: {
-  users: any[]
-  deleteUser: (id: string) => Promise<void>
-  toggleUserRole: (id: string, role: string) => Promise<void>
+  users: Array<{
+    id: string
+    email: string
+    role: AppUserRole | string
+    study_id?: string | null
+    created_at: Date | string | null
+    pre_survey_completed_at?: Date | string | null
+    checkin_count?: number
+  }>
+  actorUserId: string
+  canManageRoles: boolean
+  canDeleteUsers: boolean
 }) {
   return (
     <div className="overflow-hidden  border border-slate-300 bg-white shadow-sm">
@@ -31,8 +50,8 @@ export function UsersTable({
                 "Check",
                 "Study ID",
                 "Joined",
-                "Actions",
-                "Remove",
+                ...(canManageRoles ? ["Actions"] : []),
+                ...(canDeleteUsers ? ["Remove"] : []),
               ].map((header) => (
                 <th
                   key={header}
@@ -45,7 +64,9 @@ export function UsersTable({
           </thead>
 
           <tbody className="divide-y divide-slate-200">
-            {users.map((u: any) => (
+            {users.map((u) => {
+              const isSelf = u.id === actorUserId
+              return (
               <tr key={u.id} className="bg-white transition hover:bg-slate-50">
                 <td className="px-5 py-4">
                   <div className="flex items-center gap-3">
@@ -104,48 +125,86 @@ export function UsersTable({
                 </td>
 
                 <td className="px-5 py-4 text-sm text-slate-600">
-                  {new Date(u.created_at).toLocaleDateString()}
+                  {u.created_at ? new Date(u.created_at).toLocaleDateString() : "—"}
                 </td>
 
-                <td className="px-5 py-4">
-                  <form
-                    action={async () => {
-                      "use server"
-                      await toggleUserRole(u.id, u.role)
-                    }}
-                  >
-                    <button
-                      type="submit"
-                      className="inline-flex items-center gap-2  border border-[#005ea8] bg-white px-3 py-2 text-xs font-semibold text-[#005ea8] transition hover:bg-[#eef7ff] focus:outline-none focus:ring-2 focus:ring-[#005ea8] focus:ring-offset-2"
-                    >
-                      <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-                      </svg>
-                      Make {u.role === "ADMIN" ? "Participant" : "Admin"}
-                    </button>
-                  </form>
-                </td>
+                {canManageRoles ? (
+                  <td className="px-5 py-4">
+                    {isSelf ? (
+                      <span className="text-xs text-slate-400">Current user</span>
+                    ) : (
+                      <form
+                        action={async (formData) => {
+                          "use server"
+                          await changeUserRole(formData)
+                        }}
+                        className="flex flex-col gap-2"
+                      >
+                        <input type="hidden" name="userId" value={u.id} />
+                        <select
+                          name="toRole"
+                          defaultValue={u.role}
+                          className="border border-slate-300 bg-white px-2 py-1 text-xs text-slate-800"
+                        >
+                          {ROLE_OPTIONS.map((option) => (
+                            <option key={option.value} value={option.value}>
+                              {option.label}
+                            </option>
+                          ))}
+                        </select>
+                        <input
+                          type="password"
+                          name="currentPassword"
+                          autoComplete="current-password"
+                          placeholder="Password if promoting to admin"
+                          className="border border-slate-300 bg-white px-2 py-1 text-xs text-slate-800"
+                        />
+                        <button
+                          type="submit"
+                          className="inline-flex items-center justify-center border border-[#005ea8] bg-white px-3 py-2 text-xs font-semibold text-[#005ea8] transition hover:bg-[#eef7ff]"
+                        >
+                          Update role
+                        </button>
+                      </form>
+                    )}
+                  </td>
+                ) : null}
 
-                <td className="px-5 py-4 text-center">
-                  <form
-                    action={async () => {
-                      "use server"
-                      await deleteUser(u.id)
-                    }}
-                  >
-                    <button
-                      type="submit"
-                      className="inline-flex h-9 w-9 items-center justify-center  border border-slate-300 bg-white text-slate-500 transition hover:border-red-300 hover:bg-red-50 hover:text-red-700 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2"
-                      aria-label={`Delete ${u.email}`}
-                    >
-                      <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                    </button>
-                  </form>
-                </td>
+                {canDeleteUsers ? (
+                  <td className="px-5 py-4 text-center">
+                    {isSelf ? (
+                      <span className="text-xs text-slate-400">—</span>
+                    ) : (
+                      <form
+                        action={async (formData) => {
+                          "use server"
+                          await deleteUser(formData)
+                        }}
+                        className="flex flex-col items-center gap-2"
+                      >
+                        <input type="hidden" name="userId" value={u.id} />
+                        <input
+                          type="password"
+                          name="currentPassword"
+                          autoComplete="current-password"
+                          placeholder="Confirm password"
+                          className="w-36 border border-slate-300 bg-white px-2 py-1 text-xs text-slate-800"
+                        />
+                        <button
+                          type="submit"
+                          className="inline-flex h-9 w-9 items-center justify-center  border border-slate-300 bg-white text-slate-500 transition hover:border-red-300 hover:bg-red-50 hover:text-red-700"
+                          aria-label={`Delete ${u.email}`}
+                        >
+                          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
+                      </form>
+                    )}
+                  </td>
+                ) : null}
               </tr>
-            ))}
+            )})}
 
             {users.length === 0 && (
               <tr>

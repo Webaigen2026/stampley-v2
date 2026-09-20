@@ -5,6 +5,10 @@ export function csvFileResponse(csv: string, filename: string): Response {
     headers: {
       "Content-Type": "text/csv; charset=utf-8",
       "Content-Disposition": `attachment; filename="${filename}"`,
+      "Cache-Control": "no-store",
+      "Pragma": "no-cache",
+      "Expires": "0",
+      "X-Content-Type-Options": "nosniff",
     },
   })
 }
@@ -14,6 +18,10 @@ export function genericExportFailureResponse(): NextResponse {
     { error: "Something went wrong. Please try again." },
     { status: 500 }
   )
+}
+
+export function genericExportRejectedResponse(message: string): NextResponse {
+  return NextResponse.json({ error: message }, { status: 400 })
 }
 
 export async function respondWithAuditedCsv(args: {

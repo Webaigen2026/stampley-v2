@@ -1,5 +1,6 @@
 import { createUser } from "@/actions/admin"
 import { PasswordInput } from "./password-input"
+import type { AppUserRole } from "@/lib/admin-capabilities"
 
 type DashboardStats = {
   participants: number | string
@@ -55,7 +56,24 @@ function StatCard({
   )
 }
 
-export function AddUserForm() {
+const ROLE_OPTIONS: Array<{ value: AppUserRole; label: string }> = [
+  { value: "PARTICIPANT", label: "Participant" },
+  { value: "STUDY_COORDINATOR", label: "Study Coordinator" },
+  { value: "CLINICAL_REVIEWER", label: "Clinical Reviewer" },
+  { value: "ADMIN", label: "Admin" },
+]
+
+export function AddUserForm({
+  creatableRoles,
+}: {
+  creatableRoles: AppUserRole[]
+}) {
+  if (creatableRoles.length === 0) {
+    return null
+  }
+
+  const canCreateAdmin = creatableRoles.includes("ADMIN")
+
   return (
     <section className=" border border-slate-200/70 bg-white/80 shadow-[0_10px_30px_rgba(15,23,42,0.04)] backdrop-blur-sm">
       <details
@@ -136,10 +154,34 @@ export function AddUserForm() {
                 name="role"
                 className="h-12  border border-slate-200 bg-white/90 px-4 text-sm text-slate-900 shadow-sm outline-none transition focus:border-blue-300 focus:ring-4 focus:ring-blue-100"
               >
-                <option value="PARTICIPANT">Participant</option>
-                <option value="ADMIN">Admin</option>
+                {ROLE_OPTIONS.filter((option) =>
+                  creatableRoles.includes(option.value)
+                ).map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
               </select>
             </div>
+
+            {canCreateAdmin ? (
+              <div className="flex flex-col gap-2 lg:col-span-3">
+                <label
+                  htmlFor="currentPassword"
+                  className="text-sm font-medium text-slate-700"
+                >
+                  Confirm your password
+                </label>
+                <input
+                  id="currentPassword"
+                  name="currentPassword"
+                  type="password"
+                  autoComplete="current-password"
+                  placeholder="Required to create an admin"
+                  className="h-12 border border-slate-200 bg-white/90 px-4 text-sm text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-blue-300 focus:ring-4 focus:ring-blue-100"
+                />
+              </div>
+            ) : null}
 
             <div className="flex flex-col justify-end lg:col-span-2">
               <button
@@ -392,7 +434,7 @@ export function DashboardPage({ stats }: DashboardPageProps) {
 
             <section className="grid grid-cols-1 gap-6 xl:grid-cols-12">
               <div className="xl:col-span-8">
-                <AddUserForm />
+                <AddUserForm creatableRoles={["PARTICIPANT"]} />
               </div>
               <div className="xl:col-span-4">
                 <QuickSummaryCard />

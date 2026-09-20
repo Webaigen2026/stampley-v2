@@ -3,6 +3,7 @@ import { CheckinActivityChart } from "@/components/charts/checkin-activity-chart
 import { DistressChart } from "@/components/charts/distress-chart"
 import Link from "next/link"
 import { recordAdminPageView } from "@/lib/audit-admin"
+import { requireStaffPage } from "@/lib/admin-authz"
 
 export const dynamic = "force-dynamic"
 
@@ -13,6 +14,7 @@ function toCountNumber(value: unknown): number {
 }
 
 export default async function AdminDashboardPage() {
+  await requireStaffPage()
   const [
     participantCount,
     availableKeyCount,

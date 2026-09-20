@@ -26,7 +26,7 @@ import {
   auditedCreateStudyKey,
   auditedCreateUser,
   auditedDeleteUser,
-  auditedToggleUserRole,
+  auditedChangeUserRole,
 } from "./admin-audited-mutations"
 
 const HERE = dirname(fileURLToPath(import.meta.url))
@@ -79,9 +79,23 @@ function mutationStore(options?: { failAudit?: boolean }) {
 
   const db = {
     ...audit.db,
+    async $executeRaw() {
+      return 1
+    },
     user: {
+      async findUnique(args: { where: { id: string }; select: { role: true } }) {
+        const user = users.get(args.where.id)
+        return user ? { role: user.role } : null
+      },
+      async count(args: {
+        where: { role: "ADMIN"; id: { not: string } }
+      }) {
+        return [...users.values()].filter(
+          (user) => user.role === "ADMIN" && user.id !== args.where.id.not
+        ).length
+      },
       async create(args: {
-        data: { email: string; password: string; role: "ADMIN" | "PARTICIPANT" }
+        data: { email: string; password: string; role: string }
         select: { id: true }
       }) {
         const id = `user-${users.size + 1}`
@@ -101,7 +115,7 @@ function mutationStore(options?: { failAudit?: boolean }) {
       },
       async updateMany(args: {
         where: { id: string }
-        data: { role: "ADMIN" | "PARTICIPANT"; authVersion: { increment: 1 } }
+        data: { role: string; authVersion: { increment: 1 } }
       }) {
         const user = users.get(args.where.id)
         if (!user) return { count: 0 }
@@ -396,7 +410,8 @@ describe("HIPAA-3 exports", () => {
             from: "2026-01-01",
           }),
           rowCount: 2,
-          identified: true,
+          identified: false,
+          exportMode: "CODED",
         },
       })
       assert.equal(rows.length, 1)
@@ -411,7 +426,8 @@ describe("HIPAA-3 exports", () => {
       assert.deepEqual(rows[0].metadata, {
         filterKeys: ["from", "q"],
         rowCount: 2,
-        identified: true,
+        identified: false,
+        exportMode: "CODED",
       })
     }
   })
@@ -444,11 +460,11 @@ describe("HIPAA-3 mutations", () => {
       role: "PARTICIPANT",
       authVersion: 4,
     })
-    const result = await auditedToggleUserRole(store.db, admin, {
+    const result = await auditedChangeUserRole(store.db, admin, {
       id: "user-1",
-      currentRole: "PARTICIPANT",
+      toRole: "ADMIN",
     })
-    assert.deepEqual(result, { newRole: "ADMIN" })
+    assert.deepEqual(result, { newRole: "ADMIN", fromRole: "PARTICIPANT" })
     assert.equal(store.users.get("user-1")?.authVersion, 5)
     assert.equal(store.rows.length, 1)
     assert.equal(store.rows[0].action, "ADMIN_ROLE_CHANGED")
@@ -467,9 +483,9 @@ describe("HIPAA-3 mutations", () => {
     })
     await assert.rejects(() =>
       simulateTransaction(failing, () =>
-        auditedToggleUserRole(failing.db, admin, {
+        auditedChangeUserRole(failing.db, admin, {
           id: "user-1",
-          currentRole: "PARTICIPANT",
+          toRole: "ADMIN",
         })
       )
     )
@@ -629,7 +645,8 @@ describe("HIPAA-3 fixtures and schema safety", () => {
       metadata: {
         filterKeys: ["from", "q"],
         rowCount: 3,
-        identified: true,
+        identified: false,
+        exportMode: "CODED",
       },
     })
     const fixture = JSON.stringify(rows)

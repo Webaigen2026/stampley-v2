@@ -145,16 +145,35 @@ const navItems = [
 
 interface AdminSidebarProps {
   email: string
+  role: string
+  visibleHrefs: string[]
   collapsed: boolean
   onToggleCollapse: () => void
 }
 
 export function AdminSidebar({
   email,
+  role,
+  visibleHrefs,
   collapsed,
   onToggleCollapse,
 }: AdminSidebarProps) {
   const pathname = usePathname()
+  const allowed = new Set(visibleHrefs)
+  const sections = navItems
+    .map((section) => ({
+      ...section,
+      links: section.links.filter((link) => allowed.has(link.href)),
+    }))
+    .filter((section) => section.links.length > 0)
+  const roleCaption =
+    role === "STUDY_COORDINATOR"
+      ? "Study Coordinator"
+      : role === "CLINICAL_REVIEWER"
+        ? "Clinical Reviewer"
+        : role === "ADMIN"
+          ? "Administrator"
+          : "Staff"
 
   return (
 
@@ -244,7 +263,7 @@ export function AdminSidebar({
 
       <nav className={`flex-1 overflow-y-auto py-5 ${collapsed ? "px-3" : "px-4"}`}>
         <div className="space-y-6">
-          {navItems.map((section) => (
+          {sections.map((section) => (
             <div key={section.section}>
               {!collapsed && (
                 <div className="mb-2 px-3">
@@ -314,7 +333,7 @@ export function AdminSidebar({
             {!collapsed && (
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium text-slate-900">{email}</p>
-                <p className="mt-0.5 text-xs text-slate-500">Administrator</p>
+                <p className="mt-0.5 text-xs text-slate-500">{roleCaption}</p>
               </div>
             )}
           </div>

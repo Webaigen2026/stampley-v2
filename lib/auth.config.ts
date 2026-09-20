@@ -1,7 +1,8 @@
 import type { NextAuthConfig } from "next-auth";
 import { NextResponse } from "next/server";
+import { isStaffRole, type AppUserRole } from "@/lib/admin-capabilities";
 
-export type AuthRole = "ADMIN" | "PARTICIPANT";
+export type AuthRole = AppUserRole;
 
 /** Returns undefined in production when unset so Auth.js can surface Configuration / MissingSecret instead of crashing module load. */
 export function resolveAuthSecret(): string | undefined {
@@ -40,7 +41,7 @@ export const baseAuthConfig = {
         if (!isLoggedIn) {
           return NextResponse.redirect(new URL("/admin/login", request.nextUrl));
         }
-        if (role !== "ADMIN") {
+        if (!isStaffRole(role)) {
           return NextResponse.redirect(new URL("/dashboard", request.nextUrl));
         }
         return true;

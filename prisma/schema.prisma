@@ -15,6 +15,8 @@ datasource db {
 
 enum UserRole {
   ADMIN
+  STUDY_COORDINATOR
+  CLINICAL_REVIEWER
   PARTICIPANT
 
   @@map("user_role")

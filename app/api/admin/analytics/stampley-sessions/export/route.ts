@@ -9,26 +9,19 @@ import {
   exportFilename,
   finalizeAdminCsvExport,
   formatCsvTimestamp,
-  requireAdminApi,
+  requireCodedExportApi,
 } from "@/lib/admin-csv-export"
+import { genericExportRejectedResponse } from "@/lib/admin-export-response"
+import { buildPrismaSessionFilter } from "@/lib/admin-analytics-filters"
 import {
-  buildPrismaSessionFilter,
-  parseAnalyticsFilters,
-} from "@/lib/admin-analytics-filters"
+  CODED_EXPORT_MAX_ROWS,
+  GENERIC_EXPORT_LIMIT_ERROR,
+  STAMPLEY_SESSION_EXPORT_HEADERS,
+  codedStudyId,
+  parseCodedExportFilters,
+} from "@/lib/admin-export-filters"
+import { codedAffectBand, codedStressBand } from "@/lib/admin-coded-scores"
 import { filterKeysFromAnalytics } from "@/lib/audit-metadata"
-
-const HEADERS = [
-  "user_email",
-  "check_in_submission_id",
-  "domain",
-  "stress_level",
-  "mood",
-  "energy",
-  "user_message_count",
-  "assistant_message_count",
-  "summary",
-  "created_at",
-]
 
 function forCsv(value: unknown): unknown {
   if (typeof value === "bigint") return Number(value)
@@ -37,45 +30,50 @@ function forCsv(value: unknown): unknown {
 }
 
 export async function GET(req: NextRequest) {
-  const admin = await requireAdminApi()
+  const admin = await requireCodedExportApi()
   if (!admin.ok) return admin.response
 
-  const filters = parseAnalyticsFilters(new URL(req.url).searchParams)
+  const parsed = parseCodedExportFilters(new URL(req.url).searchParams)
+  if (!parsed.ok) {
+    return genericExportRejectedResponse(parsed.error)
+  }
+  const filters = parsed.filters
   const sessionFilter = buildPrismaSessionFilter(filters)
 
   const result = await prisma.$queryRaw<Array<Record<string, unknown>>>`
     SELECT
-      u.email AS user_email,
-      s.check_in_submission_id,
+      u.study_id,
       s.domain,
       s.stress_level,
       s.mood,
       s.energy,
       s.user_message_count,
       s.assistant_message_count,
-      s.summary,
       s.created_at
     FROM stampley_chat_sessions s
     JOIN users u ON u.id = s.user_id
     LEFT JOIN check_in_submissions c ON c.id = s.check_in_submission_id
     WHERE u.role = 'PARTICIPANT'${sessionFilter.and}
     ORDER BY s.created_at DESC
+    LIMIT ${CODED_EXPORT_MAX_ROWS + 1}
   `
 
+  if (result.length > CODED_EXPORT_MAX_ROWS) {
+    return genericExportRejectedResponse(GENERIC_EXPORT_LIMIT_ERROR)
+  }
+
   const rows = result.map((row) => [
-    forCsv(row.user_email),
-    forCsv(row.check_in_submission_id),
+    codedStudyId(row.study_id),
     forCsv(row.domain),
-    forCsv(row.stress_level),
-    forCsv(row.mood),
-    forCsv(row.energy),
+    codedStressBand(row.stress_level),
+    codedAffectBand(row.mood),
+    codedAffectBand(row.energy),
     forCsv(row.user_message_count),
     forCsv(row.assistant_message_count),
-    forCsv(row.summary),
     formatCsvTimestamp(row.created_at),
   ])
 
-  const csv = buildCsv(HEADERS, rows)
+  const csv = buildCsv([...STAMPLEY_SESSION_EXPORT_HEADERS], rows)
   return finalizeAdminCsvExport({
     actor: admin.actor,
     action: "ADMIN_STAMPLEY_SESSION_EXPORTED",
@@ -84,7 +82,8 @@ export async function GET(req: NextRequest) {
     metadata: {
       filterKeys: filterKeysFromAnalytics(filters),
       rowCount: rows.length,
-      identified: true,
+      identified: false,
+      exportMode: "CODED",
     },
   })
 }

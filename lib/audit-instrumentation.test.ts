@@ -86,7 +86,7 @@ describe("HIPAA-3 page and route instrumentation", () => {
     assert.match(source, /prisma\.\$transaction/)
     assert.match(source, /auditedCreateUser/)
     assert.match(source, /auditedDeleteUser/)
-    assert.match(source, /auditedToggleUserRole/)
+    assert.match(source, /auditedChangeUserRole/)
     assert.match(source, /auditedCreateStudyKey/)
     assert.match(source, /auditedDeleteStudyKey/)
     assert.doesNotMatch(source, /console\.error\("[^"]+",\s*error\)/)

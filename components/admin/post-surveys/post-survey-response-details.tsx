@@ -91,9 +91,15 @@ function formatText(value: string | null | undefined): string {
 export function PostSurveyResponseDetails({
   record,
   summaryLabel = "View full response",
+  showPhqItems = true,
+  showFreeText = true,
+  showContact = true,
 }: {
   record: PostSurveyResponseRecord
   summaryLabel?: string
+  showPhqItems?: boolean
+  showFreeText?: boolean
+  showContact?: boolean
 }) {
   const ddsAnswers = asJsonObject(record.dds_answers)
   const ddsScores = asJsonObject(record.dds_scores)
@@ -153,6 +159,7 @@ export function PostSurveyResponseDetails({
               value={record.phq_severity ?? "—"}
             />
           </div>
+          {showPhqItems ? (
           <ItemTable
             headers={["#", "Question", "Score", "Label"]}
             rows={POST_PHQ_QUESTIONS.map((question, index) => {
@@ -166,6 +173,11 @@ export function PostSurveyResponseDetails({
               ]
             })}
           />
+          ) : (
+            <p className="text-sm text-slate-500">
+              Item-level PHQ-9 answers are restricted.
+            </p>
+          )}
         </DetailBlock>
 
         <DetailBlock title="System Usability Scale (SUS)">
@@ -206,12 +218,15 @@ export function PostSurveyResponseDetails({
           />
         </DetailBlock>
 
+        {showFreeText ? (
         <DetailBlock title="Open Reflection">
           <p className="text-sm leading-6 text-slate-700 whitespace-pre-wrap">
             {formatText(record.open_reflection)}
           </p>
         </DetailBlock>
+        ) : null}
 
+        {showContact ? (
         <DetailBlock title="Future Research Contact">
           <div className="grid gap-2 text-sm text-slate-700">
             <p>
@@ -232,6 +247,13 @@ export function PostSurveyResponseDetails({
             </p>
           </div>
         </DetailBlock>
+        ) : (
+        <DetailBlock title="Future Research Contact">
+          <p className="text-sm text-slate-700">
+            Interested: {formatContactYesNo(record.future_research_contact)}
+          </p>
+        </DetailBlock>
+        )}
       </div>
     </details>
   )

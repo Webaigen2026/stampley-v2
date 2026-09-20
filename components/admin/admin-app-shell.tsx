@@ -6,9 +6,13 @@ import { TopNav } from "@/components/admin/top-nav"
 
 export function AdminAppShell({
   email,
+  role,
+  visibleHrefs,
   children,
 }: {
   email: string
+  role: string
+  visibleHrefs: string[]
   children: React.ReactNode
 }) {
   const [collapsed, setCollapsed] = useState(false)
@@ -18,6 +22,8 @@ export function AdminAppShell({
       {/* Sidebar */}
       <AdminSidebar
         email={email}
+        role={role}
+        visibleHrefs={visibleHrefs}
         collapsed={collapsed}
         onToggleCollapse={() => setCollapsed((c) => !c)}
       />

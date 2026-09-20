@@ -10,35 +10,21 @@ import {
   persistExportAuditOrThrow,
   recordExportDeniedFailOpen,
 } from "@/lib/audit-admin"
+import { hasCapability } from "@/lib/admin-capabilities"
 import { respondWithAuditedCsv } from "@/lib/admin-export-response"
 
 export {
   csvFileResponse,
   genericExportFailureResponse,
+  genericExportRejectedResponse,
   respondWithAuditedCsv,
 } from "@/lib/admin-export-response"
 
-export function escapeCsvValue(value: unknown): string {
-  if (value == null) return ""
-  const str = String(value)
-  if (/[",\n\r]/.test(str)) {
-    return `"${str.replace(/"/g, '""')}"`
-  }
-  return str
-}
-
-export function buildCsv(headers: string[], rows: unknown[][]): string {
-  const lines = [
-    headers.map(escapeCsvValue).join(","),
-    ...rows.map((row) => row.map(escapeCsvValue).join(",")),
-  ]
-  return lines.join("\n")
-}
-
-export function exportFilename(prefix: string): string {
-  const dateStamp = new Date().toISOString().slice(0, 10)
-  return `${prefix}-${dateStamp}.csv`
-}
+export {
+  buildCsv,
+  escapeCsvValue,
+  exportFilename,
+} from "@/lib/admin-csv-format"
 
 export function formatCsvTimestamp(value: unknown): string {
   if (value == null || value === "") return ""
@@ -60,7 +46,7 @@ export function formatCsvBoolean(value: unknown): string {
   return ""
 }
 
-export async function requireAdminApi(): Promise<
+export async function requireCodedExportApi(): Promise<
   | { ok: true; actor: AuditActor }
   | { ok: false; response: NextResponse }
 > {
@@ -71,7 +57,7 @@ export async function requireAdminApi(): Promise<
       response: NextResponse.json({ error: "Unauthorized" }, { status: 401 }),
     }
   }
-  if (session.user.role !== "ADMIN") {
+  if (!hasCapability(session.user.role, "canExportCodedResearchData")) {
     await recordExportDeniedFailOpen(prisma, session)
     return {
       ok: false,
@@ -87,6 +73,9 @@ export async function requireAdminApi(): Promise<
   }
   return { ok: true, actor }
 }
+
+/** @deprecated Use requireCodedExportApi */
+export const requireAdminApi = requireCodedExportApi
 
 export async function finalizeAdminCsvExport(args: {
   actor: AuditActor

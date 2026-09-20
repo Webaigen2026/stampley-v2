@@ -3,6 +3,8 @@ import type { Prisma } from "@/lib/generated/prisma/client"
 import Link from "next/link"
 import { recordPhiPageViewOrThrow } from "@/lib/admin-phi-page"
 import { filterKeysFromFlags } from "@/lib/audit-metadata"
+import { requireAdminPage } from "@/lib/admin-authz"
+import { hasCapability } from "@/lib/admin-capabilities"
 
 export const dynamic = "force-dynamic"
 
@@ -71,6 +73,11 @@ export default async function AdminDDSPage({
 }: {
   searchParams: Promise<SearchParams>
 }) {
+  const actor = await requireAdminPage([
+    "canViewOperationalParticipantData",
+    "canViewClinicalSurveyData",
+  ])
+  const canViewItems = hasCapability(actor.role, "canViewClinicalSurveyData")
   const params = await searchParams
   const q = (params.q ?? "").trim()
   const highDistressOnly = params.highDistress === "1"
@@ -110,23 +117,27 @@ export default async function AdminDDSPage({
       interpersonalScore: true,
       recommendedDomain: true,
       confirmedDomain: true,
-      q1: true,
-      q2: true,
-      q3: true,
-      q4: true,
-      q5: true,
-      q6: true,
-      q7: true,
-      q8: true,
-      q9: true,
-      q10: true,
-      q11: true,
-      q12: true,
-      q13: true,
-      q14: true,
-      q15: true,
-      q16: true,
-      q17: true,
+      ...(canViewItems
+        ? {
+            q1: true,
+            q2: true,
+            q3: true,
+            q4: true,
+            q5: true,
+            q6: true,
+            q7: true,
+            q8: true,
+            q9: true,
+            q10: true,
+            q11: true,
+            q12: true,
+            q13: true,
+            q14: true,
+            q15: true,
+            q16: true,
+            q17: true,
+          }
+        : {}),
       user: {
         select: { email: true, studyId: true },
       },
@@ -147,23 +158,27 @@ export default async function AdminDDSPage({
       row.interpersonalScore != null ? Number(row.interpersonalScore) : null,
     recommended_domain: row.recommendedDomain,
     confirmed_domain: row.confirmedDomain,
-    q1: row.q1,
-    q2: row.q2,
-    q3: row.q3,
-    q4: row.q4,
-    q5: row.q5,
-    q6: row.q6,
-    q7: row.q7,
-    q8: row.q8,
-    q9: row.q9,
-    q10: row.q10,
-    q11: row.q11,
-    q12: row.q12,
-    q13: row.q13,
-    q14: row.q14,
-    q15: row.q15,
-    q16: row.q16,
-    q17: row.q17,
+    ...(canViewItems
+      ? {
+          q1: row.q1,
+          q2: row.q2,
+          q3: row.q3,
+          q4: row.q4,
+          q5: row.q5,
+          q6: row.q6,
+          q7: row.q7,
+          q8: row.q8,
+          q9: row.q9,
+          q10: row.q10,
+          q11: row.q11,
+          q12: row.q12,
+          q13: row.q13,
+          q14: row.q14,
+          q15: row.q15,
+          q16: row.q16,
+          q17: row.q17,
+        }
+      : {}),
   })) as Record<string, unknown>[]
 
   await recordPhiPageViewOrThrow({
@@ -315,7 +330,8 @@ export default async function AdminDDSPage({
               <tbody>
                 {rows.map((row) => {
                   const highDistress = hasHighDistress(row)
-                  const storedItems = hasStoredItemResponses(row)
+                  const storedItems =
+                    canViewItems && hasStoredItemResponses(row)
                   const userId = String(row.user_id)
 
                   return (
