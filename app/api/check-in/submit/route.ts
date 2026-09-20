@@ -13,6 +13,7 @@ import {
 } from "@/lib/check-in-utils"
 import { resolveWeeklyDomainForUser } from "@/lib/resolve-weekly-domain"
 import { STUDY_DOMAINS } from "@/lib/weekly-domain-progress"
+import { validateCheckInSubmitBody } from "@/lib/check-in-submit-validation"
 
 const DUPLICATE_CHECK_IN_MESSAGE =
   "You have already completed today's check-in."
@@ -45,13 +46,39 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
+  let body: unknown
   try {
-    const body = await req.json()
-    const { distress, mood, energy, contextTags, reflection, copingAction } = body
+    body = await req.json()
+  } catch {
+    return NextResponse.json(
+      { error: "Invalid request body" },
+      { status: 400 }
+    )
+  }
+
+  const validated = validateCheckInSubmitBody(body)
+  if (!validated.ok) {
+    return NextResponse.json({ error: validated.error }, { status: 400 })
+  }
+
+  const {
+    distress,
+    mood,
+    energy,
+    contextTags,
+    reflection,
+    copingAction,
+  } = validated.data
+
+  try {
+    const requestedDomain =
+      body !== null && typeof body === "object" && "domain" in body
+        ? (body as { domain?: unknown }).domain
+        : undefined
 
     const { domain } = await resolveWeeklyDomainForUser(
       session.user.id,
-      body.domain
+      requestedDomain
     )
 
     if (!domain || !STUDY_DOMAINS.includes(domain)) {
@@ -122,7 +149,7 @@ export async function POST(req: NextRequest) {
               energy,
               reflection,
               copingAction,
-              contextTags: contextTags ?? Prisma.DbNull,
+              contextTags,
               needsSafetyEscalation,
               consecutiveHighDistressDays: consecutiveDays,
               weekNumber,
