@@ -1,9 +1,16 @@
 import { create } from "zustand"
 import { createJSONStorage, persist } from "zustand/middleware"
+import {
+  clearStorageKey,
+  getBrowserSessionStorage,
+  readOwnedPayload,
+  wrapOwnedPayload,
+} from "@/lib/client-owned-storage"
+import { readSessionUserId } from "@/lib/session-user-id"
 
 export type Domain = "Emotional" | "Regimen" | "Physician" | "Interpersonal"
 
-const CHECK_IN_DRAFT_KEY = "stampley-checkin-draft"
+export const CHECK_IN_DRAFT_KEY = "stampley-checkin-draft"
 
 export const checkInInitialState = {
   distress: undefined as number | undefined,
@@ -16,18 +23,13 @@ export const checkInInitialState = {
 }
 
 export interface CheckInState {
-  // Step 1 — Daily Metrics
   distress: number | undefined
   mood: number | undefined
   energy: number | undefined
-  // Step 2 — Contextual Factors
   contextTags: string[]
-  // Step 3 — Clinical Narrative
   reflection: string
   copingAction: string
-  // Step 4 — Weekly Domain
   domain: Domain | null
-  // Actions
   setDistress: (v: number) => void
   setMood: (v: number) => void
   setEnergy: (v: number) => void
@@ -37,6 +39,68 @@ export interface CheckInState {
   setDomain: (d: Domain) => void
   clearDomain: () => void
   reset: () => void
+}
+
+let draftOwnerUserId: string | null = null
+let persistWritesEnabled = false
+
+export function getCheckInDraftOwnerUserId(): string | null {
+  return draftOwnerUserId
+}
+
+function createOwnedCheckInStorage() {
+  return {
+    getItem(name: string): string | null {
+      const storage = getBrowserSessionStorage()
+      if (!storage) return null
+      let raw: string | null
+      try {
+        raw = storage.getItem(name)
+      } catch {
+        return null
+      }
+
+      const result = readOwnedPayload<unknown>({
+        raw,
+        currentUserId: draftOwnerUserId,
+      })
+
+      if (result.status === "ok") {
+        try {
+          return JSON.stringify(result.payload)
+        } catch {
+          clearStorageKey(storage, name)
+          return null
+        }
+      }
+
+      if (result.status === "rejected" && result.clear) {
+        clearStorageKey(storage, name)
+      }
+      return null
+    },
+    setItem(name: string, value: string): void {
+      if (!persistWritesEnabled || !draftOwnerUserId) return
+      const storage = getBrowserSessionStorage()
+      if (!storage) return
+      let parsed: unknown
+      try {
+        parsed = JSON.parse(value)
+      } catch {
+        return
+      }
+      const envelope = wrapOwnedPayload(draftOwnerUserId, parsed)
+      if (!envelope) return
+      try {
+        storage.setItem(name, JSON.stringify(envelope))
+      } catch {
+        // Fail closed without logging PHI.
+      }
+    },
+    removeItem(name: string): void {
+      clearStorageKey(getBrowserSessionStorage(), name)
+    },
+  }
 }
 
 export const useCheckInStore = create<CheckInState>()(
@@ -58,15 +122,8 @@ export const useCheckInStore = create<CheckInState>()(
     }),
     {
       name: CHECK_IN_DRAFT_KEY,
-      storage: createJSONStorage(() =>
-        typeof window !== "undefined"
-          ? sessionStorage
-          : {
-              getItem: () => null,
-              setItem: () => {},
-              removeItem: () => {},
-            }
-      ),
+      skipHydration: true,
+      storage: createJSONStorage(() => createOwnedCheckInStorage()),
       partialize: (state) => ({
         distress: state.distress,
         mood: state.mood,
@@ -79,3 +136,25 @@ export const useCheckInStore = create<CheckInState>()(
     }
   )
 )
+
+export async function applyCheckInDraftOwner(
+  userId: string | null
+): Promise<void> {
+  persistWritesEnabled = false
+  const next = readSessionUserId({ user: { id: userId } })
+  draftOwnerUserId = next
+  useCheckInStore.setState({ ...checkInInitialState })
+
+  if (!next) {
+    return
+  }
+
+  await useCheckInStore.persist.rehydrate()
+  persistWritesEnabled = true
+}
+
+export function resetCheckInDraftOwnerForTests(): void {
+  persistWritesEnabled = false
+  draftOwnerUserId = null
+  useCheckInStore.setState({ ...checkInInitialState })
+}

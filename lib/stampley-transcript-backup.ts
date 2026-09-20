@@ -1,4 +1,11 @@
 import type { StoredMessage } from "@/store/conversation-storage"
+import {
+  clearStorageKey,
+  getBrowserSessionStorage,
+  readOwnedStorageItem,
+  writeOwnedStorageItem,
+} from "@/lib/client-owned-storage"
+import { readSessionUserId } from "@/lib/session-user-id"
 
 export const UNSAVED_TRANSCRIPT_STORAGE_KEY = "stampley-unsaved-transcript"
 
@@ -42,52 +49,49 @@ function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
-function getSessionStorage(): Storage | null {
-  if (typeof window === "undefined") return null
-  try {
-    return window.sessionStorage
-  } catch {
+function isValidBackup(parsed: unknown): parsed is UnsavedTranscriptBackup {
+  if (typeof parsed !== "object" || parsed === null) return false
+  const backup = parsed as UnsavedTranscriptBackup
+  return (
+    typeof backup.checkInSubmissionId === "string" &&
+    backup.checkInSubmissionId.trim().length > 0 &&
+    Array.isArray(backup.messages)
+  )
+}
+
+export function backupUnsavedTranscript(
+  ownerUserId: string,
+  backup: UnsavedTranscriptBackup,
+  storage: Storage | null = getBrowserSessionStorage()
+): void {
+  const owner = readSessionUserId({ user: { id: ownerUserId } })
+  if (!owner) return
+  if (!isValidBackup(backup)) return
+  writeOwnedStorageItem(storage, UNSAVED_TRANSCRIPT_STORAGE_KEY, owner, backup)
+}
+
+export function readUnsavedTranscript(
+  currentUserId: string | null,
+  storage: Storage | null = getBrowserSessionStorage()
+): UnsavedTranscriptBackup | null {
+  const owner = readSessionUserId({ user: { id: currentUserId } })
+  const payload = readOwnedStorageItem<UnsavedTranscriptBackup>(
+    storage,
+    UNSAVED_TRANSCRIPT_STORAGE_KEY,
+    owner
+  )
+  if (!payload) return null
+  if (!isValidBackup(payload)) {
+    clearUnsavedTranscript(storage)
     return null
   }
+  return payload
 }
 
-export function backupUnsavedTranscript(backup: UnsavedTranscriptBackup): void {
-  const storage = getSessionStorage()
-  if (!storage) return
-  try {
-    storage.setItem(UNSAVED_TRANSCRIPT_STORAGE_KEY, JSON.stringify(backup))
-  } catch (err) {
-    console.error("[stampley/transcript-backup] failed to write backup:", err)
-  }
-}
-
-export function readUnsavedTranscript(): UnsavedTranscriptBackup | null {
-  const storage = getSessionStorage()
-  if (!storage) return null
-  try {
-    const raw = storage.getItem(UNSAVED_TRANSCRIPT_STORAGE_KEY)
-    if (!raw) return null
-    const parsed = JSON.parse(raw) as UnsavedTranscriptBackup
-    if (
-      typeof parsed.checkInSubmissionId !== "string" ||
-      !parsed.checkInSubmissionId.trim()
-    ) {
-      return null
-    }
-    return parsed
-  } catch {
-    return null
-  }
-}
-
-export function clearUnsavedTranscript(): void {
-  const storage = getSessionStorage()
-  if (!storage) return
-  try {
-    storage.removeItem(UNSAVED_TRANSCRIPT_STORAGE_KEY)
-  } catch (err) {
-    console.error("[stampley/transcript-backup] failed to clear backup:", err)
-  }
+export function clearUnsavedTranscript(
+  storage: Storage | null = getBrowserSessionStorage()
+): void {
+  clearStorageKey(storage, UNSAVED_TRANSCRIPT_STORAGE_KEY)
 }
 
 export async function saveStampleySessionWithRetry(
@@ -172,28 +176,24 @@ export function sessionPayloadFromBackup(
 }
 
 /** Attempt to upload a previously backed-up transcript. Clears backup on success. */
-export async function resendUnsavedTranscriptIfPresent(): Promise<boolean> {
-  const backup = readUnsavedTranscript()
+export async function resendUnsavedTranscriptIfPresent(
+  currentUserId: string | null,
+  storage: Storage | null = getBrowserSessionStorage(),
+  save = saveStampleySessionWithRetry
+): Promise<boolean> {
+  const backup = readUnsavedTranscript(currentUserId, storage)
   if (!backup) return false
 
-  console.info(
-    `[stampley/transcript-backup] resending unsaved transcript for check-in ${backup.checkInSubmissionId} (saved ${backup.timestamp})`
-  )
+  console.info("[stampley/transcript-backup] resending unsaved transcript")
 
-  const result = await saveStampleySessionWithRetry(
-    sessionPayloadFromBackup(backup)
-  )
+  const result = await save(sessionPayloadFromBackup(backup))
 
   if (result.ok) {
-    clearUnsavedTranscript()
-    console.info(
-      `[stampley/transcript-backup] resend succeeded for check-in ${backup.checkInSubmissionId}`
-    )
+    clearUnsavedTranscript(storage)
+    console.info("[stampley/transcript-backup] resend succeeded")
     return true
   }
 
-  console.warn(
-    `[stampley/transcript-backup] resend failed for check-in ${backup.checkInSubmissionId}; backup retained`
-  )
+  console.warn("[stampley/transcript-backup] resend failed; backup retained")
   return false
 }

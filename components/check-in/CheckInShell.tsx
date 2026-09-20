@@ -7,6 +7,7 @@ import {
   useCheckInSubmit,
 } from "@/components/check-in/CheckInSubmitContext"
 import WeeklyDomainSync from "@/components/check-in/WeeklyDomainSync"
+import { CheckInDraftOwnerSync } from "@/components/check-in/CheckInDraftOwnerSync"
 
 function CheckInFooterDock() {
   const { meta } = useCheckInSubmit()
@@ -37,6 +38,7 @@ function CheckInFooterDock() {
 export default function CheckInShell({ children }: { children: React.ReactNode }) {
   return (
     <CheckInSubmitProvider>
+      <CheckInDraftOwnerSync />
       <WeeklyDomainSync />
       <PageTransition>{children}</PageTransition>
       <CheckInFooterDock />

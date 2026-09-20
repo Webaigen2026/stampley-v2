@@ -3,6 +3,7 @@
 import React, { useRef, useState, useCallback, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { useRouter } from "next/navigation"
+import { useSession } from "next-auth/react"
 import Image from "next/image"
 import {
   Phone,
@@ -27,12 +28,11 @@ import { useCheckInSubmit } from "@/components/check-in/CheckInSubmitContext"
 import { useCheckInSidebarVisibility } from "@/components/check-in/CheckInSidebarVisibility"
 
 import {
-  getConversations,
-  saveConversations,
-  type StoredConversation,
+  discardLegacyConversations,
   type StoredMessage,
   type StampleyResponseData,
 } from "@/store/conversation-storage"
+import { readSessionUserId } from "@/lib/session-user-id"
 import {
   StampleySidebar,
   type DdsSummary,
@@ -83,14 +83,6 @@ const materialSpring = {
 const getCurrentTime = () =>
   new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })
 
-function ensureUniqueTitle(base: string, existing: string[]): string {
-  const set = new Set(existing.map((t) => t.toLowerCase()))
-  if (!set.has(base.toLowerCase())) return base
-  let n = 2
-  while (set.has(`${base} (${n})`.toLowerCase())) n++
-  return `${base} (${n})`
-}
-
 function buildStampleyHistory(
   msgs: StoredMessage[]
 ): StampleyHistoryMessage[] {
@@ -118,6 +110,8 @@ function hasCompletedDailyReflection(userMessageCount: number) {
 
 export default function StampleySupportPage() {
   const router = useRouter()
+  const { data: session, status: sessionStatus } = useSession()
+  const ownerUserId = readSessionUserId(session)
   const store = useCheckInStore()
   const { register } = useCheckInSubmit()
   const { setHideOuterSidebar } = useCheckInSidebarVisibility()
@@ -134,7 +128,6 @@ export default function StampleySupportPage() {
 
   const [inputText, setInputText] = useState("")
   const [messages, setMessages] = useState<StoredMessage[]>([])
-  const [conversations, setConversations] = useState<StoredConversation[]>([])
   const [currentConvId, setCurrentConvId] = useState<string | null>(null)
   const [expandedCard, setExpandedCard] = useState<string | null>(null)
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
@@ -189,7 +182,7 @@ export default function StampleySupportPage() {
   }, [messages, loading, expandedCard, showSupport, isAlertDismissed])
 
   useEffect(() => {
-    setConversations(getConversations())
+    discardLegacyConversations()
   }, [])
 
   useEffect(() => {
@@ -209,10 +202,12 @@ export default function StampleySupportPage() {
   }, [])
 
   useEffect(() => {
-    void resendUnsavedTranscriptIfPresent()
-  }, [])
+    if (sessionStatus === "loading") return
+    void resendUnsavedTranscriptIfPresent(ownerUserId)
+  }, [ownerUserId, sessionStatus])
 
   useEffect(() => {
+    if (sessionStatus === "loading") return
     if (restoreDraftRanRef.current) return
     restoreDraftRanRef.current = true
 
@@ -224,7 +219,7 @@ export default function StampleySupportPage() {
           return
         }
 
-        const draft = readActiveChatDraft()
+        const draft = readActiveChatDraft(ownerUserId)
         if (!draft) return
 
         setChatSnapshot(draft.chatSnapshot as SavedMetrics)
@@ -238,14 +233,15 @@ export default function StampleySupportPage() {
         skipDraftPersistRef.current = false
       }
     })()
-  }, [])
+  }, [ownerUserId, sessionStatus])
 
   useEffect(() => {
     if (skipDraftPersistRef.current) return
+    if (!ownerUserId) return
     if (!chatStarted || !chatSnapshot) return
     if (messages.length === 0) return
 
-    writeActiveChatDraft({
+    writeActiveChatDraft(ownerUserId, {
       chatStarted: true,
       chatSnapshot: chatSnapshot as ActiveChatSnapshot,
       messages,
@@ -258,6 +254,7 @@ export default function StampleySupportPage() {
       timestamp: new Date().toISOString(),
     })
   }, [
+    ownerUserId,
     chatStarted,
     chatSnapshot,
     messages,
@@ -265,43 +262,6 @@ export default function StampleySupportPage() {
     expandedCard,
     activeView,
   ])
-
-  useEffect(() => {
-    if (messages.length === 0) return
-    const updatedAt = new Date().toISOString()
-    if (currentConvId === null) {
-      const firstUser = messages.find((m) => m.role === "user")
-      const baseTitle =
-        firstUser?.content?.slice(0, 40) ?? "Stampley session"
-      const newId = Date.now().toString()
-      setConversations((prev) => {
-        const title = ensureUniqueTitle(
-          baseTitle,
-          prev.map((c) => c.title)
-        )
-        const newConv: StoredConversation = {
-          id: newId,
-          title,
-          updatedAt,
-          messages: [...messages],
-        }
-        const next = [...prev, newConv]
-        saveConversations(next)
-        return next
-      })
-      setCurrentConvId(newId)
-    } else {
-      setConversations((prev) => {
-        const next = prev.map((c) =>
-          c.id === currentConvId
-            ? { ...c, messages: [...messages], updatedAt }
-            : c
-        )
-        saveConversations(next)
-        return next
-      })
-    }
-  }, [messages, currentConvId])
 
   const generateStampleyResponse = useCallback(
     async (history: StampleyHistoryMessage[], m: SavedMetrics) => {
@@ -546,8 +506,9 @@ export default function StampleySupportPage() {
 
       if (sessionSave.ok) {
         clearUnsavedTranscript()
-      } else {
+      } else if (ownerUserId) {
         backupUnsavedTranscript(
+          ownerUserId,
           backupFromSessionPayload(sessionPayload, {
             domain: chatSnapshot.domain,
             distress: chatSnapshot.distress,
@@ -580,6 +541,7 @@ export default function StampleySupportPage() {
     store,
     router,
     dailyReflectionComplete,
+    ownerUserId,
   ])
 
   useEffect(() => {
@@ -663,15 +625,6 @@ export default function StampleySupportPage() {
     setCurrentConvId(null)
     setExpandedCard(null)
     setInputText("")
-    setActiveView("chat")
-  }
-
-  function handleSelectConversation(id: string) {
-    const conv = conversations.find((c) => c.id === id)
-    if (!conv) return
-    setMessages(conv.messages)
-    setCurrentConvId(conv.id)
-    setExpandedCard(null)
     setActiveView("chat")
   }
 
