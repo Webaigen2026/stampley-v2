@@ -49,6 +49,49 @@ function getAppBaseUrl() {
   return raw.replace(/\/$/, "")
 }
 
+function isAbsoluteHttpOrigin(value: string | null): value is string {
+  if (!value) return false
+
+  try {
+    const parsed = new URL(value)
+
+    return (
+      (parsed.protocol === "http:" || parsed.protocol === "https:") &&
+      Boolean(parsed.hostname)
+    )
+  } catch {
+    return false
+  }
+}
+
+function getPasswordResetBaseUrl() {
+  const configured = getAppBaseUrl()
+
+  if (isAbsoluteHttpOrigin(configured)) {
+    return configured
+  }
+
+  if (process.env.NODE_ENV !== "production") {
+    return "http://localhost:3000"
+  }
+
+  throw new Error("Failed to send email")
+}
+
+function buildPasswordResetUrl(token: string) {
+  const resetUrl = new URL("/reset-password", getPasswordResetBaseUrl())
+  resetUrl.searchParams.set("token", token)
+
+  if (
+    (resetUrl.protocol !== "http:" && resetUrl.protocol !== "https:") ||
+    !resetUrl.hostname
+  ) {
+    throw new Error("Failed to send email")
+  }
+
+  return resetUrl.toString()
+}
+
 function emailShell({
   eyebrow,
   title,
@@ -579,8 +622,17 @@ export async function sendPasswordResetEmail(
   email: string,
   token: string
 ) {
-  const resetUrl =
-    `${process.env.NEXTAUTH_URL}/reset-password?token=${token}`
+  let resetUrl: string
+
+  try {
+    resetUrl = buildPasswordResetUrl(token)
+  } catch {
+    console.error(
+      "[sendPasswordResetEmail] Failed to send password reset email"
+    )
+
+    throw new Error("Failed to send email")
+  }
 
   const html = emailShell({
     eyebrow: "Account security",

@@ -55,8 +55,6 @@ export async function requestPasswordReset(formData: FormData) {
     } catch (emailError) {
       // Log but don't fail — token is saved, email can be resent
       console.error("[password-reset] email failed:", emailError)
-      // Fallback: log token for manual testing
-      console.log(`[password-reset] fallback link: /reset-password?token=${token}`)
     }
 
     return { success: true }
