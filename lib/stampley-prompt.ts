@@ -1,75 +1,36 @@
 import type { Domain } from "@/store/checkin-store"
+import type {
+  ConversationPhase,
+  OpenAILongitudinalContext,
+  StampleyHistoryMessage,
+  StampleyOpenAIContext,
+  SupportDomain,
+} from "@/lib/stampley-openai-context"
+import { assertStampleyOpenAIContext } from "@/lib/stampley-openai-context"
 
-export type EmotionalSupportStyle =
-  | "gentle grounding"
-  | "calm validation"
-  | "light pattern noticing"
+export type {
+  ConversationPhase as StampleyPhase,
+  EmotionalSupportStyle,
+  StampleyHistoryMessage,
+  StampleyOpenAIContext,
+} from "@/lib/stampley-openai-context"
 
-/** Plain serializable emotional theme memory passed from server routes. */
+export {
+  isHighStress,
+  sanitizeHistory,
+} from "@/lib/stampley-openai-context"
+
+/** Local theme-memory shape. priorSessionCount is application-only and never sent to OpenAI. */
 export type EmotionalThemeMemory = {
   recurringThemes: string[]
-  supportStyle: EmotionalSupportStyle
+  supportStyle: import("@/lib/stampley-openai-context").EmotionalSupportStyle
   priorSessionCount: number
   allowThemeReference: boolean
 }
 
-export type StampleyInput = {
-  firstName: string
-  distress: number
-  mood: number
-  energy: number
-  domain: Domain
-  subscale: string
-  reflection: string
-  copingAction: string
-  contextTags: string[]
-  dayNumber: number
-  weekNumber: number
-}
-
-export type StampleyHistoryMessage = {
-  role: "user" | "assistant"
-  content: string
-}
-
-export type StampleyPhase =
-  | "opening"
-  | "exploration"
-  | "coping"
-  | "closure"
-
 export type OpenAIChatMessage = {
   role: "system" | "user" | "assistant"
   content: string
-}
-
-/** Saved check-in row for longitudinal context (summaries only). */
-export type LongitudinalCheckInRow = {
-  checkInDate: string
-  stressLevel: number
-  mood: number
-  energy: number
-  domain: string | null
-  subscale: string | null
-  copingAction: string | null
-}
-
-/** Saved Stampley session row for longitudinal context (summaries only). */
-export type LongitudinalChatSessionRow = {
-  summary: string | null
-  userMessageCount: number
-  assistantMessageCount: number
-  domain: string | null
-  stressLevel: number | null
-}
-
-export type LongitudinalContext = {
-  recentStressTrend: string
-  repeatedDomains: string[]
-  recentSubscales: string[]
-  recentThemes: string[]
-  priorCopingActions: string[]
-  totalRecentCheckins: number
 }
 
 const VALID_DOMAINS: Domain[] = [
@@ -156,25 +117,20 @@ export function getEducationChip(domain: Domain): string {
   return EDUCATION_CHIPS[domain]
 }
 
-function contextSummary(input: StampleyInput): string {
-  return input.contextTags.length > 0
-    ? `Today's context: ${input.contextTags.join(", ")}.`
+function contextSummary(tags: StampleyOpenAIContext["contextCategories"]): string {
+  return tags.length > 0
+    ? `Today's context: ${tags.join(", ")}.`
     : "No specific context tags selected today."
 }
 
-function subscaleLine(input: StampleyInput): string {
-  return input.subscale.trim()
-    ? `Today's focus subscale: ${input.subscale}.`
+function subscaleLine(subscale: string): string {
+  return subscale.trim()
+    ? `Today's focus subscale: ${subscale}.`
     : "Today's focus subscale: general reflection within the weekly domain."
 }
 
-/** Self-reported stress level threshold (stored internally as `distress`). */
-export function isHighStress(stressLevel: number): boolean {
-  return stressLevel >= 9
-}
-
 function getMicroSkillForSession(
-  domain: Domain,
+  domain: SupportDomain,
   subscale: string,
   highStress: boolean
 ): string {
@@ -185,9 +141,9 @@ function getMicroSkillForSession(
   return `distill into one tiny gentle action under 30 seconds (reference idea: ${raw}) — no homework, no long exercise`
 }
 
-function highStressSystemBlock(stressLevel: number): string {
+function highStressSystemBlock(): string {
   return `
-HIGH STRESS MODE (stress level ${stressLevel}/10):
+HIGH STRESS MODE:
 - The participant reported very high stress today — prioritize emotional steadiness over exploration
 - Keep every populated field to 1–2 short sentences max
 - Do NOT deep-probe, excavate emotions, or push for demanding reflection
@@ -230,16 +186,12 @@ TONE (always):
 - education_chip: one sentence max when used
 - micro_skill: one tiny gentle action under 30 seconds — no homework, worksheets, or long breathing routines
 - Empty string "" for unused fields — never force every section every turn
+- Address the participant as "you". Do not use or invent a personal name.
 `
-
-/** @deprecated Use buildOpenAIMessages instead */
-export function buildStampleyPrompt(input: StampleyInput): string {
-  return buildStampleyTurnInstruction(input, "opening")
-}
 
 export function deriveConversationPhase(
   history: StampleyHistoryMessage[]
-): StampleyPhase {
+): ConversationPhase {
   const userReplyCount = history.filter((m) => m.role === "user").length
   if (userReplyCount === 0) return "opening"
   if (userReplyCount === 1) return "exploration"
@@ -247,7 +199,7 @@ export function deriveConversationPhase(
   return "closure"
 }
 
-const PHASE_GUIDANCE: Record<StampleyPhase, string> = {
+const PHASE_GUIDANCE: Record<ConversationPhase, string> = {
   opening:
     "OPENING — Emotional safety and a gentle invitation to reflect. Mainly validation + one meaningful question. Short greeting only if natural. No coaching or education yet.",
   exploration:
@@ -291,186 +243,72 @@ STUDY WEEK 4 PACING (emotionally lighter):
   }
 }
 
-function phaseGuidance(phase: StampleyPhase): string {
+function phaseGuidance(phase: ConversationPhase): string {
   return PHASE_GUIDANCE[phase]
 }
 
-function describeStressTrend(stressLevels: number[]): string {
-  if (stressLevels.length === 0) {
-    return "No prior saved check-in stress levels on file yet."
-  }
-  if (stressLevels.length === 1) {
-    return `One recent saved check-in recorded stress around ${stressLevels[0]}/10.`
-  }
-  const min = Math.min(...stressLevels)
-  const max = Math.max(...stressLevels)
-  const highDays = stressLevels.filter((s) => s >= 9).length
-  const parts = [
-    `In recent saved check-ins, self-reported stress has often been between ${min} and ${max} out of 10.`,
-  ]
-  if (highDays >= 2) {
-    parts.push(
-      "Very high stress (9–10) has appeared in more than one recent saved check-in."
+function formatTodayNarrative(ctx: StampleyOpenAIContext): string {
+  const lines: string[] = []
+  if (ctx.phase === "opening") {
+    lines.push(
+      ctx.todayReflection
+        ? `- Their written reflection: "${ctx.todayReflection}"`
+        : "- Their written reflection: none provided today."
     )
   }
-  return parts.join(" ")
-}
-
-function truncateSummary(text: string, maxLen = 140): string {
-  const t = text.trim().replace(/\s+/g, " ")
-  if (t.length <= maxLen) return t
-  return `${t.slice(0, maxLen - 1).trim()}…`
-}
-
-export function buildLongitudinalContext(
-  checkIns: LongitudinalCheckInRow[],
-  chatSessions: LongitudinalChatSessionRow[]
-): LongitudinalContext | null {
-  if (checkIns.length === 0 && chatSessions.length === 0) {
-    return null
+  if (ctx.phase === "opening" || ctx.phase === "coping") {
+    lines.push(
+      ctx.todayCoping
+        ? `- Their coping action: "${ctx.todayCoping}"`
+        : "- Their coping action: none mentioned."
+    )
   }
-
-  const stressLevels = checkIns
-    .map((c) => c.stressLevel)
-    .filter((n) => Number.isFinite(n))
-
-  const domainCounts = new Map<string, number>()
-  for (const row of checkIns) {
-    if (!row.domain?.trim()) continue
-    const d = row.domain.trim()
-    domainCounts.set(d, (domainCounts.get(d) ?? 0) + 1)
-  }
-  const repeatedDomains = [...domainCounts.entries()]
-    .filter(([, count]) => count >= 2)
-    .map(([domain]) => domain)
-
-  const recentSubscales = [
-    ...new Set(
-      checkIns
-        .map((c) => c.subscale?.trim())
-        .filter((s): s is string => Boolean(s))
-    ),
-  ]
-
-  const priorCopingActions = [
-    ...new Set(
-      checkIns
-        .map((c) => c.copingAction?.trim())
-        .filter((s): s is string => Boolean(s))
-    ),
-  ].slice(0, 5)
-
-  const recentThemes = [
-    ...new Set(
-      chatSessions
-        .map((s) => s.summary?.trim())
-        .filter((s): s is string => Boolean(s))
-        .map((s) => truncateSummary(s))
-    ),
-  ].slice(0, 5)
-
-  return {
-    recentStressTrend: describeStressTrend(stressLevels),
-    repeatedDomains,
-    recentSubscales,
-    recentThemes,
-    priorCopingActions,
-    totalRecentCheckins: checkIns.length,
-  }
+  return lines.length > 0 ? `${lines.join("\n")}\n` : ""
 }
 
 function formatLongitudinalContextBlock(
-  ctx: LongitudinalContext | null
+  ctx: OpenAILongitudinalContext | null
 ): string {
   if (!ctx) return ""
 
-  return `
-LONGITUDINAL CONTEXT (from saved daily check-ins and past Stampley session summaries only — not full chat transcripts):
-- Recent saved check-ins on file: ${ctx.totalRecentCheckins}
-- Recent stress pattern: ${ctx.recentStressTrend}
-- Domains that have appeared more than once lately: ${
-    ctx.repeatedDomains.length > 0 ? ctx.repeatedDomains.join(", ") : "none noted"
-  }
-- Recent DDS subscales from saved check-ins: ${
-    ctx.recentSubscales.length > 0 ? ctx.recentSubscales.join("; ") : "none noted"
-  }
-- Themes from past Stampley session summaries: ${
-    ctx.recentThemes.length > 0 ? ctx.recentThemes.join(" | ") : "none yet"
-  }
-- Coping actions noted in recent saved check-ins: ${
-    ctx.priorCopingActions.length > 0
-      ? ctx.priorCopingActions.join("; ")
+  const themesList =
+    ctx.recurringThemes.length > 0
+      ? ctx.recurringThemes.join(", ")
       : "none noted"
-  }
-
-HOW TO USE LONGITUDINAL CONTEXT (gently):
-- If relevant, acknowledge recent patterns without sounding surveillance-like
-- Do not state exact historical counts unless genuinely helpful
-- Do not claim clinical improvement, decline, or that the participant's condition is worsening
-- Do not say their DDS score changed; do not score or administer DDS-17 daily
-- Use soft phrasing such as "lately," "recently," or "you've mentioned before"
-- Use context to support calm reflection — not to judge, diagnose, or prolong conversation
-- Example tone: "You've mentioned feeling overwhelmed recently. When did that tend to show up for you?"
-`
-}
-
-export function formatEmotionalThemeMemoryBlock(
-  memory: EmotionalThemeMemory | null,
-  weekNumber: number
-): string {
-  if (!memory || memory.recurringThemes.length === 0) {
-    return ""
-  }
-
-  const week = Math.min(Math.max(Math.floor(weekNumber) || 1, 1), 4)
-  const themesList = memory.recurringThemes.join(", ")
-
-  const weekFrequency =
-    week === 1
-      ? "Do not reference past themes this week."
-      : week === 2
-        ? "Theme references should be very rare — at most one vague nod in validation, and only if allowed below."
-        : week === 3
-          ? "Gentle continuity is okay occasionally — still sparse."
-          : "Emotionally familiar tone is okay — still low-pressure and never over-familiar."
-
-  const allowLine = memory.allowThemeReference
+  const allowLine = ctx.allowThemeReference
     ? "Theme reference ALLOWED this turn (optional — skip if today does not fit)."
     : "Theme reference NOT allowed this turn — focus only on today's check-in."
 
   return `
-SOFT EMOTIONAL CONTINUITY (abstract themes only — NOT full memory, NOT transcripts):
-- Recurring emotional themes noticed across recent saved check-ins (abstract labels): ${themesList}
-- Suggested support tone: ${memory.supportStyle}
-- Prior saved Stampley sessions on file: ${memory.priorSessionCount}
+LONGITUDINAL CONTEXT (derived trends only — no historical scores, narratives, or transcripts):
+- Stress trend: ${ctx.stressTrend}
+- Mood trend: ${ctx.moodTrend}
+- Energy trend: ${ctx.energyTrend}
+- Recurring support domain: ${ctx.recurringDomain ?? "none noted"}
+- Recurring emotional themes (abstract labels): ${themesList}
+- Suggested support tone: ${ctx.supportStyle}
 - ${allowLine}
-- ${weekFrequency}
 
-HOW TO USE (strict):
-- This is soft continuity — you gently notice recurring themes, you do NOT remember everything
+HOW TO USE LONGITUDINAL CONTEXT (gently):
+- If relevant, acknowledge recent patterns without sounding surveillance-like
+- Do not state exact historical counts or scores
+- Do not claim clinical improvement, decline, or that the participant's condition is worsening
+- Do not say their DDS score changed; do not score or administer DDS-17 daily
+- Use soft phrasing such as "lately," "recently," or "you've mentioned before"
 - NEVER quote old conversations, exact user wording, dates, times, or intimate details
-- NEVER say "I remember when…", "as you always…", or imply permanent attachment
 - At most ONE vague theme reference in the entire response, woven into validation — and only if allowed above
 - Most responses should focus on TODAY with no theme reference
-- Good: "You've mentioned routines feeling especially heavy lately."
-- Bad: "On Tuesday you said…" / "I remember everything you've shared"
-- If unsure, skip the theme reference entirely`
+- If unsure, skip the theme reference entirely
+`
 }
 
-export function buildStampleySystemPrompt(
-  input: StampleyInput,
-  phase: StampleyPhase,
-  highStress = false,
-  longitudinalContext: LongitudinalContext | null = null,
-  emotionalThemeMemory: EmotionalThemeMemory | null = null
-): string {
-  const stressLevel = input.distress
+export function buildStampleySystemPrompt(ctx: StampleyOpenAIContext): string {
   const microSkill = getMicroSkillForSession(
-    input.domain,
-    input.subscale,
-    highStress
+    ctx.supportDomain,
+    ctx.subscale,
+    ctx.highStress
   )
-  const educationChip = getEducationChip(input.domain)
+  const educationChip = getEducationChip(ctx.supportDomain)
 
   return `You are Stampley, a calm reflective companion in the AIDES-T2D clinical research study for people living with Type 2 Diabetes.
 ${STAMPLEY_PHILOSOPHY}
@@ -481,30 +319,26 @@ SESSION RULES (follow absolutely):
 - NEVER provide autonomous therapy, crisis counseling, or long-term memory claims
 - NEVER claim to be a therapist, clinician, or counselor
 - NEVER pressure the participant to keep chatting — they may complete check-in after one reply
+- Address the participant as "you" — do not use or invent a personal name
 - When validation is used: reflect their experience briefly before any question
 - reflection_question is optional in coping and closure — use "" when a question would add pressure
 - Ask at most ONE reflection_question when that field is populated — never stack questions
 - Do NOT repeat or lightly rephrase questions already asked in this session
-- Stay within the weekly focus domain "${input.domain}" unless safety requires a brief redirect
+- Stay within the weekly focus domain "${ctx.supportDomain}" unless safety requires a brief redirect
 ${TONE_RULES}
 
 TODAY'S CHECK-IN DATA (fixed for this session):
-- Name: ${input.firstName}
-- Stress level (self-reported): ${stressLevel}/10 | Mood: ${input.mood}/10 | Energy: ${input.energy}/10
-- Weekly focus domain (DDS): ${input.domain}
-- ${subscaleLine(input)}
-- ${contextSummary(input)}
-- Their written reflection: "${input.reflection || "No reflection provided today."}"
-- Their coping action: "${input.copingAction || "None mentioned."}"
-- Study week ${input.weekNumber}, day ${input.dayNumber}
-${getWeeklyPacingBlock(input.weekNumber)}
+- Stress band (self-reported): ${ctx.stressBand} | Mood band: ${ctx.moodBand} | Energy band: ${ctx.energyBand}
+- Weekly focus domain (DDS): ${ctx.supportDomain}
+- ${subscaleLine(ctx.subscale)}
+- ${contextSummary(ctx.contextCategories)}
+${formatTodayNarrative(ctx)}- Study week ${ctx.studyWeek}
+${getWeeklyPacingBlock(ctx.studyWeek)}
 
-CURRENT CONVERSATION PHASE: ${phase.toUpperCase()}
-${phaseGuidance(phase)}
-${highStress ? highStressSystemBlock(stressLevel) : ""}
-${formatLongitudinalContextBlock(longitudinalContext)}
-${formatEmotionalThemeMemoryBlock(emotionalThemeMemory, input.weekNumber)}
-
+CURRENT CONVERSATION PHASE: ${ctx.phase.toUpperCase()}
+${phaseGuidance(ctx.phase)}
+${ctx.highStress ? highStressSystemBlock() : ""}
+${formatLongitudinalContextBlock(ctx.longitudinal)}
 REFERENCE (only if phase rules call for micro_skill or education_chip):
 - Micro-skill guidance: ${microSkill}
 - Education (one sentence if used): ${educationChip}
@@ -518,12 +352,9 @@ MULTI-TURN BEHAVIOR:
 }
 
 export function buildStampleyTurnInstruction(
-  input: StampleyInput,
-  phase: StampleyPhase,
-  highStress = false
+  ctx: StampleyOpenAIContext
 ): string {
-  const stressLevel = input.distress
-  const highStressBlock = highStress ? `\n${highStressTurnAddendum()}` : ""
+  const highStressBlock = ctx.highStress ? `\n${highStressTurnAddendum()}` : ""
   const jsonSchema = `{
   "greeting": string,
   "validation": string,
@@ -533,7 +364,7 @@ export function buildStampleyTurnInstruction(
   "closure": string
 }`
 
-  const week = Math.min(Math.max(Math.floor(input.weekNumber) || 1, 1), 4)
+  const week = ctx.studyWeek
   const weekNote =
     week >= 3
       ? "\nWEEK 3–4 NOTE: Prefer fewer questions; use \"\" for reflection_question when validation + skill/closure is enough."
@@ -545,12 +376,13 @@ export function buildStampleyTurnInstruction(
 - reflection_question is optional in coping and closure — do not ask out of habit
 - At most ONE question when reflection_question is populated
 - Do NOT repeat prior "Question asked" lines from the thread
-- Stay aligned with ${input.domain} domain
+- Stay aligned with ${ctx.supportDomain} domain
+- Address the participant as "you" — do not use or invent a personal name
 - NEVER diagnose or give medical treatment advice
 - Keep total response concise (1–3 short paragraphs across populated fields)
 - Valid JSON only. No markdown. No extra text.${weekNote}`
 
-  switch (phase) {
+  switch (ctx.phase) {
     case "opening":
       return `Begin today's Stampley check-in (OPENING phase). Study week ${week}.
 
@@ -560,11 +392,11 @@ ${jsonSchema}
 OPENING goal: emotional safety + invitation to reflect.
 
 Usually populate:
-- validation: 1–2 calm sentences; reflect their check-in (stress ${stressLevel}/10, reflection) without minimizing
-- reflection_question: ONE meaningful open question for ${input.domain}${input.subscale.trim() ? ` / "${input.subscale}"` : ""} — not survey-like
+- validation: 1–2 calm sentences; reflect their check-in (today's stress band and written note if present) without minimizing
+- reflection_question: ONE meaningful open question for ${ctx.supportDomain}${ctx.subscale.trim() ? ` / "${ctx.subscale}"` : ""} — not survey-like
 
 Optional:
-- greeting: "" OR one short natural line max — do not over-introduce or re-welcome on later turns
+- greeting: "" OR one short natural line max — do not over-introduce or re-welcome on later turns. Do not use a personal name.
 
 Leave empty (""):
 - micro_skill (no coaching yet — grounding only if high stress)
@@ -677,60 +509,89 @@ export function hasStampleyFieldText(value: unknown): boolean {
   return typeof value === "string" && value.trim().length > 0
 }
 
-export function sanitizeHistory(
-  history: unknown
-): StampleyHistoryMessage[] {
-  if (!Array.isArray(history)) return []
-  return history
-    .filter(
-      (m): m is StampleyHistoryMessage =>
-        typeof m === "object" &&
-        m !== null &&
-        (m.role === "user" || m.role === "assistant") &&
-        typeof m.content === "string" &&
-        m.content.trim().length > 0
-    )
-    .map((m) => ({
-      role: m.role,
-      content: m.content.trim(),
-    }))
+export function getStampleyFallbackResponse(
+  phase: ConversationPhase,
+  highStress: boolean
+) {
+  const microSkill =
+    "Small reset: relax your shoulders once before moving to the next thing."
+
+  if (highStress) {
+    return {
+      greeting: "",
+      validation:
+        "Today sounds really heavy, and it makes sense you'd feel that way.",
+      reflection_question: "",
+      micro_skill: microSkill,
+      education_chip: "",
+      closure:
+        "You do not need to figure everything out right now. Support is available if you need someone to talk to.",
+    }
+  }
+
+  switch (phase) {
+    case "opening":
+      return {
+        greeting: "",
+        validation:
+          "Trying to manage diabetes while carrying what you shared today can feel heavy.",
+        reflection_question: "What felt hardest to carry today?",
+        micro_skill: "",
+        education_chip: "",
+        closure: "",
+      }
+
+    case "exploration":
+      return {
+        greeting: "",
+        validation:
+          "It sounds like the pressure may have built gradually through the day.",
+        reflection_question:
+          "When did you first notice yourself feeling overwhelmed?",
+        micro_skill: "",
+        education_chip: "",
+        closure: "",
+      }
+
+    case "coping":
+      return {
+        greeting: "",
+        validation: "You have been holding a lot — a small reset can still help.",
+        reflection_question: "",
+        micro_skill: microSkill,
+        education_chip: "",
+        closure: "",
+      }
+
+    case "closure":
+      return {
+        greeting: "",
+        validation: "Thank you for checking in honestly today.",
+        reflection_question: "",
+        micro_skill: "",
+        education_chip: "",
+        closure:
+          "You do not need to solve everything tonight. Complete Check-in is here when you are ready — no rush.",
+      }
+  }
 }
 
 export function buildOpenAIMessages(
-  input: StampleyInput,
-  history: StampleyHistoryMessage[],
-  phase?: StampleyPhase,
-  highStress?: boolean,
-  longitudinalContext?: LongitudinalContext | null,
-  emotionalThemeMemory?: EmotionalThemeMemory | null
+  ctx: StampleyOpenAIContext
 ): OpenAIChatMessage[] {
-  const resolvedPhase = phase ?? deriveConversationPhase(history)
-  const resolvedHighStress = highStress ?? isHighStress(input.distress)
-  const resolvedLongitudinal = longitudinalContext ?? null
-  const resolvedThemeMemory = emotionalThemeMemory ?? null
-  const messages: OpenAIChatMessage[] = [
+  const safe = assertStampleyOpenAIContext(ctx)
+  return [
     {
       role: "system",
-      content: buildStampleySystemPrompt(
-        input,
-        resolvedPhase,
-        resolvedHighStress,
-        resolvedLongitudinal,
-        resolvedThemeMemory
-      ),
+      content: buildStampleySystemPrompt(safe),
     },
-    ...history.map((m) => ({
+    ...safe.recentConversation.map((m) => ({
       role: m.role as "user" | "assistant",
       content: m.content,
     })),
     {
       role: "user",
-      content: buildStampleyTurnInstruction(
-        input,
-        resolvedPhase,
-        resolvedHighStress
-      ),
+      content: buildStampleyTurnInstruction(safe),
     },
   ]
-  return messages
 }

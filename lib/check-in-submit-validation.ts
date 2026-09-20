@@ -1,4 +1,4 @@
-const ALLOWED_CONTEXT_TAGS = [
+export const ALLOWED_CONTEXT_TAGS = [
   "doctors_appointment",
   "blood_sugar",
   "missed_medication",
@@ -10,8 +10,8 @@ const ALLOWED_CONTEXT_TAGS = [
 
 const ALLOWED_CONTEXT_TAG_SET = new Set<string>(ALLOWED_CONTEXT_TAGS)
 
-const REFLECTION_MAX_LENGTH = 250
-const COPING_MAX_LENGTH = 180
+export const REFLECTION_MAX_LENGTH = 250
+export const COPING_MAX_LENGTH = 180
 
 export type ValidatedCheckInSubmitFields = {
   distress: number

@@ -43,6 +43,7 @@ import {
   hasStampleyFieldText,
   type StampleyHistoryMessage,
 } from "@/lib/stampley-prompt"
+import { buildChatSessionSummary } from "@/lib/stampley-openai-context"
 import {
   backupFromSessionPayload,
   backupUnsavedTranscript,
@@ -88,25 +89,6 @@ function ensureUniqueTitle(base: string, existing: string[]): string {
   let n = 2
   while (set.has(`${base} (${n})`.toLowerCase())) n++
   return `${base} (${n})`
-}
-
-function buildChatSessionSummary(
-  snapshot: SavedMetrics,
-  userCount: number,
-  assistantCount: number
-): string {
-  const parts = [
-    `Stress ${snapshot.distress}/10, mood ${snapshot.mood}/10, energy ${snapshot.energy}/10.`,
-    snapshot.domain ? `Focus domain: ${snapshot.domain}.` : null,
-    snapshot.reflection?.trim()
-      ? `Reflection: ${snapshot.reflection.trim()}`
-      : null,
-    snapshot.copingAction?.trim()
-      ? `Coping action: ${snapshot.copingAction.trim()}`
-      : null,
-    `Stampley chat: ${userCount} participant reply${userCount === 1 ? "" : "ies"}, ${assistantCount} Stampley turn${assistantCount === 1 ? "" : "s"}.`,
-  ].filter(Boolean)
-  return parts.join(" ")
 }
 
 function buildStampleyHistory(
