@@ -9,7 +9,7 @@ import {
   TrendingUp,
 } from "lucide-react"
 
-import { signOut } from "@/lib/auth"
+import { SignOutButton } from "@/components/auth/sign-out-button"
 
 export default function DashboardSidebar() {
   return (
@@ -240,18 +240,9 @@ export default function DashboardSidebar() {
         {/* =====================================================
             SIGN OUT
         ====================================================== */}
-        <form
-          className="mt-4"
-          action={async () => {
-            "use server"
-
-            await signOut({
-              redirectTo: "/login",
-            })
-          }}
-        >
-          <button
-            type="submit"
+        <div className="mt-4">
+          <SignOutButton
+            callbackUrl="/login"
             className="
               group
               flex
@@ -297,8 +288,8 @@ export default function DashboardSidebar() {
                 strokeWidth={1.6}
               />
             </span>
-          </button>
-        </form>
+          </SignOutButton>
+        </div>
       </div>
     </aside>
   )

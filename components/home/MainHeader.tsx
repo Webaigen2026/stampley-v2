@@ -5,6 +5,7 @@ import { Menu, Search, X } from "lucide-react"
 import { useState } from "react"
 import Link from "next/link"
 import { signOut, useSession } from "next-auth/react"
+import { secureSignOut } from "@/lib/secure-sign-out"
 
 export default function MainHeader() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -12,7 +13,7 @@ export default function MainHeader() {
   const isAuthenticated = status === "authenticated" && !!session?.user
 
   const handleSignOut = () => {
-    signOut({ callbackUrl: "/" })
+    void secureSignOut({ callbackUrl: "/" }, signOut)
   }
 
   return (

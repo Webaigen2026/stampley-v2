@@ -5,6 +5,7 @@ import Link from "next/link"
 import { useEffect, useId, useRef, useState } from "react"
 import { Bell, LayoutDashboard, LogOut } from "lucide-react"
 import { signOut } from "next-auth/react"
+import { secureSignOut } from "@/lib/secure-sign-out"
 
 type DashboardTopbarProps = {
   today: string
@@ -71,7 +72,7 @@ export default function DashboardTopbar({
 
   function handleSignOut() {
     setMenuOpen(false)
-    void signOut({ callbackUrl: "/login" })
+    void secureSignOut({ callbackUrl: "/login" }, signOut)
   }
 
   return (

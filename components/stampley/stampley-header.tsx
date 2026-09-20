@@ -5,6 +5,7 @@
 import Image from "next/image"
 import Link from "next/link"
 import { signOut } from "next-auth/react"
+import { secureSignOut } from "@/lib/secure-sign-out"
 import { LogOut } from "lucide-react"
 
 interface StampleyHeaderProps {
@@ -53,7 +54,9 @@ export default function StampleyHeader({
   
     <button
       type="button"
-      onClick={() => signOut({ callbackUrl: "/login" })}
+      onClick={() => {
+        void secureSignOut({ callbackUrl: "/login" }, signOut)
+      }}
       className="group flex cursor-pointer items-center gap-2 bg-white px-3.5 py-2 text-[16px] font-['Poppins',sans-serif] text-black transition-all duration-200 hover:-translate-y-[1px] hover:text-black active:translate-y-0"
     >
       <LogOut

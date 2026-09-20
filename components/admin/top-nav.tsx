@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { signOut } from "next-auth/react"
+import { secureSignOut } from "@/lib/secure-sign-out"
 import { Notifications } from "@/components/admin/notifications"
 
 interface TopNavProps {
@@ -86,7 +87,9 @@ export function TopNav({ title, email }: TopNavProps) {
                 </div>
                 <div className="border-t border-gray-100 py-1">
                   <button
-                    onClick={() => signOut({ callbackUrl: "/login" })}
+                    onClick={() => {
+                      void secureSignOut({ callbackUrl: "/login" }, signOut)
+                    }}
                     className="w-full flex cursor-pointer items-center gap-3 px-4 py-2.5 text-sm text-blue-900 font-bold hover:bg-blue-50 transition"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

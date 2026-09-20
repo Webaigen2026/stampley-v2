@@ -3,7 +3,7 @@ import Link from "next/link"
 
 import { LogOut } from "lucide-react"
 
-import { signOut } from "next-auth/react"
+import { SignOutButton } from "@/components/auth/sign-out-button"
 
 type HeaderProps = {
   formattedName: string
@@ -202,19 +202,10 @@ export function Header({ formattedName }: HeaderProps) {
           {/* =================================================
               SIGN OUT
           ================================================== */}
-          <form
-            action={async () => {
-              "use server"
-
-              await signOut({
-                redirectTo: "/login",
-              })
-            }}
-          >
-            <button
-              type="submit"
-              aria-label="Sign out"
-              className="
+          <SignOutButton
+            callbackUrl="/login"
+            ariaLabel="Sign out"
+            className="
                 group
                 inline-flex
                 h-10
@@ -239,7 +230,7 @@ export function Header({ formattedName }: HeaderProps) {
 
                 sm:px-3
               "
-            >
+          >
               <span
                 className="
                   hidden
@@ -274,8 +265,7 @@ export function Header({ formattedName }: HeaderProps) {
                   strokeWidth={1.8}
                 />
               </span>
-            </button>
-          </form>
+          </SignOutButton>
         </div>
       </div>
     </header>

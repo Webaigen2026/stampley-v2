@@ -43,9 +43,22 @@ export interface CheckInState {
 
 let draftOwnerUserId: string | null = null
 let persistWritesEnabled = false
+let ownerGeneration = 0
 
 export function getCheckInDraftOwnerUserId(): string | null {
   return draftOwnerUserId
+}
+
+export function areCheckInPersistWritesEnabled(): boolean {
+  return persistWritesEnabled
+}
+
+/** Disable persist and drop in-memory PHI without rehydrating or rewriting storage. */
+export function resetCheckInSensitiveClientState(): void {
+  persistWritesEnabled = false
+  draftOwnerUserId = null
+  ownerGeneration += 1
+  useCheckInStore.setState({ ...checkInInitialState })
 }
 
 function createOwnedCheckInStorage() {
@@ -143,6 +156,7 @@ export async function applyCheckInDraftOwner(
   persistWritesEnabled = false
   const next = readSessionUserId({ user: { id: userId } })
   draftOwnerUserId = next
+  const generation = ++ownerGeneration
   useCheckInStore.setState({ ...checkInInitialState })
 
   if (!next) {
@@ -150,11 +164,12 @@ export async function applyCheckInDraftOwner(
   }
 
   await useCheckInStore.persist.rehydrate()
+  if (generation !== ownerGeneration) {
+    return
+  }
   persistWritesEnabled = true
 }
 
 export function resetCheckInDraftOwnerForTests(): void {
-  persistWritesEnabled = false
-  draftOwnerUserId = null
-  useCheckInStore.setState({ ...checkInInitialState })
+  resetCheckInSensitiveClientState()
 }
