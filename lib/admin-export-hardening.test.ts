@@ -14,6 +14,7 @@ import { codedAffectBand, codedStressBand } from "./admin-coded-scores"
 import { toAffectBand, toStressBand } from "./stampley-openai-context"
 import { buildCsv, exportFilename } from "./admin-csv-format"
 import { csvFileResponse, respondWithAuditedCsv } from "./admin-export-response"
+import { hasSensitiveCachePolicy } from "./sensitive-cache-headers"
 import { sanitizeAuditMetadata } from "./audit-metadata"
 import {
   CHECK_IN_EXPORT_HEADERS,
@@ -148,7 +149,7 @@ describe("HIPAA-4 coded export columns", () => {
     assert.match(filename, /^stampley-check-ins-\d{4}-\d{2}-\d{2}\.csv$/)
     assert.doesNotMatch(filename, /@|AIDES-|participant/i)
     const response = csvFileResponse("study_id\nUNASSIGNED", filename)
-    assert.equal(response.headers.get("Cache-Control"), "no-store")
+    assert.equal(hasSensitiveCachePolicy(response.headers), true)
     assert.equal(response.headers.get("Pragma"), "no-cache")
     assert.equal(response.headers.get("Expires"), "0")
     assert.equal(response.headers.get("X-Content-Type-Options"), "nosniff")

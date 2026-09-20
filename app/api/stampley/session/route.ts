@@ -1,14 +1,15 @@
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
 
-import { NextRequest, NextResponse } from "next/server"
+import { NextRequest } from "next/server"
 import { auth } from "@/lib/auth"
+import { jsonWithSensitiveCache } from "@/lib/sensitive-cache-headers"
 import { prisma } from "@/lib/prisma"
 
 export async function POST(req: NextRequest) {
   const session = await auth()
   if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    return jsonWithSensitiveCache({ error: "Unauthorized" }, { status: 401 })
   }
 
   try {
@@ -29,7 +30,7 @@ export async function POST(req: NextRequest) {
       typeof checkInSubmissionId !== "string" ||
       !checkInSubmissionId.trim()
     ) {
-      return NextResponse.json(
+      return jsonWithSensitiveCache(
         { error: "checkInSubmissionId is required" },
         { status: 400 }
       )
@@ -44,7 +45,7 @@ export async function POST(req: NextRequest) {
     })
 
     if (!owned) {
-      return NextResponse.json(
+      return jsonWithSensitiveCache(
         { error: "Check-in not found" },
         { status: 404 }
       )
@@ -71,10 +72,10 @@ export async function POST(req: NextRequest) {
       },
     })
 
-    return NextResponse.json({ success: true })
+    return jsonWithSensitiveCache({ success: true })
   } catch (error) {
     console.error("[stampley/session]", error)
-    return NextResponse.json(
+    return jsonWithSensitiveCache(
       { error: "Failed to save chat session" },
       { status: 500 }
     )

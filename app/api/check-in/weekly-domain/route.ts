@@ -1,8 +1,9 @@
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
 
-import { NextRequest, NextResponse } from "next/server"
+import { NextRequest } from "next/server"
 import { auth } from "@/lib/auth"
+import { jsonWithSensitiveCache } from "@/lib/sensitive-cache-headers"
 import { prisma } from "@/lib/prisma"
 import { isCheckInDomain } from "@/lib/check-in-subscale"
 import type { Domain } from "@/store/checkin-store"
@@ -21,7 +22,7 @@ import {
 export async function GET() {
   const session = await auth()
   if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    return jsonWithSensitiveCache({ error: "Unauthorized" }, { status: 401 })
   }
 
   try {
@@ -39,7 +40,7 @@ export async function GET() {
       currentWeekDomain
     )
 
-    return NextResponse.json({
+    return jsonWithSensitiveCache({
       currentWeek,
       currentWeekDomain,
       usedPreviousDomains,
@@ -48,14 +49,14 @@ export async function GET() {
     })
   } catch (error) {
     console.error("[check-in/weekly-domain GET]", error)
-    return NextResponse.json({ error: "Failed to load weekly domain" }, { status: 500 })
+    return jsonWithSensitiveCache({ error: "Failed to load weekly domain" }, { status: 500 })
   }
 }
 
 export async function POST(req: NextRequest) {
   const session = await auth()
   if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    return jsonWithSensitiveCache({ error: "Unauthorized" }, { status: 401 })
   }
 
   try {
@@ -63,7 +64,7 @@ export async function POST(req: NextRequest) {
     const domain = body.domain
 
     if (!isCheckInDomain(domain) || !STUDY_DOMAINS.includes(domain)) {
-      return NextResponse.json({ error: "Invalid domain." }, { status: 400 })
+      return jsonWithSensitiveCache({ error: "Invalid domain." }, { status: 400 })
     }
 
     const totalCompleted = await fetchUserTotalCheckins(session.user.id)
@@ -81,14 +82,14 @@ export async function POST(req: NextRequest) {
     )
 
     if (isLocked) {
-      return NextResponse.json(
+      return jsonWithSensitiveCache(
         { error: "This week's domain is locked once check-ins begin." },
         { status: 403 }
       )
     }
 
     if (usedPreviousDomains.includes(domain as Domain)) {
-      return NextResponse.json(
+      return jsonWithSensitiveCache(
         { error: "You already completed this domain in a previous week." },
         { status: 400 }
       )
@@ -126,13 +127,13 @@ export async function POST(req: NextRequest) {
       }),
     ])
 
-    return NextResponse.json({
+    return jsonWithSensitiveCache({
       success: true,
       weekNumber: currentWeek,
       domain,
     })
   } catch (error) {
     console.error("[check-in/weekly-domain POST]", error)
-    return NextResponse.json({ error: "Failed to save weekly domain" }, { status: 500 })
+    return jsonWithSensitiveCache({ error: "Failed to save weekly domain" }, { status: 500 })
   }
 }

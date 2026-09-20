@@ -1,14 +1,14 @@
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
 
-import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
+import { jsonWithSensitiveCache } from "@/lib/sensitive-cache-headers"
 
 export async function GET() {
   const session = await auth()
   if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    return jsonWithSensitiveCache({ error: "Unauthorized" }, { status: 401 })
   }
 
   const result = await prisma.$queryRaw<Array<{ id: string }>>`
@@ -19,7 +19,7 @@ export async function GET() {
     LIMIT 1
   `
 
-  return NextResponse.json({
+  return jsonWithSensitiveCache({
     checkedInToday: result.length > 0,
   })
 }

@@ -1,5 +1,6 @@
-import { NextResponse } from "next/server"
+import type { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
+import { jsonWithSensitiveCache } from "@/lib/sensitive-cache-headers"
 import { prisma } from "@/lib/prisma"
 import {
   createAuditRequestId,
@@ -54,21 +55,21 @@ export async function requireCodedExportApi(): Promise<
   if (!session?.user?.id) {
     return {
       ok: false,
-      response: NextResponse.json({ error: "Unauthorized" }, { status: 401 }),
+      response: jsonWithSensitiveCache({ error: "Unauthorized" }, { status: 401 }),
     }
   }
   if (!hasCapability(session.user.role, "canExportCodedResearchData")) {
     await recordExportDeniedFailOpen(prisma, session)
     return {
       ok: false,
-      response: NextResponse.json({ error: "Forbidden" }, { status: 403 }),
+      response: jsonWithSensitiveCache({ error: "Forbidden" }, { status: 403 }),
     }
   }
   const actor = actorFromSession(session)
   if (!actor) {
     return {
       ok: false,
-      response: NextResponse.json({ error: "Unauthorized" }, { status: 401 }),
+      response: jsonWithSensitiveCache({ error: "Unauthorized" }, { status: 401 }),
     }
   }
   return { ok: true, actor }

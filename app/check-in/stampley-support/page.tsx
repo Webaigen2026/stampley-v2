@@ -188,7 +188,9 @@ export default function StampleySupportPage() {
   useEffect(() => {
     void (async () => {
       try {
-        const res = await fetch("/api/check-in/dds-summary")
+        const res = await fetch("/api/check-in/dds-summary", {
+          cache: "no-store",
+        })
         if (!res.ok) return
 
         const data = await res.json()

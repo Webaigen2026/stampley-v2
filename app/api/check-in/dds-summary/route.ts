@@ -1,9 +1,9 @@
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
 
-import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
+import { jsonWithSensitiveCache } from "@/lib/sensitive-cache-headers"
 
 type DomainName = "Emotional" | "Regimen" | "Physician" | "Interpersonal"
 
@@ -34,7 +34,7 @@ export async function GET() {
   const session = await auth()
 
   if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    return jsonWithSensitiveCache({ error: "Unauthorized" }, { status: 401 })
   }
 
   try {
@@ -50,7 +50,7 @@ export async function GET() {
     })
 
     if (!row) {
-      return NextResponse.json({ ddsSummary: null })
+      return jsonWithSensitiveCache({ ddsSummary: null })
     }
 
     const totalScore = parseScore(
@@ -76,7 +76,7 @@ export async function GET() {
       interpersonalScore,
     })
 
-    return NextResponse.json({
+    return jsonWithSensitiveCache({
       ddsSummary: {
         totalScore,
         emotionalScore,
@@ -88,7 +88,7 @@ export async function GET() {
     })
   } catch (error) {
     console.error("[dds-summary]", error)
-    return NextResponse.json(
+    return jsonWithSensitiveCache(
       { error: "Failed to load DDS summary" },
       { status: 500 }
     )

@@ -1,8 +1,9 @@
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
 
-import { NextRequest, NextResponse } from "next/server"
+import { NextRequest } from "next/server"
 import { auth } from "@/lib/auth"
+import { jsonWithSensitiveCache } from "@/lib/sensitive-cache-headers"
 import { prisma } from "@/lib/prisma"
 import { Prisma } from "@/lib/generated/prisma/client"
 import { getSubscaleForDay } from "@/lib/check-in-subscale"
@@ -43,14 +44,14 @@ function isUniqueViolation(error: unknown): boolean {
 export async function POST(req: NextRequest) {
   const session = await auth()
   if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    return jsonWithSensitiveCache({ error: "Unauthorized" }, { status: 401 })
   }
 
   let body: unknown
   try {
     body = await req.json()
   } catch {
-    return NextResponse.json(
+    return jsonWithSensitiveCache(
       { error: "Invalid request body" },
       { status: 400 }
     )
@@ -58,7 +59,7 @@ export async function POST(req: NextRequest) {
 
   const validated = validateCheckInSubmitBody(body)
   if (!validated.ok) {
-    return NextResponse.json({ error: validated.error }, { status: 400 })
+    return jsonWithSensitiveCache({ error: validated.error }, { status: 400 })
   }
 
   const {
@@ -82,7 +83,7 @@ export async function POST(req: NextRequest) {
     )
 
     if (!domain || !STUDY_DOMAINS.includes(domain)) {
-      return NextResponse.json(
+      return jsonWithSensitiveCache(
         { error: "Weekly focus is missing. Open Weekly Domain and continue again." },
         { status: 400 }
       )
@@ -97,7 +98,7 @@ export async function POST(req: NextRequest) {
     `
 
     if (existingToday.length > 0) {
-      return NextResponse.json(
+      return jsonWithSensitiveCache(
         { error: DUPLICATE_CHECK_IN_MESSAGE },
         { status: 409 }
       )
@@ -111,7 +112,7 @@ export async function POST(req: NextRequest) {
     const totalCheckins = Number(progress?.totalCheckins ?? 0)
 
     if (totalCheckins >= STUDY_TOTAL_CHECKINS) {
-      return NextResponse.json({ error: STUDY_COMPLETE_MESSAGE }, { status: 403 })
+      return jsonWithSensitiveCache({ error: STUDY_COMPLETE_MESSAGE }, { status: 403 })
     }
 
     const checkInNumber = totalCheckins + 1
@@ -193,7 +194,7 @@ export async function POST(req: NextRequest) {
       }
     )
 
-    return NextResponse.json({
+    return jsonWithSensitiveCache({
       success: true,
       id: checkInSubmissionId,
       checkInSubmissionId,
@@ -205,12 +206,12 @@ export async function POST(req: NextRequest) {
 
   } catch (error) {
     if (error instanceof DuplicateCheckInError || isUniqueViolation(error)) {
-      return NextResponse.json(
+      return jsonWithSensitiveCache(
         { error: DUPLICATE_CHECK_IN_MESSAGE },
         { status: 409 }
       )
     }
     console.error("[check-in/submit]", error)
-    return NextResponse.json({ error: "Failed to submit" }, { status: 500 })
+    return jsonWithSensitiveCache({ error: "Failed to submit" }, { status: 500 })
   }
 }

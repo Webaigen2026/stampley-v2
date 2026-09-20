@@ -1,27 +1,29 @@
 import { NextResponse } from "next/server"
+import {
+  SENSITIVE_RESPONSE_HEADERS,
+  jsonWithSensitiveCache,
+} from "@/lib/sensitive-cache-headers"
 
 export function csvFileResponse(csv: string, filename: string): Response {
   return new Response(csv, {
     headers: {
       "Content-Type": "text/csv; charset=utf-8",
       "Content-Disposition": `attachment; filename="${filename}"`,
-      "Cache-Control": "no-store",
-      "Pragma": "no-cache",
-      "Expires": "0",
+      ...SENSITIVE_RESPONSE_HEADERS,
       "X-Content-Type-Options": "nosniff",
     },
   })
 }
 
 export function genericExportFailureResponse(): NextResponse {
-  return NextResponse.json(
+  return jsonWithSensitiveCache(
     { error: "Something went wrong. Please try again." },
     { status: 500 }
   )
 }
 
 export function genericExportRejectedResponse(message: string): NextResponse {
-  return NextResponse.json({ error: message }, { status: 400 })
+  return jsonWithSensitiveCache({ error: message }, { status: 400 })
 }
 
 export async function respondWithAuditedCsv(args: {

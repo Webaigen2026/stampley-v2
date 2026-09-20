@@ -1,8 +1,9 @@
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
 
-import { NextRequest, NextResponse } from "next/server"
+import { NextRequest } from "next/server"
 import { auth } from "@/lib/auth"
+import { jsonWithSensitiveCache } from "@/lib/sensitive-cache-headers"
 import { buildCheckInStudyContext } from "@/lib/check-in-context"
 import { resolveWeeklyDomainForUser } from "@/lib/resolve-weekly-domain"
 import { STUDY_DOMAINS } from "@/lib/weekly-domain-progress"
@@ -11,7 +12,7 @@ import { prisma } from "@/lib/prisma"
 export async function POST(req: NextRequest) {
   const session = await auth()
   if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    return jsonWithSensitiveCache({ error: "Unauthorized" }, { status: 401 })
   }
 
   try {
@@ -22,7 +23,7 @@ export async function POST(req: NextRequest) {
     )
 
     if (!domain || !STUDY_DOMAINS.includes(domain)) {
-      return NextResponse.json(
+      return jsonWithSensitiveCache(
         {
           error:
             "Weekly focus is missing. Open Weekly Domain and continue again.",
@@ -41,16 +42,16 @@ export async function POST(req: NextRequest) {
     const context = buildCheckInStudyContext(domain, checkInNumber)
 
     if (!context) {
-      return NextResponse.json(
+      return jsonWithSensitiveCache(
         { error: "Unable to compute study context." },
         { status: 400 }
       )
     }
 
-    return NextResponse.json(context)
+    return jsonWithSensitiveCache(context)
   } catch (error) {
     console.error("[check-in/study-context]", error)
-    return NextResponse.json(
+    return jsonWithSensitiveCache(
       { error: "Failed to compute study context" },
       { status: 500 }
     )

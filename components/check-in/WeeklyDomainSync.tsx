@@ -14,7 +14,9 @@ export default function WeeklyDomainSync() {
 
     async function sync() {
       try {
-        const res = await fetch("/api/check-in/weekly-domain")
+        const res = await fetch("/api/check-in/weekly-domain", {
+          cache: "no-store",
+        })
         if (!res.ok || cancelled) return
 
         const data = await res.json()

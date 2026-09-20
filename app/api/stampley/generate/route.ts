@@ -1,8 +1,9 @@
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
 
-import { NextRequest, NextResponse } from "next/server"
+import { NextRequest } from "next/server"
 import { auth } from "@/lib/auth"
+import { jsonWithSensitiveCache } from "@/lib/sensitive-cache-headers"
 import { prisma } from "@/lib/prisma"
 import OpenAI from "openai"
 import { buildCheckInStudyContext } from "@/lib/check-in-context"
@@ -32,7 +33,7 @@ export async function POST(req: NextRequest) {
 
   if (!isStampleyGenerateAuthorized(session)) {
     stampleyGenerateLog(console, { event: "auth_failure" })
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    return jsonWithSensitiveCache({ error: "Unauthorized" }, { status: 401 })
   }
 
   stampleyGenerateLog(console, { event: "auth_ok" })
@@ -66,7 +67,7 @@ export async function POST(req: NextRequest) {
       liveStudyContext = await loadLiveStudyContext(userId, resolvedDomain)
     } catch {
       stampleyGenerateLog(console, { event: "db_failure" })
-      return NextResponse.json(
+      return jsonWithSensitiveCache(
         { error: "Failed to generate response" },
         { status: 500 }
       )
@@ -87,7 +88,7 @@ export async function POST(req: NextRequest) {
       ])
     } catch {
       stampleyGenerateLog(console, { event: "db_failure" })
-      return NextResponse.json(
+      return jsonWithSensitiveCache(
         { error: "Failed to generate response" },
         { status: 500 }
       )
@@ -119,7 +120,7 @@ export async function POST(req: NextRequest) {
 
     if (!apiKey) {
       stampleyGenerateLog(console, { event: "openai_failure" })
-      return NextResponse.json(
+      return jsonWithSensitiveCache(
         { error: "Failed to generate response" },
         { status: 500 }
       )
@@ -162,7 +163,7 @@ export async function POST(req: NextRequest) {
         event: "openai_failure",
         openaiStatus: status,
       })
-      return NextResponse.json(
+      return jsonWithSensitiveCache(
         { error: "Failed to generate response" },
         { status: 500 }
       )
@@ -182,7 +183,7 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    return NextResponse.json({
+    return jsonWithSensitiveCache({
       success: true,
       response: stampleyResponse,
       conversationPhase: openaiContext.phase,
@@ -190,7 +191,7 @@ export async function POST(req: NextRequest) {
     })
   } catch {
     stampleyGenerateLog(console, { event: "unhandled_failure" })
-    return NextResponse.json(
+    return jsonWithSensitiveCache(
       { error: "Failed to generate response" },
       { status: 500 }
     )
