@@ -519,7 +519,7 @@ export default async function DDSResultsPage() {
           ================================================== */}
  <h1
               className="
-                mt-3
+                mt-10
                 text-4xl
                 font-light
                 tracking-[-0.045em]
@@ -531,14 +531,12 @@ export default async function DDSResultsPage() {
                   "'Papyrus', 'Brush Script MT', 'Comic Sans MS', cursive, fantasy, 'Copperplate', 'Lucida Handwriting', 'Dancing Script', 'Great Vibes', sans-serif",
               }}
             >
-              Your diabetes distress profile
+             Congratulations! You have completed the pre-survey.
             </h1>
 
 
 
-<p className="mt-4 text-lg leading-relaxed text-slate-600">
-  Choose your support focus for today&apos;s check-in
-</p>
+
 
 
           <section
