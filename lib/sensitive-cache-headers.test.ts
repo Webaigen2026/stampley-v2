@@ -174,22 +174,41 @@ describe("HIPAA-5.4 authenticated document policy", () => {
   })
 
   it("extends the middleware matcher without adding survey or enrollment login gates", () => {
-    const matcher: readonly string[] = SENSITIVE_DOCUMENT_MIDDLEWARE_MATCHER
-    assert.equal(matcher.includes("/survey/post-survey/:path*"), true)
-    assert.equal(matcher.includes("/enrollment/:path*"), true)
-    assert.equal(matcher.includes("/dashboard/:path*"), true)
-    assert.equal(matcher.includes("/check-in/:path*"), true)
-    assert.equal(matcher.includes("/admin/:path*"), true)
-    assert.equal(matcher.includes("/getting-started/:path*"), true)
-    assert.equal(matcher.includes("/"), false)
-    assert.equal(matcher.includes("/team/:path*"), false)
-
     const middleware = read("middleware.ts")
+    const matcherBlock = middleware.match(
+      /export const config = \{\s*matcher:\s*\[([\s\S]*?)\]\s*,?\s*\}/
+    )
+    assert.ok(matcherBlock, "config.matcher must be a literal static array")
+    assert.doesNotMatch(middleware, /matcher:\s*\[\s*\.\.\./)
+    assert.doesNotMatch(
+      middleware,
+      /matcher:\s*SENSITIVE_DOCUMENT_MIDDLEWARE_MATCHER/
+    )
+    assert.doesNotMatch(middleware, /matcher:\s*[A-Za-z_$][\w$]*\s*[,}]/)
+    const matcher: string[] = [...matcherBlock[1].matchAll(/"([^"]+)"/g)].map(
+      (entry) => entry[1]
+    )
+    assert.deepEqual(matcher, [...SENSITIVE_DOCUMENT_MIDDLEWARE_MATCHER])
+    for (const required of [
+      "/survey/post-survey/:path*",
+      "/enrollment/:path*",
+      "/dashboard/:path*",
+      "/check-in/:path*",
+    ]) {
+      assert.equal(matcher.some((entry) => entry === required), true)
+    }
+    for (const excluded of ["/", "/team/:path*", "/learnmore/:path*"]) {
+      assert.equal(matcher.some((entry) => entry === excluded), false)
+    }
+
     assert.match(middleware, /isSensitiveDocumentPath/)
     assert.match(middleware, /applySensitiveCacheHeaders/)
-    assert.match(middleware, /SENSITIVE_DOCUMENT_MIDDLEWARE_MATCHER/)
     assert.match(middleware, /await authMiddleware\(request, event\)/)
     assert.doesNotMatch(middleware, /export default auth\s*\(/)
+    const middlewareCode = middleware
+      .replace(/\/\*[\s\S]*?\*\//g, "")
+      .replace(/\/\/.*$/gm, "")
+    assert.doesNotMatch(middlewareCode, /auth\s*\(\s*\(?\s*req/)
 
     const authConfig = read("lib/auth.config.ts")
     assert.match(

@@ -4,7 +4,6 @@ import { baseAuthConfig, resolveAuthSecret } from "@/lib/auth.config";
 import {
   applySensitiveCacheHeaders,
   isSensitiveDocumentPath,
-  SENSITIVE_DOCUMENT_MIDDLEWARE_MATCHER,
 } from "@/lib/sensitive-cache-headers";
 
 const { auth } = NextAuth({
@@ -37,5 +36,15 @@ export default async function middleware(
 }
 
 export const config = {
-  matcher: [...SENSITIVE_DOCUMENT_MIDDLEWARE_MATCHER],
+  matcher: [
+    "/dashboard/:path*",
+    "/admin/:path*",
+    "/check-in/:path*",
+    "/getting-started/:path*",
+    "/survey/pre-survey/:path*",
+    "/survey/dds/:path*",
+    "/survey/dds/results/:path*",
+    "/survey/post-survey/:path*",
+    "/enrollment/:path*",
+  ],
 };
