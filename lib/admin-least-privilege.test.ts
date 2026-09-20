@@ -122,6 +122,9 @@ describe("HIPAA-4 capabilities", () => {
     assert.equal(hasCapability("STUDY_COORDINATOR", "canViewCheckInNarratives"), false)
     assert.equal(hasCapability("STUDY_COORDINATOR", "canViewTranscripts"), false)
     assert.equal(hasCapability("STUDY_COORDINATOR", "canExportCodedResearchData"), true)
+    assert.equal(hasCapability("STUDY_COORDINATOR", "canViewIdentifiedAnalytics"), false)
+    assert.equal(hasCapability("STUDY_COORDINATOR", "canViewClinicalSurveyScores"), false)
+    assert.equal(hasCapability("STUDY_COORDINATOR", "canViewSurveyFreeText"), false)
   })
 
   it("clinical reviewer can access clinical surfaces but not keys, roles, deletes, or exports", () => {

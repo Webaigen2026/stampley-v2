@@ -12,7 +12,11 @@ import {
 import { recordPhiPageViewOrThrow } from "@/lib/admin-phi-page"
 import { filterKeysFromFlags } from "@/lib/audit-metadata"
 import { requireAdminPage } from "@/lib/admin-authz"
-import { hasCapability } from "@/lib/admin-capabilities"
+import {
+  mapPostSurveyListRow,
+  postSurveySelect,
+  surveyViewCapabilities,
+} from "@/lib/admin-phi-minimization"
 
 export const dynamic = "force-dynamic"
 
@@ -39,9 +43,7 @@ export default async function AdminPostSurveysPage({
     "canViewOperationalParticipantData",
     "canViewClinicalSurveyData",
   ])
-  const canViewPhqItems = hasCapability(actor.role, "canViewPhqItem9")
-  const canViewContact = hasCapability(actor.role, "canViewContactInformation")
-  const canViewFreeText = hasCapability(actor.role, "canViewClinicalSurveyData")
+  const caps = surveyViewCapabilities(actor.role)
   const params = await searchParams
   const q = (params.q ?? "").trim()
   const phqSeverity = (params.phqSeverity ?? "").trim()
@@ -52,10 +54,16 @@ export default async function AdminPostSurveysPage({
   }
 
   if (q) {
-    where.user = { email: { contains: q, mode: "insensitive" } }
+    where.user = caps.canViewIdentifiedAnalytics
+      ? { email: { contains: q, mode: "insensitive" } }
+      : { studyId: { contains: q, mode: "insensitive" } }
   }
 
-  if (phqSeverity && PHQ_SEVERITY_OPTIONS.includes(phqSeverity as (typeof PHQ_SEVERITY_OPTIONS)[number])) {
+  if (
+    caps.canViewClinicalSurveyScores &&
+    phqSeverity &&
+    PHQ_SEVERITY_OPTIONS.includes(phqSeverity as (typeof PHQ_SEVERITY_OPTIONS)[number])
+  ) {
     where.phqSeverity = phqSeverity
   }
 
@@ -68,46 +76,10 @@ export default async function AdminPostSurveysPage({
   const result = await prisma.postSurveyResponse.findMany({
     where,
     orderBy: { completedAt: "desc" },
-    select: {
-      id: true,
-      userId: true,
-      completedAt: true,
-      ddsAnswers: true,
-      ddsScores: true,
-      phqAnswers: canViewPhqItems,
-      phqTotal: true,
-      phqSeverity: true,
-      susAnswers: true,
-      susScore: true,
-      stampleyFeedback: true,
-      openReflection: canViewFreeText,
-      futureResearchContact: true,
-      contactName: canViewContact,
-      contactEmail: canViewContact,
-      contactPhone: canViewContact,
-      user: { select: { email: true } },
-    },
+    select: postSurveySelect(caps),
   })
 
-  const rows = result.map((row) => ({
-    id: row.id,
-    user_id: row.userId,
-    email: row.user.email,
-    completed_at: row.completedAt,
-    dds_answers: row.ddsAnswers,
-    dds_scores: row.ddsScores,
-    phq_answers: canViewPhqItems ? row.phqAnswers : null,
-    phq_total: row.phqTotal,
-    phq_severity: row.phqSeverity,
-    sus_answers: row.susAnswers,
-    sus_score: row.susScore != null ? Number(row.susScore) : null,
-    stampley_feedback: row.stampleyFeedback,
-    open_reflection: canViewFreeText ? row.openReflection : null,
-    future_research_contact: row.futureResearchContact,
-    contact_name: canViewContact ? row.contactName : null,
-    contact_email: canViewContact ? row.contactEmail : null,
-    contact_phone: canViewContact ? row.contactPhone : null,
-  }))
+  const rows = result.map((row) => mapPostSurveyListRow(row, caps))
 
   const hasFilters = Boolean(q || phqSeverity || futureContact)
 
@@ -156,11 +128,14 @@ export default async function AdminPostSurveysPage({
               type="search"
               name="q"
               defaultValue={q}
-              placeholder="Email…"
+              placeholder={
+                caps.canViewIdentifiedAnalytics ? "Email…" : "Study ID…"
+              }
               className="w-full border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
             />
           </label>
 
+          {caps.canViewClinicalSurveyScores ? (
           <label className="block min-w-[180px] text-sm">
             <span className="mb-1.5 block text-xs font-medium text-slate-600">
               PHQ severity
@@ -178,6 +153,7 @@ export default async function AdminPostSurveysPage({
               ))}
             </select>
           </label>
+          ) : null}
 
           <label className="block min-w-[180px] text-sm">
             <span className="mb-1.5 block text-xs font-medium text-slate-600">
@@ -244,23 +220,27 @@ export default async function AdminPostSurveysPage({
               <thead>
                 <tr className="border-b border-slate-200 bg-white">
                   <th className="px-5 py-3 font-semibold text-slate-600">
-                    Participant
+                    {caps.canViewIdentifiedAnalytics ? "Participant" : "Study ID"}
                   </th>
                   <th className="px-5 py-3 font-semibold text-slate-600">
                     Submitted
                   </th>
-                  <th className="px-5 py-3 font-semibold text-slate-600">
-                    DDS Total
-                  </th>
-                  <th className="px-5 py-3 font-semibold text-slate-600">
-                    Domains
-                  </th>
-                  <th className="px-5 py-3 font-semibold text-slate-600">
-                    PHQ
-                  </th>
-                  <th className="px-5 py-3 font-semibold text-slate-600">
-                    SUS
-                  </th>
+                  {caps.canViewClinicalSurveyScores ? (
+                    <>
+                      <th className="px-5 py-3 font-semibold text-slate-600">
+                        DDS Total
+                      </th>
+                      <th className="px-5 py-3 font-semibold text-slate-600">
+                        Domains
+                      </th>
+                      <th className="px-5 py-3 font-semibold text-slate-600">
+                        PHQ
+                      </th>
+                      <th className="px-5 py-3 font-semibold text-slate-600">
+                        SUS
+                      </th>
+                    </>
+                  ) : null}
                   <th className="px-5 py-3 font-semibold text-slate-600">
                     Future Contact
                   </th>
@@ -272,22 +252,20 @@ export default async function AdminPostSurveysPage({
 
               <tbody>
                 {rows.map((row) => {
-                  const ddsScores = asJsonObject(row.dds_scores)
+                  const ddsScores = caps.canViewClinicalSurveyScores
+                    ? asJsonObject(row.dds_scores)
+                    : null
                   const domains = getDdsDomainScores(ddsScores)
-                  const userId = String(row.user_id)
 
                   return (
                     <tr
                       key={String(row.id)}
                       className="border-b border-slate-100 align-top hover:bg-slate-50/80"
                     >
-                      <td className="px-5 py-4">
-                        <Link
-                          href={`/admin/users/${userId}`}
-                          className="font-medium text-[#005ea8] hover:underline"
-                        >
-                          {String(row.email)}
-                        </Link>
+                      <td className="px-5 py-4 font-medium text-slate-900">
+                        {caps.canViewIdentifiedAnalytics
+                          ? String(row.email ?? "—")
+                          : String(row.study_id)}
                       </td>
 
                       <td className="whitespace-nowrap px-5 py-4 text-slate-600">
@@ -296,31 +274,34 @@ export default async function AdminPostSurveysPage({
                           : "—"}
                       </td>
 
-                      <td className="px-5 py-4 font-medium text-slate-900">
-                        {getDdsTotal(ddsScores)}
-                      </td>
-
-                      <td className="px-5 py-4 text-xs text-slate-700">
-                        <div className="space-y-1">
-                          <p>E: {domains.emotional}</p>
-                          <p>P: {domains.physician}</p>
-                          <p>R: {domains.regimen}</p>
-                          <p>I: {domains.interpersonal}</p>
-                        </div>
-                      </td>
-
-                      <td className="px-5 py-4 text-slate-700">
-                        <p className="font-medium text-slate-900">
-                          {formatPostSurveyNumber(row.phq_total)}
-                        </p>
-                        <p className="mt-1 text-xs text-slate-500">
-                          {row.phq_severity || "—"}
-                        </p>
-                      </td>
-
-                      <td className="px-5 py-4 font-medium text-slate-900">
-                        {formatPostSurveyScore(row.sus_score)}
-                      </td>
+                      {caps.canViewClinicalSurveyScores ? (
+                        <>
+                          <td className="px-5 py-4 font-medium text-slate-900">
+                            {getDdsTotal(ddsScores)}
+                          </td>
+                          <td className="px-5 py-4 text-xs text-slate-700">
+                            <div className="space-y-1">
+                              <p>E: {domains.emotional}</p>
+                              <p>P: {domains.physician}</p>
+                              <p>R: {domains.regimen}</p>
+                              <p>I: {domains.interpersonal}</p>
+                            </div>
+                          </td>
+                          <td className="px-5 py-4 text-slate-700">
+                            <p className="font-medium text-slate-900">
+                              {formatPostSurveyNumber(row.phq_total)}
+                            </p>
+                            <p className="mt-1 text-xs text-slate-500">
+                              {typeof row.phq_severity === "string"
+                                ? row.phq_severity
+                                : "—"}
+                            </p>
+                          </td>
+                          <td className="px-5 py-4 font-medium text-slate-900">
+                            {formatPostSurveyScore(row.sus_score)}
+                          </td>
+                        </>
+                      ) : null}
 
                       <td className="px-5 py-4">
                         {row.future_research_contact === true ? (
@@ -337,9 +318,10 @@ export default async function AdminPostSurveysPage({
                       <td className="px-5 py-4">
                         <PostSurveyResponseDetails
                           record={row}
-                          showPhqItems={canViewPhqItems}
-                          showFreeText={canViewFreeText}
-                          showContact={canViewContact}
+                          showPhqItems={caps.canViewPhqItem9}
+                          showClinicalScores={caps.canViewClinicalSurveyScores}
+                          showFreeText={caps.canViewSurveyFreeText}
+                          showContact={caps.canViewContactInformation}
                         />
                       </td>
                     </tr>

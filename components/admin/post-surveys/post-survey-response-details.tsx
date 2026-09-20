@@ -92,12 +92,14 @@ export function PostSurveyResponseDetails({
   record,
   summaryLabel = "View full response",
   showPhqItems = true,
+  showClinicalScores = true,
   showFreeText = true,
   showContact = true,
 }: {
   record: PostSurveyResponseRecord
   summaryLabel?: string
   showPhqItems?: boolean
+  showClinicalScores?: boolean
   showFreeText?: boolean
   showContact?: boolean
 }) {
@@ -114,6 +116,8 @@ export function PostSurveyResponseDetails({
       </summary>
 
       <div className="mt-3 space-y-4 min-w-[320px]">
+        {showClinicalScores ? (
+        <>
         <DetailBlock title="DDS-17 Answers & Scores">
           <div className="mb-3 grid gap-2 sm:grid-cols-2">
             <ScorePill label="Total" value={getDdsTotal(ddsScores)} />
@@ -201,7 +205,10 @@ export function PostSurveyResponseDetails({
             })}
           />
         </DetailBlock>
+        </>
+        ) : null}
 
+        {showFreeText ? (
         <DetailBlock title="Stampley Experience">
           <ItemTable
             headers={["#", "Statement", "Score", "Label"]}
@@ -217,6 +224,7 @@ export function PostSurveyResponseDetails({
             })}
           />
         </DetailBlock>
+        ) : null}
 
         {showFreeText ? (
         <DetailBlock title="Open Reflection">

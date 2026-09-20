@@ -16,6 +16,14 @@ import { recordPhiPageViewOrThrow } from "@/lib/admin-phi-page"
 import { filterKeysFromAnalytics } from "@/lib/audit-metadata"
 import { requireAdminPage } from "@/lib/admin-authz"
 import { hasCapability } from "@/lib/admin-capabilities"
+import {
+  analyticsFiltersForView,
+  shapeAnalyticsEngagementRows,
+  shapeAnalyticsOverview,
+  shapeAnalyticsParticipantRows,
+  shapeAnalyticsSafetyRows,
+  surveyViewCapabilities,
+} from "@/lib/admin-phi-minimization"
 
 export const dynamic = "force-dynamic"
 
@@ -126,11 +134,11 @@ export default async function AdminAnalyticsPage({
   searchParams: Promise<SearchParams>
 }) {
   const actor = await requireAdminPage("canViewAggregateAnalytics")
+  const caps = surveyViewCapabilities(actor.role)
   const canExport = hasCapability(actor.role, "canExportCodedResearchData")
-  const canViewSummaries = hasCapability(actor.role, "canViewTranscripts")
-  const canViewSafetyRows = hasCapability(actor.role, "canViewSafetyData")
   const params = await searchParams
-  const filters = parseAnalyticsFilters(params)
+  const requestedFilters = parseAnalyticsFilters(params)
+  const filters = analyticsFiltersForView(requestedFilters, caps)
   const exportQs = buildAnalyticsQueryString(filters)
   const filtersActive = hasActiveAnalyticsFilters(filters)
 
@@ -167,7 +175,7 @@ export default async function AdminAnalyticsPage({
           .count({
             where: {
               role: "PARTICIPANT",
-              ...(filters.q
+              ...(caps.canViewIdentifiedAnalytics && filters.q
                 ? { email: { contains: filters.q, mode: "insensitive" } }
                 : {}),
             },
@@ -184,10 +192,14 @@ export default async function AdminAnalyticsPage({
          JOIN users u ON u.id = s.user_id
          LEFT JOIN check_in_submissions c ON c.id = s.check_in_submission_id
          WHERE u.role = 'PARTICIPANT'${sessionFilter.and}) AS total_stampley_sessions,
-        (SELECT ROUND(AVG(c.distress)::numeric, 1)
+        ${
+          caps.canViewClinicalSurveyScores
+            ? Prisma.sql`(SELECT ROUND(AVG(c.distress)::numeric, 1)
          FROM check_in_submissions c
          JOIN users u ON u.id = c.user_id
-         WHERE u.role = 'PARTICIPANT'${checkInFilter.and}) AS avg_stress,
+         WHERE u.role = 'PARTICIPANT'${checkInFilter.and}) AS avg_stress`
+            : Prisma.sql`NULL AS avg_stress`
+        },
         (SELECT COUNT(*)::int
          FROM check_in_submissions c
          JOIN users u ON u.id = c.user_id
@@ -215,7 +227,8 @@ export default async function AdminAnalyticsPage({
       LEFT JOIN dds_responses d ON d.user_id = u.id
       WHERE u.role = 'PARTICIPANT'${userFilter.and}
     `,
-    prisma.$queryRaw<Array<Record<string, unknown>>>`
+    caps.canViewIdentifiedAnalytics
+      ? prisma.$queryRaw<Array<Record<string, unknown>>>`
       SELECT
         u.email,
         u.role::text AS role,
@@ -247,7 +260,8 @@ export default async function AdminAnalyticsPage({
       WHERE u.role = 'PARTICIPANT'${userFilter.and}
       GROUP BY u.id, u.email, u.role
       ORDER BY latest_check_in_date DESC NULLS LAST, u.email ASC
-    `,
+    `
+      : Promise.resolve([]),
     prisma.$queryRaw<Array<{ domain: string; count: number }>>`
       SELECT domain, COUNT(*)::int AS count
       FROM check_in_submissions c
@@ -256,7 +270,7 @@ export default async function AdminAnalyticsPage({
         AND c.domain IN ('Emotional', 'Regimen', 'Physician', 'Interpersonal')${checkInFilter.and}
       GROUP BY domain
     `,
-    canViewSafetyRows
+    caps.canViewSafetyData
       ? prisma.$queryRaw<Array<Record<string, unknown>>>`
       SELECT
         u.email,
@@ -271,12 +285,13 @@ export default async function AdminAnalyticsPage({
       LIMIT 75
     `
       : Promise.resolve([]),
-    prisma.$queryRaw<Array<Record<string, unknown>>>`
+    caps.canViewIdentifiedAnalytics
+      ? prisma.$queryRaw<Array<Record<string, unknown>>>`
       SELECT
         u.email,
         s.user_message_count,
         s.assistant_message_count,
-        ${canViewSummaries ? Prisma.sql`s.summary` : Prisma.sql`NULL AS summary`},
+        ${caps.canViewTranscripts ? Prisma.sql`s.summary` : Prisma.sql`NULL AS summary`},
         c.check_in_date AS linked_check_in_date,
         s.created_at
       FROM stampley_chat_sessions s
@@ -285,21 +300,23 @@ export default async function AdminAnalyticsPage({
       WHERE u.role = 'PARTICIPANT'${sessionFilter.and}
       ORDER BY s.created_at DESC
       LIMIT 100
-    `,
+    `
+      : Promise.resolve([]),
   ])
 
   const overviewRow = serializeAnalyticsRow(overviewResult[0] ?? {})
-  const overview = {
-    total_participants: Number(
-      serializeAnalyticsValue(
+  const overview = shapeAnalyticsOverview(
+    {
+      total_participants: serializeAnalyticsValue(
         participantCountResult[0]?.total_participants ?? 0
-      )
-    ),
-    total_checkins: Number(overviewRow.total_checkins ?? 0),
-    total_stampley_sessions: Number(overviewRow.total_stampley_sessions ?? 0),
-    avg_stress: overviewRow.avg_stress,
-    high_stress_checkins: Number(overviewRow.high_stress_checkins ?? 0),
-  }
+      ),
+      total_checkins: overviewRow.total_checkins,
+      total_stampley_sessions: overviewRow.total_stampley_sessions,
+      avg_stress: overviewRow.avg_stress,
+      high_stress_checkins: overviewRow.high_stress_checkins,
+    },
+    caps
+  )
 
   const completion = serializeAnalyticsRow(completionResult[0] ?? {})
   const totalParticipants = Number(completion.total_participants) || 0
@@ -311,9 +328,18 @@ export default async function AdminAnalyticsPage({
     domainResult.map((r) => [String(r.domain), Number(r.count) || 0])
   )
 
-  const participants = participantResult.map(serializeAnalyticsRow)
-  const highStressRows = highStressResult.map(serializeAnalyticsRow)
-  const engagementRows = engagementResult.map(serializeAnalyticsRow)
+  const participants = shapeAnalyticsParticipantRows(
+    participantResult.map(serializeAnalyticsRow),
+    caps
+  )
+  const highStressRows = shapeAnalyticsSafetyRows(
+    highStressResult.map(serializeAnalyticsRow),
+    caps
+  )
+  const engagementRows = shapeAnalyticsEngagementRows(
+    engagementResult.map(serializeAnalyticsRow),
+    caps
+  )
 
   await recordPhiPageViewOrThrow({
     action: "ADMIN_ANALYTICS_VIEWED",
@@ -347,6 +373,7 @@ export default async function AdminAnalyticsPage({
             Filters
           </p>
           <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {caps.canViewIdentifiedAnalytics ? (
             <label className="block text-sm">
               <span className="font-medium text-slate-700">Participant email</span>
               <input
@@ -357,6 +384,7 @@ export default async function AdminAnalyticsPage({
                 className="mt-1 w-full border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200"
               />
             </label>
+            ) : null}
             <label className="block text-sm">
               <span className="font-medium text-slate-700">From date</span>
               <input
@@ -471,29 +499,33 @@ export default async function AdminAnalyticsPage({
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
           <StatCard
             label="Participants"
-            value={overview.total_participants ?? 0}
+            value={Number(overview.total_participants ?? 0)}
             hint={
               rowFiltersActive
                 ? "Participants with matching check-ins"
-                : "Participants matching email search"
+                : caps.canViewIdentifiedAnalytics
+                  ? "Participants matching email search"
+                  : "Enrolled participants"
             }
           />
           <StatCard
             label="Total check-ins"
-            value={overview.total_checkins ?? 0}
+            value={Number(overview.total_checkins ?? 0)}
           />
           <StatCard
             label="Stampley sessions"
-            value={overview.total_stampley_sessions ?? 0}
+            value={Number(overview.total_stampley_sessions ?? 0)}
           />
+          {caps.canViewClinicalSurveyScores ? (
           <StatCard
             label="Avg stress level"
             value={formatNumber(overview.avg_stress)}
             hint="Self-reported stress (0–10) for filtered check-ins"
           />
+          ) : null}
           <StatCard
             label="High-stress check-ins"
-            value={overview.high_stress_checkins ?? 0}
+            value={Number(overview.high_stress_checkins ?? 0)}
             hint="Check-ins with stress ≥ 9 (within current filters)"
             accent
           />
@@ -526,6 +558,7 @@ export default async function AdminAnalyticsPage({
         </div>
       </div>
 
+      {caps.canViewIdentifiedAnalytics ? (
       <Section
         title="Participants"
         description="Aggregated metrics per participant for the current filters. Read-only."
@@ -601,8 +634,9 @@ export default async function AdminAnalyticsPage({
           </table>
         </div>
       </Section>
+      ) : null}
 
-      {canViewSafetyRows ? (
+      {caps.canViewSafetyData ? (
       <Section
         title="High-stress monitoring"
         description="Check-ins with self-reported stress ≥ 9, further narrowed by your filters."
@@ -666,10 +700,11 @@ export default async function AdminAnalyticsPage({
       </Section>
       ) : null}
 
+      {caps.canViewIdentifiedAnalytics ? (
       <Section
         title="Stampley engagement"
         description={
-          canViewSummaries
+          caps.canViewTranscripts
             ? "Saved session summaries and message counts for the current filters. Raw chat JSON is not displayed."
             : "Session counts for the current filters. Summaries are restricted."
         }
@@ -682,7 +717,7 @@ export default async function AdminAnalyticsPage({
                 <th className="px-5 py-3 font-semibold text-slate-600">User msgs</th>
                 <th className="px-5 py-3 font-semibold text-slate-600">Assistant msgs</th>
                 <th className="px-5 py-3 font-semibold text-slate-600">Linked check-in</th>
-                {canViewSummaries ? (
+                {caps.canViewTranscripts ? (
                 <th className="px-5 py-3 font-semibold text-slate-600">Session summary</th>
                 ) : null}
               </tr>
@@ -715,7 +750,7 @@ export default async function AdminAnalyticsPage({
                     <td className="px-5 py-4 text-slate-600">
                       {formatDate(row.linked_check_in_date)}
                     </td>
-                    {canViewSummaries ? (
+                    {caps.canViewTranscripts ? (
                     <td className="max-w-md px-5 py-4 text-slate-600">
                       {row.summary ? (
                         <span className="line-clamp-3">{String(row.summary)}</span>
@@ -731,6 +766,7 @@ export default async function AdminAnalyticsPage({
           </table>
         </div>
       </Section>
+      ) : null}
     </main>
   )
 }

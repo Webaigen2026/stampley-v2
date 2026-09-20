@@ -28,6 +28,9 @@ export const ADMIN_CAPABILITIES = [
   "canViewTranscripts",
   "canViewContactInformation",
   "canViewAggregateAnalytics",
+  "canViewIdentifiedAnalytics",
+  "canViewClinicalSurveyScores",
+  "canViewSurveyFreeText",
   "canExportCodedResearchData",
   "canDeleteUsers",
 ] as const
@@ -55,6 +58,9 @@ const ROLE_CAPABILITIES: Record<StaffRole, ReadonlySet<AdminCapability>> = {
     "canViewCheckInNarratives",
     "canViewTranscripts",
     "canViewAggregateAnalytics",
+    "canViewIdentifiedAnalytics",
+    "canViewClinicalSurveyScores",
+    "canViewSurveyFreeText",
   ]),
 }
 

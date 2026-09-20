@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "tsx --import ./scripts/stub-server-only.mjs --test lib/auth-throttle.test.ts lib/authorize-credentials.test.ts lib/password-reset-apply.test.ts lib/password-reset-request.test.ts lib/stampley-openai-context.test.ts lib/audit.test.ts lib/audit-instrumentation.test.ts lib/admin-least-privilege.test.ts lib/admin-export-hardening.test.ts",
+    "test": "tsx --import ./scripts/stub-server-only.mjs --test lib/auth-throttle.test.ts lib/authorize-credentials.test.ts lib/password-reset-apply.test.ts lib/password-reset-request.test.ts lib/stampley-openai-context.test.ts lib/audit.test.ts lib/audit-instrumentation.test.ts lib/admin-least-privilege.test.ts lib/admin-export-hardening.test.ts lib/admin-phi-minimization.test.ts",
     "postinstall": "prisma generate",
     "bootstrap:admin": "npx tsx scripts/bootstrap-admin.ts",
     "create:admin": "npx tsx scripts/create-admin.ts"
