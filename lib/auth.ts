@@ -1,9 +1,10 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
-import bcrypt from "bcryptjs";
 import type { JWT } from "next-auth/jwt";
 import { baseAuthConfig, resolveAuthSecret } from "./auth.config";
 import { prisma } from "@/lib/prisma";
+import { createPrismaLoginThrottleStore } from "@/lib/auth-throttle";
+import { authorizeCredentials } from "@/lib/authorize-credentials";
 
 function resolveTokenAuthVersion(authVersion: unknown): number | null {
   if (authVersion === undefined) return 0;
@@ -26,30 +27,30 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
-      async authorize(credentials) {
+      async authorize(credentials, request) {
         const email = String(credentials?.email ?? "").trim().toLowerCase();
         const password = String(credentials?.password ?? "");
         if (!email || !password) return null;
         try {
-          const user = await prisma.user.findUnique({
-            where: { email },
-            select: {
-              id: true,
-              email: true,
-              role: true,
-              password: true,
-              authVersion: true,
+          return await authorizeCredentials({
+            email,
+            password,
+            request,
+            users: {
+              findByEmail: (normalizedEmail) =>
+                prisma.user.findUnique({
+                  where: { email: normalizedEmail },
+                  select: {
+                    id: true,
+                    email: true,
+                    role: true,
+                    password: true,
+                    authVersion: true,
+                  },
+                }),
             },
+            throttles: createPrismaLoginThrottleStore(prisma),
           });
-          if (!user?.password) return null;
-          const isValid = await bcrypt.compare(password, user.password);
-          if (!isValid) return null;
-          return {
-            id: user.id,
-            email: user.email,
-            role: user.role,
-            authVersion: user.authVersion,
-          };
         } catch (e) {
           console.error("[auth] authorize failed:", e);
           return null;

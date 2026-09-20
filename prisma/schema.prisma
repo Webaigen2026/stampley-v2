@@ -33,6 +33,7 @@ model User {
   stampleyChatSessions StampleyChatSession[]
   reflections          Reflection[]
   passwordResetTokens  PasswordResetToken[]
+  loginThrottles       LoginThrottle[]
   ddsResponse          DdsResponse?
   weeklyDomains        UserWeeklyDomain[]
   studyProgress        UserStudyProgress?
@@ -122,6 +123,30 @@ model PasswordResetToken {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("password_reset_tokens")
+}
+
+/// Fixed-window failed-login budget per (user, IP hash). Not an account-wide lockout.
+model LoginThrottle {
+  id           String   @id @default(dbgenerated("gen_random_uuid()::text"))
+  userId       String   @map("user_id")
+  ipHash       String   @map("ip_hash")
+  windowStart  DateTime @map("window_start") @db.Timestamp(6)
+  attemptCount Int      @default(0) @map("attempt_count")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, ipHash])
+  @@map("login_throttles")
+}
+
+/// Fixed-window failed-login budget per IP hash (covers unknown emails).
+model LoginIpThrottle {
+  id           String   @id @default(dbgenerated("gen_random_uuid()::text"))
+  ipHash       String   @unique @map("ip_hash")
+  windowStart  DateTime @map("window_start") @db.Timestamp(6)
+  attemptCount Int      @default(0) @map("attempt_count")
+
+  @@map("login_ip_throttles")
 }
 
 /// Temporary hashed registration payload. Consumed after email verification.

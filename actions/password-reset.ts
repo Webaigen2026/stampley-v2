@@ -1,16 +1,13 @@
 "use server"
 
 import { prisma } from "@/lib/prisma"
+import {
+  PasswordResetRejected,
+  applyVerifiedPasswordReset,
+} from "@/lib/auth-throttle"
 import crypto from "crypto"
 
 const ONE_HOUR_MS = 60 * 60 * 1000
-
-class PasswordResetRejected extends Error {
-  constructor(message: string) {
-    super(message)
-    this.name = "PasswordResetRejected"
-  }
-}
 
 export async function requestPasswordReset(formData: FormData) {
   const email = formData.get("email") as string
@@ -88,44 +85,11 @@ export async function resetPassword(formData: FormData) {
       .update(token)
       .digest("hex")
 
+    const bcrypt = await import("bcryptjs")
+    const hashedPassword = await bcrypt.hash(password, 10)
+
     await prisma.$transaction(async (tx) => {
-      const tokenRow = await tx.passwordResetToken.findFirst({
-        where: {
-          tokenHash,
-          expiresAt: { gt: new Date() },
-        },
-      })
-
-      if (!tokenRow) {
-        throw new PasswordResetRejected(
-          "Reset link is invalid or has expired. Please request a new one."
-        )
-      }
-
-      const bcrypt = await import("bcryptjs")
-      const hashedPassword = await bcrypt.hash(password, 10)
-
-      const consumed = await tx.passwordResetToken.deleteMany({
-        where: {
-          id: tokenRow.id,
-          tokenHash,
-          expiresAt: { gt: new Date() },
-        },
-      })
-
-      if (consumed.count !== 1) {
-        throw new PasswordResetRejected(
-          "Reset link is invalid or has expired. Please request a new one."
-        )
-      }
-
-      await tx.user.updateMany({
-        where: { id: tokenRow.userId },
-        data: {
-          password: hashedPassword,
-          authVersion: { increment: 1 },
-        },
-      })
+      await applyVerifiedPasswordReset(tx, { tokenHash, hashedPassword })
     })
 
     return { success: true }

@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "test": "tsx --test lib/auth-throttle.test.ts lib/authorize-credentials.test.ts lib/password-reset-apply.test.ts",
     "postinstall": "prisma generate",
     "bootstrap:admin": "npx tsx scripts/bootstrap-admin.ts",
     "create:admin": "npx tsx scripts/create-admin.ts"
@@ -45,6 +46,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
-    "eslint-config-next": "16.2.3"
+    "eslint-config-next": "16.2.3",
+    "tsx": "^4.23.15"
   }
 }
