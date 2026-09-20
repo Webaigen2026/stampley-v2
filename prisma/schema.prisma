@@ -21,12 +21,13 @@ enum UserRole {
 }
 
 model User {
-  id        String    @id @default(dbgenerated("gen_random_uuid()::text"))
-  email     String    @unique
-  password  String
-  role      UserRole  @default(PARTICIPANT)
-  studyId   String?   @unique @map("study_id")
-  createdAt DateTime? @default(now()) @map("created_at") @db.Timestamp(6)
+  id          String    @id @default(dbgenerated("gen_random_uuid()::text"))
+  email       String    @unique
+  password    String
+  role        UserRole  @default(PARTICIPANT)
+  studyId     String?   @unique @map("study_id")
+  authVersion Int       @default(0) @map("auth_version")
+  createdAt   DateTime? @default(now()) @map("created_at") @db.Timestamp(6)
 
   checkInSubmissions   CheckInSubmission[]
   stampleyChatSessions StampleyChatSession[]

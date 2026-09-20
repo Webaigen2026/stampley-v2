@@ -137,7 +137,10 @@ export async function toggleUserRole(id: string, currentRole: string) {
   try {
     await prisma.user.updateMany({
       where: { id },
-      data: { role: newRole },
+      data: {
+        role: newRole,
+        authVersion: { increment: 1 },
+      },
     })
     revalidatePath("/admin/users")
     return { success: true, newRole }

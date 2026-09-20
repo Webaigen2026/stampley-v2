@@ -121,7 +121,10 @@ export async function resetPassword(formData: FormData) {
 
       await tx.user.updateMany({
         where: { id: tokenRow.userId },
-        data: { password: hashedPassword },
+        data: {
+          password: hashedPassword,
+          authVersion: { increment: 1 },
+        },
       })
     })
 
