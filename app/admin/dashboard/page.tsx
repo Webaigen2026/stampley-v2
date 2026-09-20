@@ -4,6 +4,11 @@ import { DistressChart } from "@/components/charts/distress-chart"
 import Link from "next/link"
 import { recordAdminPageView } from "@/lib/audit-admin"
 import { requireStaffPage } from "@/lib/admin-authz"
+import {
+  canViewDashboardParticipantEmail,
+  dashboardRecentUserSelect,
+  mapDashboardRecentUser,
+} from "@/lib/admin-phi-minimization"
 
 export const dynamic = "force-dynamic"
 
@@ -14,7 +19,8 @@ function toCountNumber(value: unknown): number {
 }
 
 export default async function AdminDashboardPage() {
-  await requireStaffPage()
+  const actor = await requireStaffPage()
+  const includeDashboardEmail = canViewDashboardParticipantEmail(actor.role)
   const [
     participantCount,
     availableKeyCount,
@@ -37,7 +43,7 @@ export default async function AdminDashboardPage() {
       where: { role: "PARTICIPANT" },
       orderBy: { createdAt: "desc" },
       take: 5,
-      select: { email: true, createdAt: true },
+      select: dashboardRecentUserSelect(includeDashboardEmail),
     }),
     prisma.$queryRaw<Array<{ date: string; count: bigint | number }>>`
       SELECT
@@ -94,10 +100,9 @@ export default async function AdminDashboardPage() {
     color: distressColors[r.range ?? ""] ?? "#e5e7eb",
   }))
 
-  const recentUsers = recentUserRows.map((u) => ({
-    email: u.email,
-    created_at: u.createdAt,
-  }))
+  const recentUsers = recentUserRows.map((u) =>
+    mapDashboardRecentUser(u, includeDashboardEmail)
+  )
 
   const participants = parseInt(String(stats.participants), 10) || 0
   const totalCheckins = parseInt(String(stats.totalCheckins), 10) || 0
@@ -324,15 +329,18 @@ export default async function AdminDashboardPage() {
                 {recentUsers.length === 0 ? (
                   <p className="text-sm text-white">No participants yet</p>
                 ) : (
-                  recentUsers.map((u) => (
-                    <div key={u.email} className="flex items-center gap-3">
+                  recentUsers.map((u, index) => (
+                    <div
+                      key={`${u.label}-${String(u.created_at)}-${index}`}
+                      className="flex items-center gap-3"
+                    >
                       <div className="flex h-9 w-9 items-center justify-center  bg-slate-100 text-sm font-medium text-slate-700">
-                        {u.email[0].toUpperCase()}
+                        {u.label[0]?.toUpperCase() || "U"}
                       </div>
 
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm text-white">
-                          {u.email}
+                          {u.label}
                         </p>
                         <p className="text-xs text-white">
                           {new Date(u.created_at as Date).toLocaleDateString()}

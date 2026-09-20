@@ -38,6 +38,58 @@ export function operationalStudyId(value: unknown): string {
   return trimmed.length > 0 ? trimmed : "UNASSIGNED"
 }
 
+const UNASSIGNED_DASHBOARD_PARTICIPANT = "Unassigned participant"
+
+export function canViewDashboardParticipantEmail(role: unknown): boolean {
+  return (
+    hasCapability(role, "canViewIdentifiedAnalytics") &&
+    hasCapability(role, "canManageParticipants")
+  )
+}
+
+export function dashboardRecentUserSelect(includeEmail: boolean) {
+  return {
+    studyId: true,
+    createdAt: true,
+    email: includeEmail,
+  } as const
+}
+
+export type DashboardRecentUserRow = {
+  label: string
+  created_at: Date | string
+  study_id?: string
+  email?: string | null
+}
+
+export function mapDashboardRecentUser(
+  row: {
+    studyId?: string | null
+    createdAt?: Date | string | null
+    email?: string | null
+    id?: string | null
+  },
+  includeEmail: boolean
+): DashboardRecentUserRow {
+  const studyId =
+    typeof row.studyId === "string" && row.studyId.trim().length > 0
+      ? row.studyId.trim()
+      : null
+  const mapped: DashboardRecentUserRow = {
+    label: includeEmail
+      ? row.email?.trim() || studyId || UNASSIGNED_DASHBOARD_PARTICIPANT
+      : studyId || UNASSIGNED_DASHBOARD_PARTICIPANT,
+    created_at: row.createdAt ?? "",
+  }
+  if (studyId) {
+    mapped.study_id = studyId
+  }
+  if (includeEmail) {
+    mapped.email = row.email ?? null
+  }
+  return mapped
+}
+
 export function analyticsFiltersForView<T extends { q: string | null }>(
   filters: T,
   caps: Pick<SurveyViewCapabilities, "canViewIdentifiedAnalytics">

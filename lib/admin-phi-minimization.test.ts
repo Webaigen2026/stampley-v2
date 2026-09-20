@@ -7,6 +7,9 @@ import { canAccessAdminPath, hasCapability } from "./admin-capabilities"
 import {
   analyticsFiltersForView,
   assertNoCoordinatorPhi,
+  canViewDashboardParticipantEmail,
+  dashboardRecentUserSelect,
+  mapDashboardRecentUser,
   mapPostSurveyListRow,
   mapPreSurveyListRow,
   postSurveySelect,
@@ -252,5 +255,93 @@ describe("HIPAA-4.1 server authorization and audit", () => {
     assert.match(read("app/admin/analytics/page.tsx"), /await recordPhiPageViewOrThrow/)
     assert.match(read("app/admin/pre-surveys/page.tsx"), /await recordPhiPageViewOrThrow/)
     assert.match(read("app/admin/post-surveys/page.tsx"), /await recordPhiPageViewOrThrow/)
+  })
+})
+
+describe("HIPAA-4.2 dashboard identifier minimization", () => {
+  const createdAt = new Date("2026-03-01T00:00:00.000Z")
+  const identifiedRow = {
+    id: "550e8400-e29b-41d4-a716-446655440000",
+    email: "participant@example.com",
+    studyId: "AIDES-TEST1",
+    createdAt,
+  }
+  const unassignedRow = {
+    id: "550e8400-e29b-41d4-a716-446655440099",
+    email: "orphan@example.com",
+    studyId: null,
+    createdAt,
+  }
+
+  it("omits email and UUID from coordinator dashboard rows", () => {
+    const includeEmail = canViewDashboardParticipantEmail("STUDY_COORDINATOR")
+    const row = mapDashboardRecentUser(identifiedRow, includeEmail)
+    assert.equal(includeEmail, false)
+    assert.equal(dashboardRecentUserSelect(includeEmail).email, false)
+    assert.equal("email" in row, false)
+    assert.equal("id" in row, false)
+    assert.equal("user_id" in row, false)
+    assert.equal(row.study_id, "AIDES-TEST1")
+    assert.equal(row.label, "AIDES-TEST1")
+    assert.doesNotMatch(JSON.stringify(row), /550e8400-e29b-41d4-a716-446655440000/)
+    assert.deepEqual(assertNoCoordinatorPhi(row), [])
+  })
+
+  it("does not fall back to email or UUID when studyId is missing", () => {
+    const row = mapDashboardRecentUser(
+      unassignedRow,
+      canViewDashboardParticipantEmail("STUDY_COORDINATOR")
+    )
+    assert.equal(row.label, "Unassigned participant")
+    assert.equal("email" in row, false)
+    assert.equal("study_id" in row, false)
+    assert.equal("id" in row, false)
+    assert.doesNotMatch(JSON.stringify(row), /orphan@example.com/)
+    assert.doesNotMatch(JSON.stringify(row), /550e8400-e29b-41d4-a716-446655440099/)
+  })
+
+  it("keeps ADMIN dashboard email behavior", () => {
+    const includeEmail = canViewDashboardParticipantEmail("ADMIN")
+    const row = mapDashboardRecentUser(identifiedRow, includeEmail)
+    assert.equal(includeEmail, true)
+    assert.equal(dashboardRecentUserSelect(includeEmail).email, true)
+    assert.equal(row.email, "participant@example.com")
+    assert.equal(row.label, "participant@example.com")
+  })
+
+  it("omits dashboard email for clinical reviewer and unknown roles", () => {
+    assert.equal(canViewDashboardParticipantEmail("CLINICAL_REVIEWER"), false)
+    assert.equal(canViewDashboardParticipantEmail("PARTICIPANT"), false)
+    assert.equal(canViewDashboardParticipantEmail("SUPERUSER"), false)
+    assert.equal(canViewDashboardParticipantEmail(undefined), false)
+    const reviewerRow = mapDashboardRecentUser(
+      identifiedRow,
+      canViewDashboardParticipantEmail("CLINICAL_REVIEWER")
+    )
+    assert.equal("email" in reviewerRow, false)
+    assert.equal(reviewerRow.label, "AIDES-TEST1")
+  })
+
+  it("keeps dashboard authorization server-side and participants denied", () => {
+    assert.equal(canAccessAdminPath("PARTICIPANT", "/admin/dashboard"), false)
+    assert.equal(canAccessAdminPath("STUDY_COORDINATOR", "/admin/dashboard"), true)
+    assert.equal(canAccessAdminPath("CLINICAL_REVIEWER", "/admin/dashboard"), true)
+    assert.equal(canAccessAdminPath("ADMIN", "/admin/dashboard"), true)
+    const dashboard = read("app/admin/dashboard/page.tsx")
+    assert.match(dashboard, /requireStaffPage/)
+    assert.match(dashboard, /canViewDashboardParticipantEmail/)
+    assert.match(dashboard, /dashboardRecentUserSelect/)
+    assert.match(dashboard, /mapDashboardRecentUser/)
+    assert.doesNotMatch(dashboard, /select:\s*\{\s*email:\s*true/)
+  })
+
+  it("preserves HIPAA-3 dashboard audit without identifiers", () => {
+    const dashboard = read("app/admin/dashboard/page.tsx")
+    assert.match(dashboard, /ADMIN_DASHBOARD_VIEWED/)
+    assert.match(dashboard, /fail-open/)
+    assert.doesNotMatch(
+      dashboard,
+      /recordAdminPageView\([\s\S]*email|studyId|userId/
+    )
   })
 })
