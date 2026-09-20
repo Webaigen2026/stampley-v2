@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "tsx --test lib/auth-throttle.test.ts lib/authorize-credentials.test.ts lib/password-reset-apply.test.ts",
+    "test": "tsx --test lib/auth-throttle.test.ts lib/authorize-credentials.test.ts lib/password-reset-apply.test.ts lib/password-reset-request.test.ts",
     "postinstall": "prisma generate",
     "bootstrap:admin": "npx tsx scripts/bootstrap-admin.ts",
     "create:admin": "npx tsx scripts/create-admin.ts"

@@ -1,63 +1,47 @@
 "use server"
 
+import { headers } from "next/headers"
 import { prisma } from "@/lib/prisma"
 import {
   PasswordResetRejected,
   applyVerifiedPasswordReset,
 } from "@/lib/auth-throttle"
+import {
+  createPrismaPasswordResetIpThrottleStore,
+  createPrismaPasswordResetTokenIssuer,
+  executePasswordResetRequest,
+} from "@/lib/password-reset-throttle"
 import crypto from "crypto"
 
-const ONE_HOUR_MS = 60 * 60 * 1000
-
-export async function requestPasswordReset(formData: FormData) {
-  const email = formData.get("email") as string
-
-  if (!email) return { error: "Email is required" }
-
+export async function requestPasswordReset(formData: FormData): Promise<{
+  success?: true
+  error?: string
+}> {
   try {
-    const user = await prisma.user.findUnique({
-      where: { email: email.toLowerCase() },
-      select: { id: true },
+    const headerList = await headers()
+    return await executePasswordResetRequest(formData.get("email"), {
+      headers: headerList,
+      users: {
+        findByEmail: (email) =>
+          prisma.user.findUnique({
+            where: { email },
+            select: { id: true },
+          }),
+      },
+      tokens: createPrismaPasswordResetTokenIssuer(prisma),
+      ipThrottle: createPrismaPasswordResetIpThrottleStore(prisma),
+      sendEmail: async (email, token) => {
+        const { sendPasswordResetEmail } = await import("@/lib/email")
+        await sendPasswordResetEmail(email, token)
+      },
+      deleteTokenById: async (tokenId) => {
+        await prisma.passwordResetToken.deleteMany({
+          where: { id: tokenId },
+        })
+      },
     })
-
-    // Always return success even if user not found (security best practice)
-    if (!user) {
-      return { success: true }
-    }
-
-    const token = crypto.randomBytes(32).toString("hex")
-    const tokenHash = crypto
-      .createHash("sha256")
-      .update(token)
-      .digest("hex")
-
-    await prisma.$transaction([
-      prisma.passwordResetToken.deleteMany({
-        where: { userId: user.id },
-      }),
-      prisma.passwordResetToken.create({
-        data: {
-          userId: user.id,
-          tokenHash,
-          expiresAt: new Date(Date.now() + ONE_HOUR_MS),
-        },
-      }),
-    ])
-
-    // Send email
-    try {
-      const { sendPasswordResetEmail } = await import("@/lib/email")
-      await sendPasswordResetEmail(email.toLowerCase(), token)
-      console.log(`[password-reset] email sent to ${email}`)
-    } catch (emailError) {
-      // Log but don't fail — token is saved, email can be resent
-      console.error("[password-reset] email failed:", emailError)
-    }
-
-    return { success: true }
-
-  } catch (error) {
-    console.error("[requestPasswordReset]", error)
+  } catch {
+    console.error("[auth] password reset request failed")
     return { error: "Something went wrong. Please try again." }
   }
 }

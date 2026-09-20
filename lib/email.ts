@@ -627,9 +627,7 @@ export async function sendPasswordResetEmail(
   try {
     resetUrl = buildPasswordResetUrl(token)
   } catch {
-    console.error(
-      "[sendPasswordResetEmail] Failed to send password reset email"
-    )
+    console.error("[auth] password reset email failed")
 
     throw new Error("Failed to send email")
   }
@@ -686,10 +684,7 @@ export async function sendPasswordResetEmail(
   })
 
   if (error) {
-    console.error(
-      "[sendPasswordResetEmail] error:",
-      error
-    )
+    console.error("[auth] password reset email failed")
 
     throw new Error("Failed to send email")
   }

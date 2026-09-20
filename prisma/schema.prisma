@@ -149,6 +149,16 @@ model LoginIpThrottle {
   @@map("login_ip_throttles")
 }
 
+/// Fixed-window forgot-password request budget per IP hash. Not an account lockout.
+model PasswordResetIpThrottle {
+  id           String   @id @default(dbgenerated("gen_random_uuid()::text"))
+  ipHash       String   @unique @map("ip_hash")
+  windowStart  DateTime @map("window_start") @db.Timestamp(6)
+  attemptCount Int      @default(0) @map("attempt_count")
+
+  @@map("password_reset_ip_throttles")
+}
+
 /// Temporary hashed registration payload. Consumed after email verification.
 /// Never stores plaintext passwords or verification codes.
 model RegistrationVerification {
