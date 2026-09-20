@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma"
 import { Prisma } from "@/lib/generated/prisma/client"
+import { recordPhiPageViewOrThrow } from "@/lib/admin-phi-page"
 
 export const dynamic = "force-dynamic"
 
@@ -7,6 +8,10 @@ function serializeSafetyValue(value: unknown): unknown {
   if (typeof value === "bigint") return Number(value)
   if (value instanceof Prisma.Decimal) return value.toFixed(1)
   return value
+}
+
+function text(value: unknown): string {
+  return value == null ? "" : String(value)
 }
 
 function serializeSafetyRow(
@@ -87,6 +92,11 @@ export default async function AdminSafetyPage() {
   const totalAlerts = alertsResult.rows.length
   const atRisk = highDistressResult.rows.length
   const recentHigh = recentHighResult.rows.length
+
+  await recordPhiPageViewOrThrow({
+    action: "ADMIN_SAFETY_VIEWED",
+    resourceType: "SAFETY",
+  })
 
   return (
     <div className="space-y-8">
@@ -233,20 +243,20 @@ export default async function AdminSafetyPage() {
           </div>
 
           <div className="divide-y divide-gray-100">
-            {alertsResult.rows.map((u: any) => (
+            {alertsResult.rows.map((u: Record<string, unknown>) => (
               <div
-                key={u.user_id}
+                key={text(u.user_id)}
                 className="flex flex-col gap-4 px-6 py-5 lg:flex-row lg:items-center lg:justify-between"
               >
                 <div className="flex min-w-0 items-center gap-3">
                   <div className="flex h-11 w-11 shrink-0 items-center justify-center  bg-red-100 text-sm font-semibold text-red-700">
-                    {u.email[0].toUpperCase()}
+                    {text(u.email).charAt(0).toUpperCase()}
                   </div>
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-medium text-gray-900">{u.email}</p>
+                    <p className="truncate text-sm font-medium text-gray-900">{text(u.email)}</p>
                     <p className="mt-0.5 text-xs text-gray-500">
-                      {u.consecutive_days} consecutive high-distress days · Last flagged{" "}
-                      {new Date(u.last_flagged).toLocaleDateString()}
+                      {text(u.consecutive_days)} consecutive high-distress days · Last flagged{" "}
+                      {new Date(text(u.last_flagged)).toLocaleDateString()}
                     </p>
                   </div>
                 </div>
@@ -254,16 +264,16 @@ export default async function AdminSafetyPage() {
                 <div className="flex flex-wrap items-center gap-6">
                   <div className="text-center">
                     <p className="text-xs text-gray-400">Max Distress</p>
-                    <p className="text-lg font-semibold text-red-600">{u.max_distress}/10</p>
+                    <p className="text-lg font-semibold text-red-600">{text(u.max_distress)}/10</p>
                   </div>
 
                   <div className="text-center">
                     <p className="text-xs text-gray-400">Total Flags</p>
-                    <p className="text-lg font-semibold text-gray-900">{u.total_flags}</p>
+                    <p className="text-lg font-semibold text-gray-900">{text(u.total_flags)}</p>
                   </div>
 
                   <a
-                    href={`mailto:${u.email}?subject=AIDES-T2D Study Check-in&body=Hi, we noticed you've been experiencing high distress levels. We wanted to check in and provide support.`}
+                    href={`mailto:${text(u.email)}?subject=AIDES-T2D Study Check-in&body=Hi, we noticed you've been experiencing high distress levels. We wanted to check in and provide support.`}
                     className="inline-flex h-10 items-center gap-2  bg-red-600 px-4 text-xs font-medium text-white shadow-sm transition hover:bg-red-700"
                   >
                     <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -301,20 +311,20 @@ export default async function AdminSafetyPage() {
           </div>
 
           <div className="divide-y divide-gray-100">
-            {highDistressResult.rows.map((u: any) => (
+            {highDistressResult.rows.map((u: Record<string, unknown>) => (
               <div
-                key={u.user_id}
+                key={text(u.user_id)}
                 className="flex flex-col gap-4 px-6 py-5 lg:flex-row lg:items-center lg:justify-between"
               >
                 <div className="flex min-w-0 items-center gap-3">
                   <div className="flex h-11 w-11 shrink-0 items-center justify-center  bg-amber-100 text-sm font-semibold text-amber-700">
-                    {u.email[0].toUpperCase()}
+                    {text(u.email).charAt(0).toUpperCase()}
                   </div>
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-medium text-gray-900">{u.email}</p>
+                    <p className="truncate text-sm font-medium text-gray-900">{text(u.email)}</p>
                     <p className="mt-0.5 text-xs text-gray-500">
-                      {u.high_count} high distress check-ins · Last{" "}
-                      {new Date(u.last_checkin).toLocaleDateString()}
+                      {text(u.high_count)} high distress check-ins · Last{" "}
+                      {new Date(text(u.last_checkin)).toLocaleDateString()}
                     </p>
                   </div>
                 </div>
@@ -322,16 +332,16 @@ export default async function AdminSafetyPage() {
                 <div className="flex flex-wrap items-center gap-6">
                   <div className="text-center">
                     <p className="text-xs text-gray-400">Avg Distress</p>
-                    <p className="text-lg font-semibold text-amber-600">{u.avg_distress}/10</p>
+                    <p className="text-lg font-semibold text-amber-600">{text(u.avg_distress)}/10</p>
                   </div>
 
                   <div className="text-center">
                     <p className="text-xs text-gray-400">Max</p>
-                    <p className="text-lg font-semibold text-gray-900">{u.max_distress}/10</p>
+                    <p className="text-lg font-semibold text-gray-900">{text(u.max_distress)}/10</p>
                   </div>
 
                   <a
-                    href={`mailto:${u.email}`}
+                    href={`mailto:${text(u.email)}`}
                     className="inline-flex h-10 items-center gap-2  border border-amber-200 bg-white px-4 text-xs font-medium text-amber-700 shadow-sm transition hover:bg-amber-50"
                   >
                     <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -393,7 +403,7 @@ export default async function AdminSafetyPage() {
               </thead>
 
               <tbody className="divide-y divide-gray-100">
-                {recentHighResult.rows.map((c: any, i: number) => (
+                {recentHighResult.rows.map((c, i) => (
                   <tr key={i} className="transition hover:bg-gray-50/70">
                     <td className="px-6 py-4 text-sm font-medium text-gray-900">
                       {c.email}
@@ -420,7 +430,9 @@ export default async function AdminSafetyPage() {
                     </td>
 
                     <td className="px-6 py-4 text-sm text-gray-500">
-                      {new Date(c.check_in_date).toLocaleDateString()}
+                      {c.check_in_date
+                        ? new Date(c.check_in_date).toLocaleDateString()
+                        : "—"}
                     </td>
 
                     <td className="px-6 py-4">

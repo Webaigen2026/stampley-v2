@@ -9,6 +9,8 @@ import {
   formatPostSurveyNumber,
   formatPostSurveyScore,
 } from "@/components/admin/post-surveys/post-survey-response-details"
+import { recordPhiPageViewOrThrow } from "@/lib/admin-phi-page"
+import { filterKeysFromFlags } from "@/lib/audit-metadata"
 
 export const dynamic = "force-dynamic"
 
@@ -99,6 +101,16 @@ export default async function AdminPostSurveysPage({
   }))
 
   const hasFilters = Boolean(q || phqSeverity || futureContact)
+
+  await recordPhiPageViewOrThrow({
+    action: "ADMIN_POST_SURVEY_LIST_VIEWED",
+    resourceType: "POST_SURVEY",
+    metadata: {
+      filterKeys: filterKeysFromFlags({
+        q: Boolean(q),
+      }),
+    },
+  })
 
   return (
     <main className="space-y-8">

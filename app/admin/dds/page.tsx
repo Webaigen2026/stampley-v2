@@ -1,6 +1,8 @@
 import { prisma } from "@/lib/prisma"
 import type { Prisma } from "@/lib/generated/prisma/client"
 import Link from "next/link"
+import { recordPhiPageViewOrThrow } from "@/lib/admin-phi-page"
+import { filterKeysFromFlags } from "@/lib/audit-metadata"
 
 export const dynamic = "force-dynamic"
 
@@ -163,6 +165,16 @@ export default async function AdminDDSPage({
     q16: row.q16,
     q17: row.q17,
   })) as Record<string, unknown>[]
+
+  await recordPhiPageViewOrThrow({
+    action: "ADMIN_DDS_LIST_VIEWED",
+    resourceType: "DDS",
+    metadata: {
+      filterKeys: filterKeysFromFlags({
+        q: Boolean(q),
+      }),
+    },
+  })
 
   return (
     <main className="space-y-8">

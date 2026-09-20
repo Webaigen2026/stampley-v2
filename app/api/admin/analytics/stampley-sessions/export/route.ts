@@ -6,8 +6,8 @@ import { prisma } from "@/lib/prisma"
 import { Prisma } from "@/lib/generated/prisma/client"
 import {
   buildCsv,
-  csvFileResponse,
   exportFilename,
+  finalizeAdminCsvExport,
   formatCsvTimestamp,
   requireAdminApi,
 } from "@/lib/admin-csv-export"
@@ -15,6 +15,7 @@ import {
   buildPrismaSessionFilter,
   parseAnalyticsFilters,
 } from "@/lib/admin-analytics-filters"
+import { filterKeysFromAnalytics } from "@/lib/audit-metadata"
 
 const HEADERS = [
   "user_email",
@@ -75,5 +76,15 @@ export async function GET(req: NextRequest) {
   ])
 
   const csv = buildCsv(HEADERS, rows)
-  return csvFileResponse(csv, exportFilename("stampley-sessions"))
+  return finalizeAdminCsvExport({
+    actor: admin.actor,
+    action: "ADMIN_STAMPLEY_SESSION_EXPORTED",
+    csv,
+    filename: exportFilename("stampley-sessions"),
+    metadata: {
+      filterKeys: filterKeysFromAnalytics(filters),
+      rowCount: rows.length,
+      identified: true,
+    },
+  })
 }

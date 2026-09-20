@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma"
+import { recordPhiPageViewOrThrow } from "@/lib/admin-phi-page"
 
 export const dynamic = "force-dynamic"
 
@@ -42,6 +43,11 @@ export default async function AdminCheckInsPage() {
     consecutive_high_distress_days: item.consecutiveHighDistressDays,
     created_at: item.createdAt,
   }))
+
+  await recordPhiPageViewOrThrow({
+    action: "ADMIN_CHECKIN_LIST_VIEWED",
+    resourceType: "CHECK_IN",
+  })
 
   return (
     <main className="space-y-8">

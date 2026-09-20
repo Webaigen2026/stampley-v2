@@ -5,6 +5,7 @@ import { baseAuthConfig, resolveAuthSecret } from "./auth.config";
 import { prisma } from "@/lib/prisma";
 import { createPrismaLoginThrottleStore } from "@/lib/auth-throttle";
 import { authorizeCredentials } from "@/lib/authorize-credentials";
+import { recordAdminLoginSucceededFailOpen } from "@/lib/audit-auth-events";
 
 function resolveTokenAuthVersion(authVersion: unknown): number | null {
   if (authVersion === undefined) return 0;
@@ -32,7 +33,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const password = String(credentials?.password ?? "");
         if (!email || !password) return null;
         try {
-          return await authorizeCredentials({
+          const user = await authorizeCredentials({
             email,
             password,
             request,
@@ -51,8 +52,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             },
             throttles: createPrismaLoginThrottleStore(prisma),
           });
-        } catch (e) {
-          console.error("[auth] authorize failed:", e);
+          if (user?.role === "ADMIN") {
+            await recordAdminLoginSucceededFailOpen(prisma, {
+              userId: user.id,
+              role: "ADMIN",
+            });
+          }
+          return user;
+        } catch {
+          console.error("[auth] authorize failed");
           return null;
         }
       },

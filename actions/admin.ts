@@ -5,6 +5,15 @@ import { auth } from "@/lib/auth"
 import { revalidatePath } from "next/cache"
 import bcrypt from "bcryptjs"
 import type { UserRole } from "@/lib/generated/prisma/client"
+import { actorFromSession, isAdminActor } from "@/lib/audit-admin"
+import { appendAuditEventFailOpen } from "@/lib/audit"
+import {
+  auditedCreateStudyKey,
+  auditedCreateUser,
+  auditedDeleteStudyKey,
+  auditedDeleteUser,
+  auditedToggleUserRole,
+} from "@/lib/admin-audited-mutations"
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -21,9 +30,19 @@ function normalizeEmail(email: string) {
   return email.trim().toLowerCase()
 }
 
+async function requireAdminActor() {
+  const session = await auth()
+  const actor = actorFromSession(session)
+  if (!isAdminActor(actor)) {
+    return { error: "Unauthorized" as const, actor: null }
+  }
+  return { actor, error: null }
+}
+
 export async function generateStudyKey(formData: FormData) {
   const session = await auth()
-  if (!session || session.user?.role !== "ADMIN") {
+  const actor = actorFromSession(session)
+  if (!isAdminActor(actor)) {
     return { error: "Unauthorized" }
   }
 
@@ -38,28 +57,42 @@ export async function generateStudyKey(formData: FormData) {
     return { error: "Please enter a valid email address" }
   }
 
-  let key: string
+  const key = generateKey()
+  let createdId: string
   try {
-    key = generateKey()
-    await prisma.studyKey.create({
-      data: {
+    const created = await prisma.$transaction((tx) =>
+      auditedCreateStudyKey(tx, actor, {
         key,
-        isUsed: false,
-        createdBy: session.user.email,
-      },
-    })
-    revalidatePath("/admin/keys")
-  } catch (error) {
-    console.error("[generateStudyKey]", error)
+        createdBy:
+          typeof session?.user?.email === "string" ? session.user.email : null,
+      })
+    )
+    createdId = created.id
+  } catch {
+    console.error("[admin] generateStudyKey failed")
     return { error: "Failed to generate key" }
   }
 
   try {
     const { sendStudyKeyEmail } = await import("@/lib/email")
     await sendStudyKeyEmail({ email, studyKey: key })
+    await appendAuditEventFailOpen(prisma, actor, {
+      action: "ADMIN_STUDY_KEY_EMAILED",
+      resourceType: "STUDY_KEY",
+      resourceId: createdId,
+      outcome: "SUCCESS",
+      metadata: { emailed: true },
+    })
     return { success: true, key, emailed: true as const }
-  } catch (emailError) {
-    console.error("[generateStudyKey] email failed:", emailError)
+  } catch {
+    console.error("[admin] generateStudyKey email failed")
+    await appendAuditEventFailOpen(prisma, actor, {
+      action: "ADMIN_STUDY_KEY_EMAILED",
+      resourceType: "STUDY_KEY",
+      resourceId: createdId,
+      outcome: "FAILED",
+      metadata: { emailed: false },
+    })
     return {
       success: true,
       key,
@@ -70,42 +103,48 @@ export async function generateStudyKey(formData: FormData) {
 }
 
 export async function deleteStudyKey(id: string) {
-  const session = await auth()
-  if (!session || session.user?.role !== "ADMIN") {
+  const gate = await requireAdminActor()
+  if (gate.error || !gate.actor) {
     return { error: "Unauthorized" }
   }
   try {
-    await prisma.studyKey.deleteMany({
-      where: { id, isUsed: false },
-    })
+    const result = await prisma.$transaction((tx) =>
+      auditedDeleteStudyKey(tx, gate.actor, id)
+    )
+    if (!result.deleted) {
+      return { error: "Failed to delete key" }
+    }
     revalidatePath("/admin/keys")
     return { success: true }
-  } catch (error) {
-    console.error("[deleteStudyKey]", error)
+  } catch {
+    console.error("[admin] deleteStudyKey failed")
     return { error: "Failed to delete key" }
   }
 }
 
 export async function deleteUser(id: string) {
-  const session = await auth()
-  if (!session || session.user?.role !== "ADMIN") {
+  const gate = await requireAdminActor()
+  if (gate.error || !gate.actor) {
     return { error: "Unauthorized" }
   }
   try {
-    await prisma.user.deleteMany({
-      where: { id },
-    })
+    const result = await prisma.$transaction((tx) =>
+      auditedDeleteUser(tx, gate.actor, id)
+    )
+    if (!result.deleted) {
+      return { error: "Failed to delete user" }
+    }
     revalidatePath("/admin/users")
     return { success: true }
-  } catch (error) {
-    console.error("[deleteUser]", error)
+  } catch {
+    console.error("[admin] deleteUser failed")
     return { error: "Failed to delete user" }
   }
 }
 
 export async function createUser(formData: FormData) {
-  const session = await auth()
-  if (!session || session.user?.role !== "ADMIN") {
+  const gate = await requireAdminActor()
+  if (gate.error || !gate.actor) {
     return { error: "Unauthorized" }
   }
   const email = formData.get("email") as string
@@ -113,39 +152,37 @@ export async function createUser(formData: FormData) {
   const role = formData.get("role") as string
   try {
     const hashedPassword = await bcrypt.hash(password, 10)
-    await prisma.user.create({
-      data: {
+    await prisma.$transaction((tx) =>
+      auditedCreateUser(tx, gate.actor, {
         email: email.toLowerCase(),
-        password: hashedPassword,
+        passwordHash: hashedPassword,
         role: role as UserRole,
-      },
-    })
+      })
+    )
     revalidatePath("/admin/users")
     return { success: true }
-  } catch (error) {
-    console.error("[createUser]", error)
+  } catch {
+    console.error("[admin] createUser failed")
     return { error: "Failed to create user" }
   }
 }
 
 export async function toggleUserRole(id: string, currentRole: string) {
-  const session = await auth()
-  if (!session || session.user?.role !== "ADMIN") {
+  const gate = await requireAdminActor()
+  if (gate.error || !gate.actor) {
     return { error: "Unauthorized" }
   }
-  const newRole: UserRole = currentRole === "ADMIN" ? "PARTICIPANT" : "ADMIN"
   try {
-    await prisma.user.updateMany({
-      where: { id },
-      data: {
-        role: newRole,
-        authVersion: { increment: 1 },
-      },
-    })
+    const result = await prisma.$transaction((tx) =>
+      auditedToggleUserRole(tx, gate.actor, { id, currentRole })
+    )
+    if (!("newRole" in result)) {
+      return { error: "Failed to update role" }
+    }
     revalidatePath("/admin/users")
-    return { success: true, newRole }
-  } catch (error) {
-    console.error("[toggleUserRole]", error)
+    return { success: true, newRole: result.newRole }
+  } catch {
+    console.error("[admin] toggleUserRole failed")
     return { error: "Failed to update role" }
   }
 }

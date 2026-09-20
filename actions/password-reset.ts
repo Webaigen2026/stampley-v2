@@ -6,6 +6,7 @@ import {
   PasswordResetRejected,
   applyVerifiedPasswordReset,
 } from "@/lib/auth-throttle"
+import { recordPasswordResetCompletedFailOpen } from "@/lib/audit-auth-events"
 import {
   createPrismaPasswordResetIpThrottleStore,
   createPrismaPasswordResetTokenIssuer,
@@ -72,9 +73,19 @@ export async function resetPassword(formData: FormData) {
     const bcrypt = await import("bcryptjs")
     const hashedPassword = await bcrypt.hash(password, 10)
 
+    const preview = await prisma.passwordResetToken.findFirst({
+      where: { tokenHash, expiresAt: { gt: new Date() } },
+      select: { userId: true },
+    })
+
     await prisma.$transaction(async (tx) => {
       await applyVerifiedPasswordReset(tx, { tokenHash, hashedPassword })
     })
+
+    await recordPasswordResetCompletedFailOpen(
+      prisma,
+      preview?.userId ?? null
+    )
 
     return { success: true }
 
@@ -82,7 +93,7 @@ export async function resetPassword(formData: FormData) {
     if (error instanceof PasswordResetRejected) {
       return { error: error.message }
     }
-    console.error("[resetPassword]", error)
+    console.error("[auth] password reset completion failed")
     return { error: "Something went wrong. Please try again." }
   }
 }

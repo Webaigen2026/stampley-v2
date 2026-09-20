@@ -12,6 +12,8 @@ import {
   parseAnalyticsFilters,
   STUDY_DOMAINS,
 } from "@/lib/admin-analytics-filters"
+import { recordPhiPageViewOrThrow } from "@/lib/admin-phi-page"
+import { filterKeysFromAnalytics } from "@/lib/audit-metadata"
 
 export const dynamic = "force-dynamic"
 
@@ -304,6 +306,14 @@ export default async function AdminAnalyticsPage({
   const participants = participantResult.map(serializeAnalyticsRow)
   const highStressRows = highStressResult.map(serializeAnalyticsRow)
   const engagementRows = engagementResult.map(serializeAnalyticsRow)
+
+  await recordPhiPageViewOrThrow({
+    action: "ADMIN_ANALYTICS_VIEWED",
+    resourceType: "ANALYTICS",
+    metadata: {
+      filterKeys: filterKeysFromAnalytics(filters),
+    },
+  })
 
   return (
     <main className="space-y-8">

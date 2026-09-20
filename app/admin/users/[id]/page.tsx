@@ -7,6 +7,7 @@ import {
   PostSurveyResponseDetails,
   PostSurveySummaryCards,
 } from "@/components/admin/post-surveys/post-survey-response-details"
+import { recordPhiPageViewOrThrow } from "@/lib/admin-phi-page"
 
 export const dynamic = "force-dynamic"
 
@@ -231,6 +232,17 @@ export default async function AdminUserProfilePage({
       check_in_date: session.checkInSubmission?.checkInDate ?? null,
     })
   )
+
+  await recordPhiPageViewOrThrow({
+    action: "ADMIN_PARTICIPANT_PROFILE_VIEWED",
+    resourceType: "USER",
+    resourceId: user.id,
+    subjectUserId: user.id,
+    metadata: {
+      includesPhqItems: true,
+      includesTranscripts: true,
+    },
+  })
 
   return (
     <main className="space-y-8">
@@ -708,7 +720,7 @@ function SectionCard({
   )
 }
 
-function StatCard({ label, value }: { label: string; value: any }) {
+function StatCard({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="border border-slate-200 bg-white p-5">
       <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
@@ -719,7 +731,7 @@ function StatCard({ label, value }: { label: string; value: any }) {
   )
 }
 
-function InfoRow({ label, value }: { label: string; value: any }) {
+function InfoRow({ label, value }: { label: string; value: unknown }) {
   return (
     <div className="border border-slate-100 bg-slate-50 px-4 py-3">
       <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">

@@ -5,6 +5,8 @@ import { AddUserForm } from "@/components/admin/add-user-form"
 import { UsersTableToolbar } from "@/components/admin/users/users-table-toolbar"
 import { UsersTable } from "@/components/admin/users/users-table"
 import { UsersPagination } from "@/components/admin/users/users-pagination"
+import { recordAdminPageView } from "@/lib/audit-admin"
+import { filterKeysFromFlags } from "@/lib/audit-metadata"
 
 export const dynamic = "force-dynamic"
 
@@ -85,6 +87,17 @@ export default async function AdminUsersPage({
   }))
 
   const totalPages = Math.max(Math.ceil(totalUsers / pageSize), 1)
+
+  await recordAdminPageView({
+    policy: "fail-open",
+    action: "ADMIN_USER_DIRECTORY_VIEWED",
+    resourceType: "USER_DIRECTORY",
+    metadata: {
+      page,
+      pageSize,
+      filterKeys: filterKeysFromFlags({ q: Boolean(q) }),
+    },
+  })
 
   return (
     <div className="space-y-8">

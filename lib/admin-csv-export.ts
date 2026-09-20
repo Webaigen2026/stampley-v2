@@ -1,5 +1,22 @@
 import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
+import { prisma } from "@/lib/prisma"
+import {
+  createAuditRequestId,
+  type AuditActor,
+} from "@/lib/audit"
+import {
+  actorFromSession,
+  persistExportAuditOrThrow,
+  recordExportDeniedFailOpen,
+} from "@/lib/audit-admin"
+import { respondWithAuditedCsv } from "@/lib/admin-export-response"
+
+export {
+  csvFileResponse,
+  genericExportFailureResponse,
+  respondWithAuditedCsv,
+} from "@/lib/admin-export-response"
 
 export function escapeCsvValue(value: unknown): string {
   if (value == null) return ""
@@ -16,15 +33,6 @@ export function buildCsv(headers: string[], rows: unknown[][]): string {
     ...rows.map((row) => row.map(escapeCsvValue).join(",")),
   ]
   return lines.join("\n")
-}
-
-export function csvFileResponse(csv: string, filename: string): Response {
-  return new Response(csv, {
-    headers: {
-      "Content-Type": "text/csv; charset=utf-8",
-      "Content-Disposition": `attachment; filename="${filename}"`,
-    },
-  })
 }
 
 export function exportFilename(prefix: string): string {
@@ -52,8 +60,10 @@ export function formatCsvBoolean(value: unknown): string {
   return ""
 }
 
-export async function requireAdminApi():
-  Promise<{ ok: true } | { ok: false; response: NextResponse }> {
+export async function requireAdminApi(): Promise<
+  | { ok: true; actor: AuditActor }
+  | { ok: false; response: NextResponse }
+> {
   const session = await auth()
   if (!session?.user?.id) {
     return {
@@ -62,10 +72,43 @@ export async function requireAdminApi():
     }
   }
   if (session.user.role !== "ADMIN") {
+    await recordExportDeniedFailOpen(prisma, session)
     return {
       ok: false,
       response: NextResponse.json({ error: "Forbidden" }, { status: 403 }),
     }
   }
-  return { ok: true }
+  const actor = actorFromSession(session)
+  if (!actor) {
+    return {
+      ok: false,
+      response: NextResponse.json({ error: "Unauthorized" }, { status: 401 }),
+    }
+  }
+  return { ok: true, actor }
+}
+
+export async function finalizeAdminCsvExport(args: {
+  actor: AuditActor
+  action:
+    | "ADMIN_CHECKIN_EXPORTED"
+    | "ADMIN_HIGH_STRESS_EXPORTED"
+    | "ADMIN_STAMPLEY_SESSION_EXPORTED"
+  csv: string
+  filename: string
+  metadata: unknown
+}): Promise<Response> {
+  const requestId = createAuditRequestId()
+  return respondWithAuditedCsv({
+    csv: args.csv,
+    filename: args.filename,
+    persistAudit: () =>
+      persistExportAuditOrThrow({
+        db: prisma,
+        actor: args.actor,
+        action: args.action,
+        requestId,
+        metadata: args.metadata,
+      }),
+  })
 }

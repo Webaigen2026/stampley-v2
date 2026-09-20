@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma"
 import { CheckinActivityChart } from "@/components/charts/checkin-activity-chart"
 import { DistressChart } from "@/components/charts/distress-chart"
 import Link from "next/link"
+import { recordAdminPageView } from "@/lib/audit-admin"
 
 export const dynamic = "force-dynamic"
 
@@ -99,6 +100,12 @@ export default async function AdminDashboardPage() {
   const participants = parseInt(String(stats.participants), 10) || 0
   const totalCheckins = parseInt(String(stats.totalCheckins), 10) || 0
   const safetyAlerts = parseInt(String(stats.safetyAlerts), 10) || 0
+
+  await recordAdminPageView({
+    policy: "fail-open",
+    action: "ADMIN_DASHBOARD_VIEWED",
+    resourceType: "ADMIN_DASHBOARD",
+  })
 
   return (
     <div className="min-h-screen ">

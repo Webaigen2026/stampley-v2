@@ -6,8 +6,8 @@ import { prisma } from "@/lib/prisma"
 import { Prisma } from "@/lib/generated/prisma/client"
 import {
   buildCsv,
-  csvFileResponse,
   exportFilename,
+  finalizeAdminCsvExport,
   formatCsvBoolean,
   formatCsvDate,
   formatCsvTimestamp,
@@ -17,6 +17,7 @@ import {
   buildPrismaHighStressTableFilter,
   parseAnalyticsFilters,
 } from "@/lib/admin-analytics-filters"
+import { filterKeysFromAnalytics } from "@/lib/audit-metadata"
 
 const HEADERS = [
   "user_email",
@@ -76,5 +77,15 @@ export async function GET(req: NextRequest) {
   ])
 
   const csv = buildCsv(HEADERS, rows)
-  return csvFileResponse(csv, exportFilename("stampley-high-stress"))
+  return finalizeAdminCsvExport({
+    actor: admin.actor,
+    action: "ADMIN_HIGH_STRESS_EXPORTED",
+    csv,
+    filename: exportFilename("stampley-high-stress"),
+    metadata: {
+      filterKeys: filterKeysFromAnalytics(filters),
+      rowCount: rows.length,
+      identified: true,
+    },
+  })
 }

@@ -6,6 +6,8 @@ import { GenerateStudyKeyForm } from "@/components/admin/keys/generate-study-key
 import { KeysTableToolbar } from "@/components/admin/keys/keys-table-toolbar"
 import { KeysTable } from "@/components/admin/keys/keys-table"
 import { KeysPagination } from "@/components/admin/keys/keys-pagination"
+import { recordAdminPageView } from "@/lib/audit-admin"
+import { filterKeysFromFlags } from "@/lib/audit-metadata"
 
 export const dynamic = "force-dynamic"
 
@@ -105,6 +107,17 @@ export default async function AdminKeysPage({
   }))
 
   const totalPages = Math.max(Math.ceil(filteredTotal / pageSize), 1)
+
+  await recordAdminPageView({
+    policy: "fail-open",
+    action: "ADMIN_STUDY_KEY_LIST_VIEWED",
+    resourceType: "STUDY_KEY",
+    metadata: {
+      page,
+      pageSize,
+      filterKeys: filterKeysFromFlags({ q: Boolean(q) }),
+    },
+  })
 
   return (
     <div className="space-y-8">

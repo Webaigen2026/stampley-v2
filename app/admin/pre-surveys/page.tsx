@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma"
+import { recordPhiPageViewOrThrow } from "@/lib/admin-phi-page"
 
 export const dynamic = "force-dynamic"
 
@@ -42,6 +43,11 @@ export default async function AdminPreSurveysPage() {
       u.preSurveyResponse?.needsMentalHealthFollowup ?? null,
     completed_at: u.preSurveyResponse?.completedAt ?? null,
   }))
+
+  await recordPhiPageViewOrThrow({
+    action: "ADMIN_PRE_SURVEY_LIST_VIEWED",
+    resourceType: "PRE_SURVEY",
+  })
 
   return (
     <main className="space-y-8">

@@ -7,6 +7,8 @@ import {
 } from "@/lib/admin-analytics-filters"
 import { mapStampleySessionRow } from "@/lib/admin-stampley-sessions"
 import { StampleySessionCard } from "@/components/admin/stampley-chats/stampley-session-card"
+import { recordPhiPageViewOrThrow } from "@/lib/admin-phi-page"
+import { filterKeysFromAnalytics } from "@/lib/audit-metadata"
 
 export const dynamic = "force-dynamic"
 
@@ -47,6 +49,15 @@ export default async function AdminStampleyChatsPage({
   `
 
   const sessions = result.map(mapStampleySessionRow)
+
+  await recordPhiPageViewOrThrow({
+    action: "ADMIN_STAMPLEY_TRANSCRIPT_LIST_VIEWED",
+    resourceType: "STAMPLEY_SESSION",
+    metadata: {
+      includesTranscripts: true,
+      filterKeys: filterKeysFromAnalytics(filters),
+    },
+  })
 
   return (
     <main className="space-y-8">
