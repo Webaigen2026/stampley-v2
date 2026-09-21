@@ -14,23 +14,24 @@ export const PRE_SURVEY_STEP_TITLES = [
 
 export default function PreSurveySidebar({
   currentStep,
+  collapsed = false,
 }: {
   currentStep: number
+  collapsed?: boolean
 }) {
   return (
     <nav
       aria-label="Pre-survey progress"
-      className="
-        w-full
-        max-w-[270px]
+      className={`
         font-['Outfit',system-ui,sans-serif]
-      "
+        ${collapsed ? "w-[44px]" : "w-full max-w-[270px]"}
+      `}
     >
       {/* =====================================================
           HEADER
       ====================================================== */}
 
-      <div className="mb-7">
+      <div className={collapsed ? "sr-only" : "mb-7"}>
         <p
           className="
             mt-3
@@ -99,11 +100,14 @@ export default function PreSurveySidebar({
               <li
                 key={title}
                 aria-current={active ? "step" : undefined}
+                aria-label={`Step ${stepNumber}: ${title}${
+                  completed ? ", completed" : active ? ", current" : ""
+                }`}
                 className={`
                   relative
                   flex
                   items-center
-                  gap-4
+                  ${collapsed ? "justify-center gap-0" : "gap-4"}
                   py-3
                   ${index === 0 ? "pt-0" : ""}
                   ${
@@ -202,6 +206,7 @@ export default function PreSurveySidebar({
                     py-2.5
                     transition-all
                     duration-300
+                    ${collapsed ? "sr-only" : ""}
                     ${
                       active
                         ? "font-medium text-blue-900"
