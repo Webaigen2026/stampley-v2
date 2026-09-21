@@ -24,6 +24,8 @@ import {
   shapeAnalyticsSafetyRows,
   surveyViewCapabilities,
 } from "@/lib/admin-phi-minimization"
+import { mapAnalyticsEngagementListRow } from "@/lib/admin-stampley-summary"
+import { StampleySummaryCell } from "@/components/admin/analytics/stampley-summary-cell"
 
 export const dynamic = "force-dynamic"
 
@@ -288,10 +290,10 @@ export default async function AdminAnalyticsPage({
     caps.canViewIdentifiedAnalytics
       ? prisma.$queryRaw<Array<Record<string, unknown>>>`
       SELECT
+        s.id,
         u.email,
         s.user_message_count,
         s.assistant_message_count,
-        ${caps.canViewTranscripts ? Prisma.sql`s.summary` : Prisma.sql`NULL AS summary`},
         c.check_in_date AS linked_check_in_date,
         s.created_at
       FROM stampley_chat_sessions s
@@ -339,13 +341,14 @@ export default async function AdminAnalyticsPage({
   const engagementRows = shapeAnalyticsEngagementRows(
     engagementResult.map(serializeAnalyticsRow),
     caps
-  )
+  ).map(mapAnalyticsEngagementListRow)
 
   await recordPhiPageViewOrThrow({
     action: "ADMIN_ANALYTICS_VIEWED",
     resourceType: "ANALYTICS",
     metadata: {
       filterKeys: filterKeysFromAnalytics(filters),
+      includesNarratives: false,
     },
   })
 
@@ -735,7 +738,7 @@ export default async function AdminAnalyticsPage({
               ) : (
                 engagementRows.map((row, i) => (
                   <tr
-                    key={`${row.email}-${row.created_at}-${i}`}
+                    key={row.id || `${row.email}-${row.created_at}-${i}`}
                     className="border-b border-slate-100 hover:bg-slate-50/80"
                   >
                     <td className="px-5 py-4 font-medium text-slate-900">
@@ -752,8 +755,8 @@ export default async function AdminAnalyticsPage({
                     </td>
                     {caps.canViewTranscripts ? (
                     <td className="max-w-md px-5 py-4 text-slate-600">
-                      {row.summary ? (
-                        <span className="line-clamp-3">{String(row.summary)}</span>
+                      {row.id ? (
+                        <StampleySummaryCell sessionId={row.id} />
                       ) : (
                         <span className="italic text-slate-400">No summary</span>
                       )}
