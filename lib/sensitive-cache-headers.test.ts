@@ -274,8 +274,10 @@ describe("HIPAA-5.4 client fetch and Auth.js wrapping", () => {
 
   it("does not disable public-site caching globally", () => {
     const nextConfig = read("next.config.ts")
+    assert.doesNotMatch(nextConfig, /Cache-Control/)
     assert.doesNotMatch(nextConfig, /no-store/)
-    assert.doesNotMatch(nextConfig, /headers\s*:\s*/)
+    assert.doesNotMatch(nextConfig, /\bPragma\b/)
+    assert.doesNotMatch(nextConfig, /\bExpires\b/)
     const middleware = read("middleware.ts")
     assert.doesNotMatch(middleware, /matcher:\s*\[\s*"\/:path\*"\s*\]/)
   })
