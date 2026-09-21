@@ -5,11 +5,15 @@ import { dirname, join } from "node:path"
 import { fileURLToPath } from "node:url"
 import { isCheckInDomain } from "./check-in-subscale"
 import {
+  authoritativeDomainFromConflictRow,
   getDomainForStudyWeek,
   getStudyWeekForNextCheckIn,
   getUsedDomainsFromPreviousWeeks,
   isDomainSelectable,
   isWeeklyDomainLocked,
+  MISSING_WEEKLY_FOCUS_MESSAGE,
+  PRIOR_WEEK_DOMAIN_REUSE_MESSAGE,
+  resolveSubmitWeeklyDomain,
   STUDY_DOMAINS,
   type WeeklyDomainRow,
 } from "./weekly-domain-progress"
@@ -102,6 +106,132 @@ describe("weekly-domain progress helpers", () => {
     assert.equal(getStudyWeekForNextCheckIn(5), 2)
     assert.equal(getStudyWeekForNextCheckIn(19), 4)
     assert.equal(getStudyWeekForNextCheckIn(20), 4)
+  })
+})
+
+describe("resolveSubmitWeeklyDomain submit integrity", () => {
+  const week1Emotional: WeeklyDomainRow[] = [
+    { week_number: 1, domain: "Emotional" },
+  ]
+
+  it("uses the existing current-week domain and ignores a differing client request", () => {
+    const result = resolveSubmitWeeklyDomain({
+      weekNumber: 1,
+      weeklyRows: week1Emotional,
+      requestedDomain: "Regimen",
+    })
+    assert.deepEqual(result, {
+      ok: true,
+      domain: "Emotional",
+      shouldPersist: false,
+    })
+  })
+
+  it("ignores invalid or missing client domains when a current-week row exists", () => {
+    for (const requestedDomain of ["Fake", "", null, undefined]) {
+      const result = resolveSubmitWeeklyDomain({
+        weekNumber: 1,
+        weeklyRows: week1Emotional,
+        requestedDomain,
+      })
+      assert.deepEqual(result, {
+        ok: true,
+        domain: "Emotional",
+        shouldPersist: false,
+      })
+    }
+  })
+
+  it("rejects prior-week reuse when the current week has no row", () => {
+    const result = resolveSubmitWeeklyDomain({
+      weekNumber: 2,
+      weeklyRows: week1Emotional,
+      requestedDomain: "Emotional",
+    })
+    assert.deepEqual(result, {
+      ok: false,
+      error: PRIOR_WEEK_DOMAIN_REUSE_MESSAGE,
+    })
+  })
+
+  it("accepts a valid unused domain when the current week has no row", () => {
+    const result = resolveSubmitWeeklyDomain({
+      weekNumber: 2,
+      weeklyRows: week1Emotional,
+      requestedDomain: "Regimen",
+    })
+    assert.deepEqual(result, {
+      ok: true,
+      domain: "Regimen",
+      shouldPersist: true,
+    })
+  })
+
+  it("rejects invalid or missing domains when the current week has no row", () => {
+    for (const requestedDomain of ["Fake", "", null, undefined, "emotional"]) {
+      const result = resolveSubmitWeeklyDomain({
+        weekNumber: 2,
+        weeklyRows: week1Emotional,
+        requestedDomain,
+      })
+      assert.deepEqual(result, {
+        ok: false,
+        error: MISSING_WEEKLY_FOCUS_MESSAGE,
+      })
+    }
+  })
+
+  it("does not allow the current-week domain to change after an authoritative row exists", () => {
+    const first = resolveSubmitWeeklyDomain({
+      weekNumber: 2,
+      weeklyRows: week1Emotional,
+      requestedDomain: "Regimen",
+    })
+    assert.equal(first.ok, true)
+    if (!first.ok) throw new Error("unreachable")
+
+    const afterPersist: WeeklyDomainRow[] = [
+      ...week1Emotional,
+      { week_number: 2, domain: first.domain },
+    ]
+    const second = resolveSubmitWeeklyDomain({
+      weekNumber: 2,
+      weeklyRows: afterPersist,
+      requestedDomain: "Physician",
+    })
+    assert.deepEqual(second, {
+      ok: true,
+      domain: "Regimen",
+      shouldPersist: false,
+    })
+  })
+
+  it("treats a unique-conflict winner as the stored domain, not the later request", () => {
+    assert.equal(authoritativeDomainFromConflictRow("Emotional"), "Emotional")
+    assert.equal(authoritativeDomainFromConflictRow("Regimen"), "Regimen")
+    assert.equal(authoritativeDomainFromConflictRow("Physician"), "Physician")
+    assert.equal(authoritativeDomainFromConflictRow("Interpersonal"), "Interpersonal")
+    assert.equal(authoritativeDomainFromConflictRow("Fake"), null)
+    assert.equal(authoritativeDomainFromConflictRow(""), null)
+    assert.equal(authoritativeDomainFromConflictRow(null), null)
+  })
+})
+
+describe("submit weekly-domain persistence wiring", () => {
+  it("creates UserWeeklyDomain in the same transaction and re-reads after unique conflict", () => {
+    const source = read("app/api/check-in/submit/route.ts")
+    assert.match(source, /resolveSubmitWeeklyDomain/)
+    assert.match(source, /tx\.userWeeklyDomain\.create/)
+    assert.match(source, /authoritativeDomainFromConflictRow/)
+    assert.match(source, /userId_weekNumber/)
+    assert.match(
+      source,
+      /domain,\s*subscale,\s*distress/
+    )
+    assert.doesNotMatch(
+      source,
+      /tx\.userWeeklyDomain\.upsert/
+    )
   })
 })
 

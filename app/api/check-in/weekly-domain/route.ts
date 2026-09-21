@@ -5,6 +5,7 @@ import { NextRequest } from "next/server"
 import { auth } from "@/lib/auth"
 import { jsonWithSensitiveCache } from "@/lib/sensitive-cache-headers"
 import { prisma } from "@/lib/prisma"
+import { resolveCheckInMutationAccess } from "@/lib/check-in-mutation-authz"
 import { isCheckInDomain } from "@/lib/check-in-subscale"
 import type { Domain } from "@/store/checkin-store"
 import {
@@ -46,9 +47,11 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   const session = await auth()
-  if (!session?.user?.id) {
-    return jsonWithSensitiveCache({ error: "Unauthorized" }, { status: 401 })
+  const access = resolveCheckInMutationAccess(session)
+  if (!access.ok) {
+    return jsonWithSensitiveCache({ error: access.error }, { status: access.status })
   }
+  const userId = access.userId
 
   try {
     const body = await req.json().catch(() => ({}))
@@ -58,9 +61,9 @@ export async function POST(req: NextRequest) {
       return jsonWithSensitiveCache({ error: "Invalid domain." }, { status: 400 })
     }
 
-    const totalCompleted = await fetchUserTotalCheckins(session.user.id)
+    const totalCompleted = await fetchUserTotalCheckins(userId)
     const currentWeek = getStudyWeekForNextCheckIn(totalCompleted)
-    const weeklyRows = await fetchUserWeeklyDomainRows(session.user.id)
+    const weeklyRows = await fetchUserWeeklyDomainRows(userId)
     const currentWeekDomain = getDomainForStudyWeek(weeklyRows, currentWeek)
     const usedPreviousDomains = getUsedDomainsFromPreviousWeeks(
       weeklyRows,
@@ -90,12 +93,12 @@ export async function POST(req: NextRequest) {
       prisma.userWeeklyDomain.upsert({
         where: {
           userId_weekNumber: {
-            userId: session.user.id,
+            userId,
             weekNumber: currentWeek,
           },
         },
         create: {
-          userId: session.user.id,
+          userId,
           weekNumber: currentWeek,
           domain,
         },
@@ -105,9 +108,9 @@ export async function POST(req: NextRequest) {
         },
       }),
       prisma.userStudyProgress.upsert({
-        where: { userId: session.user.id },
+        where: { userId },
         create: {
-          userId: session.user.id,
+          userId,
           currentWeek,
           totalCheckins: totalCompleted,
         },

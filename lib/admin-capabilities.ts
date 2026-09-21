@@ -72,6 +72,10 @@ export function isStaffRole(value: unknown): value is StaffRole {
   return typeof value === "string" && (STAFF_ROLES as readonly string[]).includes(value)
 }
 
+export function isParticipantRole(value: unknown): value is "PARTICIPANT" {
+  return value === "PARTICIPANT"
+}
+
 export function hasCapability(
   role: unknown,
   capability: AdminCapability

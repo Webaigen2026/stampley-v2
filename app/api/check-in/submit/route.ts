@@ -6,14 +6,18 @@ import { auth } from "@/lib/auth"
 import { jsonWithSensitiveCache } from "@/lib/sensitive-cache-headers"
 import { prisma } from "@/lib/prisma"
 import { Prisma } from "@/lib/generated/prisma/client"
-import { getSubscaleForDay } from "@/lib/check-in-subscale"
+import { getSubscaleForDay, isCheckInDomain } from "@/lib/check-in-subscale"
 import {
   computeStudyWeekAndDayFromCheckInNumber,
   STUDY_COMPLETE_MESSAGE,
   STUDY_TOTAL_CHECKINS,
 } from "@/lib/check-in-utils"
-import { resolveWeeklyDomainForUser } from "@/lib/resolve-weekly-domain"
-import { STUDY_DOMAINS } from "@/lib/weekly-domain-progress"
+import { resolveCheckInMutationAccess } from "@/lib/check-in-mutation-authz"
+import { fetchUserWeeklyDomainRows } from "@/lib/resolve-weekly-domain"
+import {
+  authoritativeDomainFromConflictRow,
+  resolveSubmitWeeklyDomain,
+} from "@/lib/weekly-domain-progress"
 import { validateCheckInSubmitBody } from "@/lib/check-in-submit-validation"
 
 const DUPLICATE_CHECK_IN_MESSAGE =
@@ -43,9 +47,11 @@ function isUniqueViolation(error: unknown): boolean {
 
 export async function POST(req: NextRequest) {
   const session = await auth()
-  if (!session?.user?.id) {
-    return jsonWithSensitiveCache({ error: "Unauthorized" }, { status: 401 })
+  const access = resolveCheckInMutationAccess(session)
+  if (!access.ok) {
+    return jsonWithSensitiveCache({ error: access.error }, { status: access.status })
   }
+  const userId = access.userId
 
   let body: unknown
   try {
@@ -77,22 +83,10 @@ export async function POST(req: NextRequest) {
         ? (body as { domain?: unknown }).domain
         : undefined
 
-    const { domain } = await resolveWeeklyDomainForUser(
-      session.user.id,
-      requestedDomain
-    )
-
-    if (!domain || !STUDY_DOMAINS.includes(domain)) {
-      return jsonWithSensitiveCache(
-        { error: "Weekly focus is missing. Open Weekly Domain and continue again." },
-        { status: 400 }
-      )
-    }
-
     const existingToday = await prisma.$queryRaw<Array<{ id: string }>>`
       SELECT id
       FROM check_in_submissions
-      WHERE user_id = ${session.user.id}
+      WHERE user_id = ${userId}
         AND check_in_date = CURRENT_DATE
       LIMIT 1
     `
@@ -105,7 +99,7 @@ export async function POST(req: NextRequest) {
     }
 
     const progress = await prisma.userStudyProgress.findUnique({
-      where: { userId: session.user.id },
+      where: { userId },
       select: { totalCheckins: true },
     })
 
@@ -118,12 +112,73 @@ export async function POST(req: NextRequest) {
     const checkInNumber = totalCheckins + 1
     const { weekNumber, dayNumber } =
       computeStudyWeekAndDayFromCheckInNumber(checkInNumber)
-    const subscale = getSubscaleForDay(domain, dayNumber)
+    const weeklyRows = await fetchUserWeeklyDomainRows(userId)
+    const domainDecision = resolveSubmitWeeklyDomain({
+      weekNumber,
+      weeklyRows,
+      requestedDomain,
+    })
 
-    const { checkInSubmissionId, needsSafetyEscalation } = await prisma.$transaction(
+    if (!domainDecision.ok) {
+      return jsonWithSensitiveCache(
+        { error: domainDecision.error },
+        { status: 400 }
+      )
+    }
+
+    const { checkInSubmissionId, needsSafetyEscalation, subscale } = await prisma.$transaction(
       async (tx) => {
+        let domain = domainDecision.domain
+
+        if (domainDecision.shouldPersist) {
+          try {
+            await tx.userWeeklyDomain.create({
+              data: {
+                userId,
+                weekNumber,
+                domain,
+              },
+            })
+          } catch (persistError) {
+            if (!isUniqueViolation(persistError)) {
+              throw persistError
+            }
+            const winner = await tx.userWeeklyDomain.findUnique({
+              where: {
+                userId_weekNumber: {
+                  userId,
+                  weekNumber,
+                },
+              },
+              select: { domain: true },
+            })
+            const authoritative = authoritativeDomainFromConflictRow(
+              winner?.domain
+            )
+            if (!authoritative) {
+              throw persistError
+            }
+            domain = authoritative
+          }
+        } else {
+          const existingWeek = await tx.userWeeklyDomain.findUnique({
+            where: {
+              userId_weekNumber: {
+                userId,
+                weekNumber,
+              },
+            },
+            select: { domain: true },
+          })
+          if (isCheckInDomain(existingWeek?.domain)) {
+            domain = existingWeek.domain
+          }
+        }
+
+        const subscale = getSubscaleForDay(domain, dayNumber)
+
         const prev = await tx.checkInSubmission.findFirst({
-          where: { userId: session.user.id },
+          where: { userId },
           orderBy: { createdAt: "desc" },
           select: {
             distress: true,
@@ -142,7 +197,7 @@ export async function POST(req: NextRequest) {
         try {
           created = await tx.checkInSubmission.create({
             data: {
-              userId: session.user.id,
+              userId,
               domain,
               subscale,
               distress,
@@ -166,9 +221,9 @@ export async function POST(req: NextRequest) {
         }
 
         await tx.userStudyProgress.upsert({
-          where: { userId: session.user.id },
+          where: { userId },
           create: {
-            userId: session.user.id,
+            userId,
             currentWeek: weekNumber,
             totalCheckins: 1,
             consecutiveHighDistressDays: consecutiveDays,
@@ -184,12 +239,13 @@ export async function POST(req: NextRequest) {
         await tx.$executeRaw`
           UPDATE user_study_progress
           SET last_checkin_date = CURRENT_DATE
-          WHERE user_id = ${session.user.id}
+          WHERE user_id = ${userId}
         `
 
         return {
           checkInSubmissionId: created.id,
           needsSafetyEscalation,
+          subscale,
         }
       }
     )

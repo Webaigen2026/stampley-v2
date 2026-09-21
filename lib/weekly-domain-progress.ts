@@ -67,3 +67,57 @@ export function isDomainSelectable(
   }
   return true
 }
+
+export const MISSING_WEEKLY_FOCUS_MESSAGE =
+  "Weekly focus is missing. Open Weekly Domain and continue again."
+
+export const PRIOR_WEEK_DOMAIN_REUSE_MESSAGE =
+  "You already completed this domain in a previous week."
+
+export type ResolveSubmitWeeklyDomainResult =
+  | { ok: true; domain: Domain; shouldPersist: boolean }
+  | { ok: false; error: string }
+
+/**
+ * Authoritative weekly-domain decision for check-in submit.
+ * A stored current-week row always wins. Otherwise the requested domain
+ * may be accepted only if it is allowlisted and unused in a prior week.
+ */
+export function resolveSubmitWeeklyDomain(args: {
+  weekNumber: number
+  weeklyRows: WeeklyDomainRow[]
+  requestedDomain: unknown
+}): ResolveSubmitWeeklyDomainResult {
+  const stored = getDomainForStudyWeek(args.weeklyRows, args.weekNumber)
+  if (stored) {
+    return { ok: true, domain: stored, shouldPersist: false }
+  }
+
+  if (
+    !isCheckInDomain(args.requestedDomain) ||
+    !STUDY_DOMAINS.includes(args.requestedDomain)
+  ) {
+    return { ok: false, error: MISSING_WEEKLY_FOCUS_MESSAGE }
+  }
+
+  const usedPrevious = getUsedDomainsFromPreviousWeeks(
+    args.weeklyRows,
+    args.weekNumber
+  )
+  if (usedPrevious.includes(args.requestedDomain)) {
+    return { ok: false, error: PRIOR_WEEK_DOMAIN_REUSE_MESSAGE }
+  }
+
+  return {
+    ok: true,
+    domain: args.requestedDomain,
+    shouldPersist: true,
+  }
+}
+
+/** After a unique (userId, weekNumber) conflict, the stored row wins. */
+export function authoritativeDomainFromConflictRow(
+  domain: unknown
+): Domain | null {
+  return isCheckInDomain(domain) ? domain : null
+}
