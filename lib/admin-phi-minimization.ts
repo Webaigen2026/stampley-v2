@@ -240,7 +240,6 @@ export function postSurveySelect(caps: SurveyViewCapabilities) {
     susAnswers: caps.canViewClinicalSurveyScores,
     susScore: caps.canViewClinicalSurveyScores,
     stampleyFeedback: caps.canViewSurveyFreeText,
-    openReflection: caps.canViewSurveyFreeText,
     contactName: caps.canViewContactInformation,
     contactEmail: caps.canViewContactInformation,
     contactPhone: caps.canViewContactInformation,
@@ -266,7 +265,6 @@ export function mapPostSurveyListRow(
     susAnswers?: unknown
     susScore?: unknown
     stampleyFeedback?: unknown
-    openReflection?: string | null
     contactName?: string | null
     contactEmail?: string | null
     contactPhone?: string | null
@@ -297,7 +295,6 @@ export function mapPostSurveyListRow(
   }
   if (caps.canViewSurveyFreeText) {
     mapped.stampley_feedback = row.stampleyFeedback ?? null
-    mapped.open_reflection = row.openReflection ?? null
   }
   if (caps.canViewContactInformation) {
     mapped.contact_name = row.contactName ?? null

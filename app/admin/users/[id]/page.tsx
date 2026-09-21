@@ -46,6 +46,7 @@ export default async function AdminUserProfilePage({
   const canViewTranscripts = hasCapability(actor.role, "canViewTranscripts")
   const canViewContact = hasCapability(actor.role, "canViewContactInformation")
   const canViewClinical = hasCapability(actor.role, "canViewClinicalSurveyData")
+  const canViewSurveyFreeText = hasCapability(actor.role, "canViewSurveyFreeText")
   const { id } = await params
 
   const userRow = await prisma.user.findUnique({
@@ -124,6 +125,7 @@ export default async function AdminUserProfilePage({
     prisma.postSurveyResponse.findFirst({
       where: { userId: id, completedAt: { not: null } },
       select: {
+        id: canViewSurveyFreeText,
         ddsAnswers: canViewClinical,
         ddsScores: true,
         phqAnswers: canViewPhqItems,
@@ -132,7 +134,6 @@ export default async function AdminUserProfilePage({
         susAnswers: true,
         susScore: true,
         stampleyFeedback: canViewClinical,
-        openReflection: canViewClinical,
         futureResearchContact: true,
         contactName: canViewContact,
         contactEmail: canViewContact,
@@ -240,6 +241,9 @@ export default async function AdminUserProfilePage({
 
   const postSurvey = postSurveyRow
     ? {
+        ...(canViewSurveyFreeText && postSurveyRow.id
+          ? { id: postSurveyRow.id }
+          : {}),
         dds_answers: canViewClinical ? postSurveyRow.ddsAnswers : null,
         dds_scores: postSurveyRow.ddsScores,
         phq_answers: canViewPhqItems ? postSurveyRow.phqAnswers : null,
@@ -249,7 +253,6 @@ export default async function AdminUserProfilePage({
         sus_score:
           postSurveyRow.susScore != null ? Number(postSurveyRow.susScore) : null,
         stampley_feedback: canViewClinical ? postSurveyRow.stampleyFeedback : null,
-        open_reflection: canViewClinical ? postSurveyRow.openReflection : null,
         future_research_contact: postSurveyRow.futureResearchContact,
         contact_name: canViewContact ? postSurveyRow.contactName : null,
         contact_email: canViewContact ? postSurveyRow.contactEmail : null,
@@ -627,9 +630,15 @@ export default async function AdminUserProfilePage({
             <div className="mt-6">
               <PostSurveyResponseDetails
                 record={postSurvey}
+                responseId={
+                  canViewSurveyFreeText && postSurvey.id
+                    ? String(postSurvey.id)
+                    : undefined
+                }
                 summaryLabel="View detailed responses"
                 showPhqItems={canViewPhqItems}
                 showFreeText={canViewClinical}
+                showOpenReflection={canViewSurveyFreeText}
                 showContact={canViewContact}
               />
             </div>

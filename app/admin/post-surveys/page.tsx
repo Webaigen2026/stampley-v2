@@ -90,6 +90,7 @@ export default async function AdminPostSurveysPage({
       filterKeys: filterKeysFromFlags({
         q: Boolean(q),
       }),
+      includesNarratives: false,
     },
   })
 
@@ -318,9 +319,13 @@ export default async function AdminPostSurveysPage({
                       <td className="px-5 py-4">
                         <PostSurveyResponseDetails
                           record={row}
+                          responseId={
+                            caps.canViewSurveyFreeText ? String(row.id) : undefined
+                          }
                           showPhqItems={caps.canViewPhqItem9}
                           showClinicalScores={caps.canViewClinicalSurveyScores}
                           showFreeText={caps.canViewSurveyFreeText}
+                          showOpenReflection={caps.canViewSurveyFreeText}
                           showContact={caps.canViewContactInformation}
                         />
                       </td>

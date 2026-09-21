@@ -7,6 +7,7 @@ import {
   POST_SUS_QUESTIONS,
   POST_LIKERT_5_SCALE,
 } from "@/lib/post-survey-constants"
+import { PostSurveyReflectionCell } from "@/components/admin/post-surveys/post-survey-reflection-cell"
 
 export type PostSurveyResponseRecord = {
   dds_answers?: unknown
@@ -17,7 +18,6 @@ export type PostSurveyResponseRecord = {
   sus_answers?: unknown
   sus_score?: number | null
   stampley_feedback?: unknown
-  open_reflection?: string | null
   future_research_contact?: boolean | null
   contact_name?: string | null
   contact_email?: string | null
@@ -90,17 +90,21 @@ function formatText(value: string | null | undefined): string {
 
 export function PostSurveyResponseDetails({
   record,
+  responseId,
   summaryLabel = "View full response",
   showPhqItems = true,
   showClinicalScores = true,
   showFreeText = true,
+  showOpenReflection = false,
   showContact = true,
 }: {
   record: PostSurveyResponseRecord
+  responseId?: string
   summaryLabel?: string
   showPhqItems?: boolean
   showClinicalScores?: boolean
   showFreeText?: boolean
+  showOpenReflection?: boolean
   showContact?: boolean
 }) {
   const ddsAnswers = asJsonObject(record.dds_answers)
@@ -226,11 +230,9 @@ export function PostSurveyResponseDetails({
         </DetailBlock>
         ) : null}
 
-        {showFreeText ? (
+        {showOpenReflection && responseId ? (
         <DetailBlock title="Open Reflection">
-          <p className="text-sm leading-6 text-slate-700 whitespace-pre-wrap">
-            {formatText(record.open_reflection)}
-          </p>
+          <PostSurveyReflectionCell responseId={responseId} />
         </DetailBlock>
         ) : null}
 
