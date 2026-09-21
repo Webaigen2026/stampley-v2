@@ -19,6 +19,7 @@ export const ALLOWED_AUDIT_METADATA_KEYS = [
   "exportMode",
   "includesPhqItems",
   "includesTranscripts",
+  "includesNarratives",
   "page",
   "pageSize",
 ] as const
@@ -35,6 +36,7 @@ export type AuditMetadata = {
   exportMode?: "CODED"
   includesPhqItems?: boolean
   includesTranscripts?: boolean
+  includesNarratives?: boolean
   page?: number
   pageSize?: number
 }
@@ -132,6 +134,7 @@ export function sanitizeAuditMetadata(input: unknown): AuditMetadata | null {
       case "identified":
       case "includesPhqItems":
       case "includesTranscripts":
+      case "includesNarratives":
         if (typeof value !== "boolean") {
           throw new AuditMetadataRejected(`Invalid ${key}`)
         }

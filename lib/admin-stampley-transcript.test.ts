@@ -95,8 +95,6 @@ describe("HIPAA-5.6.2A Stampley list DTO minimization", () => {
     assert.doesNotMatch(profile, /messages:\s*true/)
     assert.match(profile, /mapStampleySessionListRow/)
     assert.match(profile, /includesTranscripts:\s*false/)
-    assert.match(profile, /reflection: canViewNarratives/)
-    assert.match(profile, /copingAction: canViewNarratives/)
   })
 
   it("StampleySessionCard initial props cannot carry messages", () => {

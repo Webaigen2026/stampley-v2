@@ -116,6 +116,12 @@ describe("HIPAA-5.4 check-in and Stampley JSON responses", () => {
     assert.match(source, /jsonWithSensitiveCache/)
     assert.doesNotMatch(source, /NextResponse\.json/)
   })
+
+  it("uses the shared helper on admin check-in narrative detail responses", () => {
+    const source = read("app/api/admin/check-ins/[id]/route.ts")
+    assert.match(source, /jsonWithSensitiveCache/)
+    assert.doesNotMatch(source, /NextResponse\.json/)
+  })
 })
 
 describe("HIPAA-5.4 admin and coded export responses", () => {

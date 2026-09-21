@@ -387,6 +387,49 @@ describe("HIPAA-3 PHI page reads", () => {
     assert.doesNotMatch(serialized, /I feel exhausted|insulin|messages/i)
   })
 
+  it("check-in list audit is metadata-only and contains no reflection or coping text", async () => {
+    const { db, rows } = createAuditStore()
+    await completePhiPageAccess({
+      db,
+      session: adminSession,
+      action: "ADMIN_CHECKIN_LIST_VIEWED",
+      resourceType: "CHECK_IN",
+      metadata: { includesNarratives: false },
+      payload: {
+        reflection: "I cannot sleep after insulin",
+        copingAction: "Went for a walk",
+      },
+    })
+    const serialized = JSON.stringify(rows)
+    assert.equal(rows.length, 1)
+    assert.deepEqual(rows[0].metadata, { includesNarratives: false })
+    assert.equal(rows[0].resourceId, null)
+    assert.doesNotMatch(serialized, /I cannot sleep|Went for a walk|insulin|reflection|coping/i)
+  })
+
+  it("check-in narrative detail audit is resource-scoped and contains no free text", async () => {
+    const { db, rows } = createAuditStore()
+    await completePhiPageAccess({
+      db,
+      session: adminSession,
+      action: "ADMIN_CHECKIN_LIST_VIEWED",
+      resourceType: "CHECK_IN",
+      resourceId: "11111111-1111-4111-8111-111111111111",
+      subjectUserId: "22222222-2222-4222-8222-222222222222",
+      metadata: { includesNarratives: true },
+      payload: {
+        reflection: "I cannot sleep after insulin",
+        copingAction: "Went for a walk",
+      },
+    })
+    const serialized = JSON.stringify(rows)
+    assert.equal(rows.length, 1)
+    assert.equal(rows[0].resourceId, "11111111-1111-4111-8111-111111111111")
+    assert.equal(rows[0].subjectUserId, "22222222-2222-4222-8222-222222222222")
+    assert.deepEqual(rows[0].metadata, { includesNarratives: true })
+    assert.doesNotMatch(serialized, /I cannot sleep|Went for a walk|insulin|coping/i)
+  })
+
   it("safety audit contains no email, reflection, or distress values", async () => {
     const { db, rows } = createAuditStore()
     await completePhiPageAccess({

@@ -3,6 +3,8 @@ import Link from "next/link"
 import { notFound } from "next/navigation"
 import { StampleySessionCard } from "@/components/admin/stampley-chats/stampley-session-card"
 import { mapStampleySessionListRow } from "@/lib/admin-stampley-sessions"
+import { mapAdminCheckInListRow } from "@/lib/admin-check-in-narratives"
+import { CheckInNarrativeCard } from "@/components/admin/check-ins/check-in-narrative-card"
 import {
   PostSurveyResponseDetails,
   PostSurveySummaryCards,
@@ -160,11 +162,7 @@ export default async function AdminUserProfilePage({
         energy: canViewClinical,
         domain: true,
         subscale: true,
-        reflection: canViewNarratives,
-        copingAction: canViewNarratives,
-        contextTags: canViewNarratives,
         needsSafetyEscalation: canViewSafety,
-        consecutiveHighDistressDays: canViewSafety,
         createdAt: true,
       },
     }),
@@ -272,23 +270,19 @@ export default async function AdminUserProfilePage({
       }
     : null
 
-  const checkIns = checkInRows.map((item) => ({
-    id: item.id,
-    check_in_date: item.checkInDate,
-    distress: item.distress,
-    mood: item.mood,
-    energy: item.energy,
-    domain: item.domain,
-    subscale: item.subscale,
-    reflection: canViewNarratives ? item.reflection : null,
-    coping_action: canViewNarratives ? item.copingAction : null,
-    context_tags: canViewNarratives ? item.contextTags : null,
-    needs_safety_escalation: canViewSafety ? item.needsSafetyEscalation : null,
-    consecutive_high_distress_days: canViewSafety
-      ? item.consecutiveHighDistressDays
-      : null,
-    created_at: item.createdAt,
-  }))
+  const checkIns = checkInRows.map((item) =>
+    mapAdminCheckInListRow({
+      id: item.id,
+      checkInDate: item.checkInDate,
+      createdAt: item.createdAt,
+      distress: item.distress,
+      mood: item.mood,
+      energy: item.energy,
+      domain: item.domain,
+      subscale: item.subscale,
+      needsSafetyEscalation: canViewSafety ? item.needsSafetyEscalation : null,
+    })
+  )
 
   const stampleySessions = stampleySessionRows.map((session) =>
     mapStampleySessionListRow({
@@ -316,6 +310,7 @@ export default async function AdminUserProfilePage({
     metadata: {
       includesPhqItems: canViewPhqItems,
       includesTranscripts: false,
+      includesNarratives: false,
     },
   })
 
@@ -687,7 +682,7 @@ export default async function AdminUserProfilePage({
                     className="border-b border-slate-100 hover:bg-slate-50"
                   >
                     <td className="px-5 py-4 text-slate-700">
-                      {formatDate(item.check_in_date)}
+                      {formatDate(item.checkInDate)}
                     </td>
                     <td className="px-5 py-4 font-medium text-slate-900">
                       {canViewClinical ? item.distress : "—"}
@@ -704,7 +699,7 @@ export default async function AdminUserProfilePage({
                     <td className="px-5 py-4">
                       {!canViewSafety ? (
                         <span className="text-slate-400">—</span>
-                      ) : item.needs_safety_escalation ? (
+                      ) : item.needsSafetyEscalation ? (
                         <span className="border border-red-200 bg-red-50 px-2 py-1 text-xs font-semibold text-red-700">
                           Flagged
                         </span>
@@ -725,48 +720,13 @@ export default async function AdminUserProfilePage({
       {canViewNarratives ? (
       <section className="grid gap-4">
         {checkIns.map((item) => (
-          <div
+          <CheckInNarrativeCard
             key={`${item.id}-reflection`}
-            className="border border-slate-200 bg-white p-5"
-          >
-            <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-              <div>
-                <p className="text-sm font-semibold text-slate-900">
-                  {formatDate(item.check_in_date)}
-                </p>
-                <p className="text-xs text-slate-500">
-                  {item.domain ?? "No domain"} ·{" "}
-                  {item.subscale ?? "No subscale"}
-                </p>
-              </div>
-
-              {item.needs_safety_escalation && (
-                <span className="w-fit border border-red-200 bg-red-50 px-2 py-1 text-xs font-semibold text-red-700">
-                  Safety Flag
-                </span>
-              )}
-            </div>
-
-            <div className="mt-4 grid gap-4 md:grid-cols-2">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
-                  Reflection
-                </p>
-                <p className="mt-2 text-sm leading-6 text-slate-700">
-                  {item.reflection || "No reflection provided."}
-                </p>
-              </div>
-
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
-                  Coping Action
-                </p>
-                <p className="mt-2 text-sm leading-6 text-slate-700">
-                  {item.coping_action || "No coping action provided."}
-                </p>
-              </div>
-            </div>
-          </div>
+            checkInId={item.id}
+            heading={formatDate(item.checkInDate)}
+            subheading={`${item.domain ?? "No domain"} · ${item.subscale ?? "No subscale"}`}
+            flagged={Boolean(item.needsSafetyEscalation)}
+          />
         ))}
       </section>
       ) : null}

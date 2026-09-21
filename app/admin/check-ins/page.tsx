@@ -1,8 +1,22 @@
 import { prisma } from "@/lib/prisma"
 import { recordPhiPageViewOrThrow } from "@/lib/admin-phi-page"
 import { requireAdminPage } from "@/lib/admin-authz"
+import { mapAdminCheckInListRow } from "@/lib/admin-check-in-narratives"
+import { CheckInNarrativeCard } from "@/components/admin/check-ins/check-in-narrative-card"
 
 export const dynamic = "force-dynamic"
+
+function formatDate(value: Date | string | null): string {
+  if (!value) return "—"
+  const d = new Date(value)
+  return Number.isNaN(d.getTime()) ? "—" : d.toLocaleDateString()
+}
+
+function formatDateTime(value: Date | string | null): string {
+  if (!value) return "—"
+  const d = new Date(value)
+  return Number.isNaN(d.getTime()) ? "—" : d.toLocaleString()
+}
 
 export default async function AdminCheckInsPage() {
   await requireAdminPage("canViewCheckInNarratives")
@@ -11,44 +25,39 @@ export default async function AdminCheckInsPage() {
     take: 100,
     select: {
       id: true,
-      userId: true,
       checkInDate: true,
       distress: true,
       mood: true,
       energy: true,
       domain: true,
       subscale: true,
-      reflection: true,
-      copingAction: true,
-      contextTags: true,
       needsSafetyEscalation: true,
-      consecutiveHighDistressDays: true,
       createdAt: true,
       user: { select: { email: true } },
     },
   })
 
-  const checkIns = result.map((item) => ({
-    id: item.id,
-    user_id: item.userId,
-    email: item.user.email,
-    check_in_date: item.checkInDate,
-    distress: item.distress,
-    mood: item.mood,
-    energy: item.energy,
-    domain: item.domain,
-    subscale: item.subscale,
-    reflection: item.reflection,
-    coping_action: item.copingAction,
-    context_tags: item.contextTags,
-    needs_safety_escalation: item.needsSafetyEscalation,
-    consecutive_high_distress_days: item.consecutiveHighDistressDays,
-    created_at: item.createdAt,
-  }))
+  const checkIns = result.map((item) =>
+    mapAdminCheckInListRow({
+      id: item.id,
+      email: item.user.email,
+      checkInDate: item.checkInDate,
+      createdAt: item.createdAt,
+      distress: item.distress,
+      mood: item.mood,
+      energy: item.energy,
+      domain: item.domain,
+      subscale: item.subscale,
+      needsSafetyEscalation: item.needsSafetyEscalation,
+    })
+  )
 
   await recordPhiPageViewOrThrow({
     action: "ADMIN_CHECKIN_LIST_VIEWED",
     resourceType: "CHECK_IN",
+    metadata: {
+      includesNarratives: false,
+    },
   })
 
   return (
@@ -110,7 +119,7 @@ export default async function AdminCheckInsPage() {
                     </td>
 
                     <td className="px-5 py-4 text-slate-600">
-                      {new Date(item.check_in_date as Date).toLocaleDateString()}
+                      {formatDate(item.checkInDate)}
                     </td>
 
                     <td className="px-5 py-4 font-medium text-slate-900">
@@ -130,7 +139,7 @@ export default async function AdminCheckInsPage() {
                     </td>
 
                     <td className="px-5 py-4">
-                      {item.needs_safety_escalation ? (
+                      {item.needsSafetyEscalation ? (
                         <span className="border border-red-200 bg-red-50 px-2 py-1 text-xs font-semibold text-red-700">
                           Flagged
                         </span>
@@ -150,42 +159,13 @@ export default async function AdminCheckInsPage() {
 
       <section className="grid gap-4">
         {checkIns.map((item) => (
-          <div key={`${item.id}-details`} className="border border-slate-200 bg-white p-5">
-            <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-              <div>
-                <p className="text-sm font-semibold text-slate-900">
-                  {item.email}
-                </p>
-                <p className="text-xs text-slate-500">
-                  {new Date(item.created_at as Date).toLocaleString()}
-                </p>
-              </div>
-
-              <p className="text-xs font-medium uppercase tracking-[0.14em] text-slate-500">
-                {item.domain ?? "No domain"} · {item.subscale ?? "No subscale"}
-              </p>
-            </div>
-
-            <div className="mt-4 grid gap-4 md:grid-cols-2">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
-                  Reflection
-                </p>
-                <p className="mt-2 text-sm leading-6 text-slate-700">
-                  {item.reflection || "No reflection provided."}
-                </p>
-              </div>
-
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
-                  Coping Action
-                </p>
-                <p className="mt-2 text-sm leading-6 text-slate-700">
-                  {item.coping_action || "No coping action provided."}
-                </p>
-              </div>
-            </div>
-          </div>
+          <CheckInNarrativeCard
+            key={`${item.id}-details`}
+            checkInId={item.id}
+            heading={item.email || "Participant"}
+            subheading={`${formatDateTime(item.createdAt)} · ${item.domain ?? "No domain"} · ${item.subscale ?? "No subscale"}`}
+            flagged={Boolean(item.needsSafetyEscalation)}
+          />
         ))}
       </section>
     </main>
