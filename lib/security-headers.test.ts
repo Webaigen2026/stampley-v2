@@ -3,7 +3,7 @@ import assert from "node:assert/strict"
 import { csvFileResponse } from "./admin-export-response"
 import nextConfig, {
   GLOBAL_SECURITY_HEADERS,
-  SECURITY_CSP_REPORT_ONLY,
+  SECURITY_CSP,
   SECURITY_PERMISSIONS_POLICY,
 } from "../next.config"
 
@@ -24,7 +24,7 @@ function cspDirectiveMap(csp: string): Map<string, string[]> {
   return directives
 }
 
-describe("HIPAA-5.5 Phase 1 global security headers", () => {
+describe("HIPAA-5.5 enforcing global security headers", () => {
   it("exposes the configured next.config headers() policy", async () => {
     assert.equal(typeof nextConfig.headers, "function")
     const configured = await nextConfig.headers!()
@@ -63,19 +63,16 @@ describe("HIPAA-5.5 Phase 1 global security headers", () => {
     assert.match(SECURITY_PERMISSIONS_POLICY, /clipboard-write=\(self\)/)
   })
 
-  it("ships CSP as Report-Only and does not enforce Content-Security-Policy", async () => {
+  it("ships enforcing Content-Security-Policy and does not keep Report-Only", async () => {
     const headers = headerMap((await nextConfig.headers!())[0].headers)
-    assert.equal(headers.has("Content-Security-Policy-Report-Only"), true)
-    assert.equal(headers.has("Content-Security-Policy"), false)
-    assert.equal(
-      headers.get("Content-Security-Policy-Report-Only"),
-      SECURITY_CSP_REPORT_ONLY
-    )
-    assert.equal(SECURITY_CSP_REPORT_ONLY.includes(","), false)
+    assert.equal(headers.has("Content-Security-Policy"), true)
+    assert.equal(headers.has("Content-Security-Policy-Report-Only"), false)
+    assert.equal(headers.get("Content-Security-Policy"), SECURITY_CSP)
+    assert.equal(SECURITY_CSP.includes(","), false)
   })
 
   it("contains the audited CSP directives and no extra dangerous sources", () => {
-    const directives = cspDirectiveMap(SECURITY_CSP_REPORT_ONLY)
+    const directives = cspDirectiveMap(SECURITY_CSP)
     assert.deepEqual(directives.get("default-src"), ["'self'"])
     assert.deepEqual(directives.get("base-uri"), ["'self'"])
     assert.deepEqual(directives.get("object-src"), ["'none'"])

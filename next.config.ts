@@ -1,6 +1,6 @@
 import type { NextConfig } from "next";
 
-export const SECURITY_CSP_REPORT_ONLY = [
+export const SECURITY_CSP = [
   "default-src 'self'",
   "base-uri 'self'",
   "object-src 'none'",
@@ -37,8 +37,8 @@ export const GLOBAL_SECURITY_HEADERS = [
   { key: "X-Frame-Options", value: "DENY" },
   { key: "Permissions-Policy", value: SECURITY_PERMISSIONS_POLICY },
   {
-    key: "Content-Security-Policy-Report-Only",
-    value: SECURITY_CSP_REPORT_ONLY,
+    key: "Content-Security-Policy",
+    value: SECURITY_CSP,
   },
 ] as const;
 
