@@ -5,29 +5,9 @@ import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { jsonWithSensitiveCache } from "@/lib/sensitive-cache-headers"
 
-type DomainName = "Emotional" | "Regimen" | "Physician" | "Interpersonal"
-
 function parseScore(value: unknown): number {
   const n = Number(value)
   return Number.isFinite(n) ? n : NaN
-}
-
-function highestDomainFromScores(scores: {
-  emotionalScore: number
-  regimenScore: number
-  physicianScore: number
-  interpersonalScore: number
-}): DomainName {
-  const entries: { domain: DomainName; score: number }[] = [
-    { domain: "Emotional", score: scores.emotionalScore },
-    { domain: "Regimen", score: scores.regimenScore },
-    { domain: "Physician", score: scores.physicianScore },
-    { domain: "Interpersonal", score: scores.interpersonalScore },
-  ]
-
-  return entries.reduce((best, current) =>
-    current.score > best.score ? current : best
-  ).domain
 }
 
 export async function GET() {
@@ -41,7 +21,6 @@ export async function GET() {
     const row = await prisma.ddsResponse.findUnique({
       where: { userId: session.user.id },
       select: {
-        totalScore: true,
         emotionalScore: true,
         physicianScore: true,
         regimenScore: true,
@@ -53,9 +32,6 @@ export async function GET() {
       return jsonWithSensitiveCache({ ddsSummary: null })
     }
 
-    const totalScore = parseScore(
-      row.totalScore != null ? Number(row.totalScore) : null
-    )
     const emotionalScore = parseScore(
       row.emotionalScore != null ? Number(row.emotionalScore) : null
     )
@@ -69,21 +45,12 @@ export async function GET() {
       row.interpersonalScore != null ? Number(row.interpersonalScore) : null
     )
 
-    const highestDomain = highestDomainFromScores({
-      emotionalScore,
-      regimenScore,
-      physicianScore,
-      interpersonalScore,
-    })
-
     return jsonWithSensitiveCache({
       ddsSummary: {
-        totalScore,
         emotionalScore,
         regimenScore,
         physicianScore,
         interpersonalScore,
-        highestDomain,
       },
     })
   } catch (error) {

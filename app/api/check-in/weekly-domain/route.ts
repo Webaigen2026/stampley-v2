@@ -34,18 +34,9 @@ export async function GET() {
       weeklyRows,
       currentWeek
     )
-    const isLocked = isWeeklyDomainLocked(
-      totalCompleted,
-      currentWeek,
-      currentWeekDomain
-    )
-
     return jsonWithSensitiveCache({
-      currentWeek,
       currentWeekDomain,
       usedPreviousDomains,
-      isLocked,
-      totalCompleted,
     })
   } catch (error) {
     console.error("[check-in/weekly-domain GET]", error)

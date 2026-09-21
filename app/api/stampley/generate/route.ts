@@ -186,8 +186,6 @@ export async function POST(req: NextRequest) {
     return jsonWithSensitiveCache({
       success: true,
       response: stampleyResponse,
-      conversationPhase: openaiContext.phase,
-      highStress: openaiContext.highStress,
     })
   } catch {
     stampleyGenerateLog(console, { event: "unhandled_failure" })

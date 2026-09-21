@@ -72,7 +72,7 @@ export async function submitDDS(formData: FormData) {
     })
 
     revalidatePath("/survey/dds")
-    return { success: true, scores }
+    return { success: true }
 
   } catch (error) {
     console.error("[submitDDS]", error)

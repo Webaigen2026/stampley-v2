@@ -53,12 +53,10 @@ interface SessionStep {
 }
 
 export type DdsSummary = {
-  totalScore: number
   emotionalScore: number
   regimenScore: number
   physicianScore: number
   interpersonalScore: number
-  highestDomain: string
 }
 
 function formatScore(value: number | null | undefined) {
