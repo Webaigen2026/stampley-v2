@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma"
 import { Prisma } from "@/lib/generated/prisma/client"
 import { recordPhiPageViewOrThrow } from "@/lib/admin-phi-page"
 import { requireAdminPage } from "@/lib/admin-authz"
+import { SafetyReflectionCell } from "@/components/admin/safety/safety-reflection-cell"
 
 export const dynamic = "force-dynamic"
 
@@ -64,11 +65,10 @@ export default async function AdminSafetyPage() {
       orderBy: { createdAt: "desc" },
       take: 10,
       select: {
+        id: true,
         distress: true,
         domain: true,
-        reflection: true,
         checkInDate: true,
-        consecutiveHighDistressDays: true,
         needsSafetyEscalation: true,
         user: { select: { email: true } },
       },
@@ -81,12 +81,11 @@ export default async function AdminSafetyPage() {
   }
   const recentHighResult = {
     rows: recentHighRows.map((item) => ({
+      id: item.id,
       email: item.user.email,
       distress: item.distress,
       domain: item.domain,
-      reflection: item.reflection,
       check_in_date: item.checkInDate,
-      consecutive_high_distress_days: item.consecutiveHighDistressDays,
       needs_safety_escalation: item.needsSafetyEscalation,
     })),
   }
@@ -98,6 +97,7 @@ export default async function AdminSafetyPage() {
   await recordPhiPageViewOrThrow({
     action: "ADMIN_SAFETY_VIEWED",
     resourceType: "SAFETY",
+    metadata: { includesNarratives: false },
   })
 
   return (
@@ -405,8 +405,8 @@ export default async function AdminSafetyPage() {
               </thead>
 
               <tbody className="divide-y divide-gray-100">
-                {recentHighResult.rows.map((c, i) => (
-                  <tr key={i} className="transition hover:bg-gray-50/70">
+                {recentHighResult.rows.map((c) => (
+                  <tr key={c.id} className="transition hover:bg-gray-50/70">
                     <td className="px-6 py-4 text-sm font-medium text-gray-900">
                       {c.email}
                     </td>
@@ -428,7 +428,7 @@ export default async function AdminSafetyPage() {
                     </td>
 
                     <td className="max-w-xs px-6 py-4 text-sm text-gray-500">
-                      <p className="truncate">{c.reflection || "—"}</p>
+                      <SafetyReflectionCell checkInId={c.id} />
                     </td>
 
                     <td className="px-6 py-4 text-sm text-gray-500">
