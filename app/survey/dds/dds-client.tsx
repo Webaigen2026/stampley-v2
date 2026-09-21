@@ -14,6 +14,8 @@ import {
   ArrowLeft,
   ArrowRight,
   Check,
+  ChevronLeft,
+  ChevronRight,
   HeartHandshake,
   Info,
   Menu,
@@ -236,6 +238,7 @@ export default function DDSClient() {
   const [error, setError] = useState("")
   const [currentDomainIndex, setCurrentDomainIndex] = useState(0)
   const [showMobileProgress, setShowMobileProgress] = useState(false)
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
 
   const questionRefs = useRef<
     Record<string, HTMLTableRowElement | null>
@@ -451,122 +454,173 @@ export default function DDSClient() {
         text-slate-950
       "
     >
-      {/* =====================================================
-          FIXED SIDEBAR
-      ====================================================== */}
+      <div className="flex min-h-dvh">
+        {/* =====================================================
+            DESKTOP SIDEBAR
+        ====================================================== */}
 
-<aside
-  className="
-    fixed
-    inset-y-0
-    left-0
-    z-40
-    hidden
-    w-[340px]
-    overflow-hidden
-    border-r
-    border-slate-100
-    bg-white
-    lg:block
-  "
->
-  {/* =====================================================
-      SCROLLABLE SIDEBAR CONTENT
-  ====================================================== */}
-  <div
-    className="
-      relative
-      z-20
-      h-full
-      overflow-y-auto
-      px-8
-      pb-[290px]
-      pt-8
-    "
-  >
-    <DDSProgressContent
-      groupedQuestions={groupedQuestions}
-      currentDomainIndex={currentDomainIndex}
-      answers={answers}
-      totalAnswered={totalAnswered}
-      progress={progress}
-    />
-  </div>
+        <aside
+          className={`
+            relative
+            z-40
+            hidden
+            shrink-0
+            flex-col
+            overflow-hidden
+            border-r
+            border-slate-100
+            bg-white
+            transition-[width]
+            duration-300
+            ease-in-out
+            lg:flex
+            ${isSidebarCollapsed ? "w-20 px-0 pt-14" : "w-[340px]"}
+          `}
+        >
+          <button
+            type="button"
+            onClick={() =>
+              setIsSidebarCollapsed((current) => !current)
+            }
+            aria-label={
+              isSidebarCollapsed
+                ? "Expand DDS navigation"
+                : "Collapse DDS navigation"
+            }
+            aria-expanded={!isSidebarCollapsed}
+            className={`
+              absolute
+              top-4
+              z-30
+              flex
+              h-8
+              w-8
+              items-center
+              justify-center
+              rounded-full
+              border
+              border-slate-200
+              bg-white
+              text-slate-500
+              shadow-sm
+              transition-colors
+              duration-200
+              hover:bg-slate-50
+              hover:text-[#123B7A]
+              focus-visible:outline-2
+              focus-visible:outline-offset-2
+              focus-visible:outline-[#1473E6]
+              ${isSidebarCollapsed ? "right-1/2 translate-x-1/2" : "right-3"}
+            `}
+          >
+            {isSidebarCollapsed ? (
+              <ChevronRight
+                aria-hidden="true"
+                size={16}
+                strokeWidth={1.8}
+              />
+            ) : (
+              <ChevronLeft
+                aria-hidden="true"
+                size={16}
+                strokeWidth={1.8}
+              />
+            )}
+          </button>
 
-  {/* =====================================================
-      NURSE ILLUSTRATION
-  ====================================================== */}
-  <div
-    aria-hidden="true"
-    className="
-      pointer-events-none
-    flex
-    justify-center
-      bottom-0
-    
-      z-10
-      h-[285px]
-      w-full
-      overflow-hidden
-    "
-  >
-    {/* Soft background circle */}
-    <div
-      className="
-        absolute
-        -bottom-[40px]
-        
-        h-[300px]
-        w-[300px]
-        rounded-full
-        bg-[radial-gradient(circle_at_center,#eef7ff_0%,#f7fbff_62%,transparent_100%)]
-      "
-    />
+          <div
+            className={`
+              relative
+              z-20
+              h-full
+              overflow-y-auto
+              ${
+                isSidebarCollapsed
+                  ? "flex justify-center px-0 pb-6"
+                  : "px-8 pb-[290px] pt-8"
+              }
+            `}
+          >
+            <DDSProgressContent
+              groupedQuestions={groupedQuestions}
+              currentDomainIndex={currentDomainIndex}
+              answers={answers}
+              totalAnswered={totalAnswered}
+              progress={progress}
+              collapsed={isSidebarCollapsed}
+            />
+          </div>
 
-    {/* Secondary ring */}
-    <div
-      className="
-        absolute
-        bottom-[18px]
-        
-        h-[180px]
-        w-[180px]
-        rounded-full
-        border
-        border-[#d8e9f8]
-        opacity-70
-      "
-    />
+          {!isSidebarCollapsed ? (
+            <>
+              <div
+                aria-hidden="true"
+                className="
+                  pointer-events-none
+                  absolute
+                  bottom-0
+                  left-0
+                  z-10
+                  flex
+                  h-[285px]
+                  w-full
+                  justify-center
+                  overflow-hidden
+                "
+              >
+                <div
+                  className="
+                    absolute
+                    -bottom-[40px]
+                    h-[300px]
+                    w-[300px]
+                    rounded-full
+                    bg-[radial-gradient(circle_at_center,#eef7ff_0%,#f7fbff_62%,transparent_100%)]
+                  "
+                />
 
-  
-<img
-  src="/dashboard/nurse2.png"
-  alt=""
-  width={220}
-  height={260}
-  className="
-    absolute
-    bottom-0
-   
-    z-10
-    h-[200px]
-    w-auto
-    max-w-none
-    object-contain
-    object-bottom
-  "
-/>
-  </div>
-  <p className="text-center text-sm text-slate-500 ">
-    This survey is designed to help you identify your support needs and provide you with the resources you need to manage your diabetes.
-  </p>
-</aside>
+                <div
+                  className="
+                    absolute
+                    bottom-[18px]
+                    h-[180px]
+                    w-[180px]
+                    rounded-full
+                    border
+                    border-[#d8e9f8]
+                    opacity-70
+                  "
+                />
+
+                <img
+                  src="/dashboard/nurse2.png"
+                  alt=""
+                  width={220}
+                  height={260}
+                  className="
+                    absolute
+                    bottom-0
+                    z-10
+                    h-[200px]
+                    w-auto
+                    max-w-none
+                    object-contain
+                    object-bottom
+                  "
+                />
+              </div>
+              <p className="relative z-20 px-4 pb-4 text-center text-sm text-slate-500">
+                This survey is designed to help you identify your support needs and provide you with the resources you need to manage your diabetes.
+              </p>
+            </>
+          ) : null}
+        </aside>
 
       {/* =====================================================
           MAIN
       ====================================================== */}
 
-      <div className="min-w-0 lg:pl-[340px]">
+      <div className="min-w-0 flex-1">
         {/* ===================================================
             HEADER
         ==================================================== */}
@@ -1167,6 +1221,7 @@ export default function DDSClient() {
           </motion.div>
         </div>
       </div>
+      </div>
     </main>
   )
 }
@@ -1589,6 +1644,7 @@ function DDSProgressContent({
   answers,
   totalAnswered,
   progress,
+  collapsed = false,
 }: {
   groupedQuestions:
     GroupedSection[]
@@ -1601,44 +1657,49 @@ function DDSProgressContent({
   totalAnswered: number
 
   progress: number
+
+  collapsed?: boolean
 }) {
   return (
-    <>
-      <p
-        className="
-          text-[10px]
-          font-bold
-          uppercase
-          tracking-[0.28em]
-          text-slate-400
-        "
-      >
-        DDS-17 Progress
-      </p>
+    <nav
+      aria-label="DDS navigation"
+      className={collapsed ? "w-[40px]" : "w-full"}
+    >
+      <div className={collapsed ? "sr-only" : undefined}>
+        <p
+          className="
+            text-[10px]
+            font-bold
+            uppercase
+            tracking-[0.28em]
+            text-slate-400
+          "
+        >
+          DDS-17 Progress
+        </p>
 
-      <h2
-        className="
-          mt-3
-          text-xl
-          font-light
-          tracking-tight
-          text-slate-500
-        "
-      >
-        {totalAnswered} of 17 answered
-      </h2>
-
-    
+        <h2
+          className="
+            mt-3
+            text-xl
+            font-light
+            tracking-tight
+            text-slate-500
+          "
+        >
+          {totalAnswered} of 17 answered
+        </h2>
+      </div>
 
       {/* =====================================================
           DOMAINS
       ====================================================== */}
 
       <div
-        className="
+        className={`
           relative
-          mt-8
-        "
+          ${collapsed ? "" : "mt-8"}
+        `}
       >
         <div
           aria-hidden="true"
@@ -1679,18 +1740,29 @@ function DDSProgressContent({
                     ] != null
                 ).length
 
+              const domainLabel =
+                DOMAIN_LABELS[
+                  section.domain
+                ]
+
               return (
                 <li
                   key={
                     section.domain
                   }
-                  className="
+                  aria-current={
+                    active
+                      ? "step"
+                      : undefined
+                  }
+                  aria-label={`${domainLabel}, ${answered} of ${section.questions.length} answered`}
+                  className={`
                     relative
                     flex
                     items-center
-                    gap-4
                     py-2
-                  "
+                    ${collapsed ? "justify-center gap-0" : "gap-4"}
+                  `}
                 >
                   <div
                     className={`
@@ -1731,6 +1803,7 @@ function DDSProgressContent({
                   >
                     {completed ? (
                       <Check
+                        aria-hidden="true"
                         size={16}
                         strokeWidth={2.1}
                       />
@@ -1746,7 +1819,7 @@ function DDSProgressContent({
                       rounded-[12px]
                       px-4
                       py-3
-
+                      ${collapsed ? "sr-only" : ""}
                       ${
                         active
                           ? "bg-white font-bold text-blue-900"
@@ -1766,11 +1839,7 @@ function DDSProgressContent({
                         }
                       `}
                     >
-                      {
-                        DOMAIN_LABELS[
-                          section.domain
-                        ]
-                      }
+                      {domainLabel}
                     </p>
 
                     <p
@@ -1794,6 +1863,6 @@ function DDSProgressContent({
           )}
         </ol>
       </div>
-    </>
+    </nav>
   )
 }
