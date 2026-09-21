@@ -4,57 +4,16 @@ import { prisma } from "@/lib/prisma"
 
 import DomainConfirmation from "./domain-confirmation"
 import { Header } from "@/components/survey/dds/results/header"
+import {
+  getHighestDdsDomains,
+  isDdsDomain,
+  meetsDdsClinicalAttentionThreshold,
+} from "@/lib/dds-scoring"
 
-function getSeverity(score: number) {
-  if (score >= 4) {
-    return {
-      label: "High Distress",
-      description:
-        "This score suggests diabetes distress may be strongly affecting your daily experience.",
-      surface: "bg-red-50",
-      text: "text-red-700",
-      dot: "bg-red-500",
-      progress: "bg-red-500",
-    }
-  }
-
-  if (score >= 3) {
-    return {
-      label: "Moderate Distress or Higher",
-      description:
-        "This score falls within the range commonly associated with moderate diabetes distress or higher.",
-      surface: "bg-amber-50",
-      text: "text-amber-700",
-      dot: "bg-amber-500",
-      progress: "bg-amber-500",
-    }
-  }
-
-  if (score >= 2) {
-    return {
-      label: "Mild to Moderate Distress",
-      description:
-        "This score suggests some diabetes-related distress may be present.",
-      surface: "bg-[#F0F6FD]",
-      text: "text-[#173B7A]",
-      dot: "bg-[#1473E6]",
-      progress: "bg-[#1473E6]",
-    }
-  }
-
-  return {
-    label: "Low Distress",
-    description:
-      "Your score is below the moderate diabetes-distress threshold.",
-    surface: "bg-emerald-50",
-    text: "text-emerald-700",
-    dot: "bg-emerald-500",
-    progress: "bg-emerald-500",
-  }
-}
-
-function getScaleWidth(score: number) {
-  return `${Math.min(Math.max((score / 6) * 100, 0), 100)}%`
+function storedMean(value: unknown): number {
+  if (value == null) return 0
+  const score = Number(value)
+  return Number.isFinite(score) ? score : 0
 }
 
 export default async function DDSResultsPage() {
@@ -74,18 +33,22 @@ export default async function DDSResultsPage() {
     redirect("/survey/dds")
   }
 
-  const totalScore =
-    row.totalScore != null
-      ? Number(row.totalScore)
-      : 0
-
-  const severity =
-    getSeverity(totalScore)
-
-  const recommendedDomain =
-    row.recommendedDomain ||
-    row.confirmedDomain ||
-    "Emotional"
+  const totalScore = storedMean(row.totalScore)
+  const attentionThresholdReached =
+    meetsDdsClinicalAttentionThreshold(totalScore)
+  const highestDomains = getHighestDdsDomains({
+    emotional: storedMean(row.emotionalScore),
+    physician: storedMean(row.physicianScore),
+    regimen: storedMean(row.regimenScore),
+    interpersonal: storedMean(row.interpersonalScore),
+  })
+  const recommendedDomain = isDdsDomain(row.recommendedDomain)
+    ? row.recommendedDomain
+    : isDdsDomain(row.confirmedDomain)
+      ? row.confirmedDomain
+      : highestDomains[0] ?? "Emotional"
+  const uniqueHighest =
+    highestDomains.length === 1 ? highestDomains[0] : null
 
   return (
     <main
@@ -178,348 +141,11 @@ export default async function DDSResultsPage() {
           "
         >
           {/* =================================================
-              INTRO
-          ================================================== */}
-
-          {/* <section>
-            <p
-              className="
-                text-[11px]
-                font-bold
-                uppercase
-                tracking-[0.28em]
-                text-cyan-700
-              "
-            >
-              DDS-17 Score Summary
-            </p>
-
-            <h1
-              className="
-                mt-4
-                text-3xl
-                font-light
-                tracking-[-0.04em]
-                text-slate-950
-                sm:text-4xl
-                lg:text-[44px]
-              "
-            >
-              Your diabetes distress profile
-            </h1>
-
-            <p
-              className="
-                mt-5
-                max-w-[720px]
-                text-lg
-                leading-relaxed
-                text-slate-600
-              "
-            >
-              Your responses help identify the areas of diabetes management
-              that may be creating the most emotional or practical burden.
-            </p>
-          </section> */}
-
-          {/* =================================================
-              SCORE SUMMARY
-          ================================================== */}
-
-          {/* <section
-            className="
-              mt-10
-              grid
-              gap-6
-              lg:grid-cols-[340px_1fr]
-            "
-          > */}
-            {/* Main score */}
-
-            {/* <div
-              className="
-                rounded-[20px]
-                bg-white
-                p-7
-                shadow-[0_12px_38px_rgba(15,45,80,0.08)]
-              "
-            >
-              <p
-                className="
-                  text-[11px]
-                  font-semibold
-                  uppercase
-                  tracking-[0.18em]
-                  text-slate-400
-                "
-              >
-                Overall DDS Score
-              </p>
-
-              <div
-                className="
-                  mt-6
-                  flex
-                  items-end
-                  gap-3
-                "
-              >
-                <p
-                  className="
-                    text-[58px]
-                    font-light
-                    leading-none
-                    tracking-[-0.05em]
-                    text-[#173B7A]
-                  "
-                >
-                  {totalScore.toFixed(2)}
-                </p>
-
-                <span
-                  className="
-                    pb-1
-                    text-base
-                    font-medium
-                    text-slate-400
-                  "
-                >
-                  / 6
-                </span>
-              </div>
-
-              <div
-                className={`
-                  mt-6
-                  inline-flex
-                  items-center
-                  gap-2
-                  rounded-full
-                  px-3.5
-                  py-2
-                  ${severity.surface}
-                  ${severity.text}
-                `}
-              >
-                <span
-                  className={`
-                    h-2
-                    w-2
-                    rounded-full
-                    ${severity.dot}
-                  `}
-                />
-
-                <span
-                  className="
-                    text-xs
-                    font-semibold
-                  "
-                >
-                  {severity.label}
-                </span>
-              </div>
-
-              <p
-                className="
-                  mt-5
-                  text-sm
-                  leading-6
-                  text-slate-600
-                "
-              >
-                {severity.description}
-              </p>
-            </div> */}
-
-            {/* Scale */}
-
-            {/* <div
-              className="
-                rounded-[20px]
-                bg-white
-                p-7
-                shadow-[0_12px_38px_rgba(15,45,80,0.08)]
-              "
-            >
-              <div
-                className="
-                  flex
-                  flex-wrap
-                  items-start
-                  justify-between
-                  gap-4
-                "
-              >
-                <div>
-                  <p
-                    className="
-                      text-[11px]
-                      font-semibold
-                      uppercase
-                      tracking-[0.18em]
-                      text-slate-400
-                    "
-                  >
-                    Distress Scale
-                  </p>
-
-                  <h2
-                    className="
-                      mt-2
-                      text-xl
-                      font-medium
-                      text-slate-950
-                    "
-                  >
-                    Where your score falls
-                  </h2>
-                </div>
-
-                <div
-                  className="
-                    rounded-full
-                    bg-[#F4F8FD]
-                    px-3.5
-                    py-2
-                    text-xs
-                    font-medium
-                    text-[#173B7A]
-                  "
-                >
-                  Moderate threshold: 3.0
-                </div>
-              </div>
-
-              <div className="mt-9">
-                <div
-                  className="
-                    mb-3
-                    flex
-                    justify-between
-                    text-xs
-                    font-medium
-                    text-slate-400
-                  "
-                >
-                  <span>Low</span>
-                  <span>Moderate</span>
-                  <span>High</span>
-                </div>
-
-                <div
-                  className="
-                    relative
-                    h-3
-                    overflow-hidden
-                    rounded-full
-                    bg-slate-100
-                  "
-                >
-                  <div
-                    className={`
-                      h-full
-                      rounded-full
-                      transition-all
-                      duration-500
-                      ${severity.progress}
-                    `}
-                    style={{
-                      width:
-                        getScaleWidth(
-                          totalScore
-                        ),
-                    }}
-                  />
-
-                  <div
-                    className="
-                      absolute
-                      bottom-0
-                      top-0
-                      w-px
-                      bg-slate-500
-                    "
-                    style={{
-                      left: "50%",
-                    }}
-                  />
-                </div>
-
-                <div
-                  className="
-                    mt-3
-                    flex
-                    justify-between
-                    text-[11px]
-                    text-slate-400
-                  "
-                >
-                  <span>1.0</span>
-                  <span>3.0</span>
-                  <span>6.0</span>
-                </div>
-              </div>
-
-              <div
-                className="
-                  mt-8
-                  rounded-[14px]
-                  bg-[#F7FAFD]
-                  px-5
-                  py-4
-                "
-              >
-                <p
-                  className="
-                    text-sm
-                    leading-6
-                    text-slate-600
-                  "
-                >
-                  DDS-17 scores summarize diabetes-related distress. This
-                  information can help identify which areas may benefit from
-                  additional support.
-                </p>
-              </div>
-            </div> */}
-          {/* </section> */}
-
-          {/* =================================================
-              NOTE
-          ================================================== */}
-
-          {/* <section
-            className="
-              mt-8
-              rounded-[16px]
-              border-l-4
-              border-blue-900
-              bg-white
-              px-6
-              py-5
-              shadow-[0_10px_32px_rgba(15,45,80,0.07)]
-            "
-          >
-            <p
-              className="
-                text-sm
-                leading-6
-                text-slate-600
-              "
-            >
-              This summary is intended to support your study experience. It is
-              not a diagnosis and does not replace advice or care from a
-              qualified healthcare professional.
-            </p>
-          </section> */}
-
-          {/* =================================================
               FOCUS SELECTION
           ================================================== */}
  <h1
               className="
-                mt-10
+                my-10
                 text-4xl
                 font-light
                 tracking-[-0.045em]
@@ -531,8 +157,10 @@ export default async function DDSResultsPage() {
                   "'Papyrus', 'Brush Script MT', 'Comic Sans MS', cursive, fantasy, 'Copperplate', 'Lucida Handwriting', 'Dancing Script', 'Great Vibes', sans-serif",
               }}
             >
-             Congratulations! You have completed the pre-survey.
+           You have completed the pre-survey.
             </h1>
+
+
 
 
 
@@ -573,9 +201,24 @@ export default async function DDSResultsPage() {
     text-slate-600
   "
 >
-  Based on your DDS-17 responses, we recommend starting with the area
-  most relevant to you today. You can continue with our recommendation
-  or choose another area that feels more important right now.
+  Your overall DDS-17 mean is {totalScore.toFixed(2)}.{" "}
+  {attentionThresholdReached
+    ? "This score meets the DDS threshold for additional attention."
+    : "This score is below the DDS threshold for additional attention."}
+</p>
+
+<p
+  className="
+    mt-4
+    max-w-3xl
+    text-base
+    leading-relaxed
+    text-slate-600
+  "
+>
+  {uniqueHighest
+    ? `Based on your DDS-17 responses, ${uniqueHighest} had the highest mean score. You may continue with that area or choose another of the four approved domains.`
+    : "More than one area had the same highest DDS-17 mean score. You may choose any of the four approved domains for today's check-in."}
 </p>
 
             <div className="mt-8">
@@ -583,6 +226,7 @@ export default async function DDSResultsPage() {
                 recommendedDomain={
                   recommendedDomain
                 }
+                highestDomains={highestDomains}
               />
             </div>
           </section>

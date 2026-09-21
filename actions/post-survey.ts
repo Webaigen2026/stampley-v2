@@ -2,28 +2,18 @@
 
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
-import { calculateDDSScores, type DDSAnswers } from "@/lib/dds-scoring"
+import { parseDdsAnswers } from "@/lib/dds-scoring"
 import {
   calculatePhqSeverity,
   calculatePhqTotal,
   calculateSusScore,
   hasNumericAnswer,
+  scorePostSurveyDds,
   type PhqAnswers,
   type SusAnswers,
 } from "@/lib/post-survey-scoring"
 import { getPostSurveyAccessStatus } from "@/lib/post-survey-access"
 import { redirect } from "next/navigation"
-
-function parseDdsAnswers(raw: Record<string, unknown>): DDSAnswers | null {
-  const answers = {} as DDSAnswers
-  for (let i = 1; i <= 17; i++) {
-    const key = `q${i}` as keyof DDSAnswers
-    const value = raw[key]
-    if (!hasNumericAnswer(value) || value < 1 || value > 6) return null
-    answers[key] = value
-  }
-  return answers
-}
 
 function parsePhqAnswers(raw: Record<string, unknown>): PhqAnswers | null {
   const answers = {} as PhqAnswers
@@ -95,7 +85,7 @@ export async function submitPostSurvey(data: {
     return { error: "Please indicate whether you would like future research contact." }
   }
 
-  const ddsScores = calculateDDSScores(ddsAnswers)
+  const ddsScores = scorePostSurveyDds(ddsAnswers)
   const phqTotal = calculatePhqTotal(phqAnswers)
   const phqSeverity = calculatePhqSeverity(phqTotal)
   const susScore = calculateSusScore(susAnswers)

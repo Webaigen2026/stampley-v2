@@ -10,6 +10,7 @@ import {
 } from "lucide-react"
 
 import { confirmDomain } from "@/actions/dds"
+import { isDdsDomain, type DdsDomain } from "@/lib/dds-scoring"
 
 const DOMAINS = [
   {
@@ -40,17 +41,19 @@ const DOMAINS = [
       "Support, understanding, and emotional connection with family, friends, and people around you.",
     image: "/dds/interperson.png",
   },
-]
+] as const
 
 export default function DomainConfirmation({
   recommendedDomain,
+  highestDomains,
 }: {
   recommendedDomain: string
+  highestDomains: readonly DdsDomain[]
 }) {
   const router = useRouter()
 
   const [selectedDomain, setSelectedDomain] = useState(
-    recommendedDomain || "Emotional"
+    isDdsDomain(recommendedDomain) ? recommendedDomain : "Emotional"
   )
 
   const [loading, setLoading] = useState(false)
@@ -92,8 +95,13 @@ export default function DomainConfirmation({
           const selected =
             selectedDomain === domain.value
 
-          const recommended =
-            recommendedDomain === domain.value
+          const uniqueHighest =
+            highestDomains.length === 1 &&
+            highestDomains[0] === domain.value
+
+          const tiedHighest =
+            highestDomains.length > 1 &&
+            highestDomains.includes(domain.value)
 
           return (
             <button
@@ -243,7 +251,7 @@ export default function DomainConfirmation({
                           {domain.title}
                         </h3>
 
-                        {recommended ? (
+                        {uniqueHighest ? (
                           <span
                             className="
                               
@@ -257,7 +265,21 @@ export default function DomainConfirmation({
                               text-[#1473E6]
                             "
                           >
-                            Recommended
+                            Highest mean
+                          </span>
+                        ) : tiedHighest ? (
+                          <span
+                            className="
+                              px-3
+                              py-1.5
+                              text-xs
+                              font-semibold
+                              uppercase
+                              tracking-[0.12em]
+                              text-[#1473E6]
+                            "
+                          >
+                            Tied highest mean
                           </span>
                         ) : null}
                       </div>

@@ -22,11 +22,11 @@ export const POST_DDS_QUESTIONS = [
 
 export const POST_DDS_SCALE = [
   { value: 1, label: "Not a Problem" },
-  { value: 2, label: "Slight Problem" },
-  { value: 3, label: "Moderate Problem" },
+  { value: 2, label: "A Slight Problem" },
+  { value: 3, label: "A Moderate Problem" },
   { value: 4, label: "Somewhat Serious Problem" },
-  { value: 5, label: "Serious Problem" },
-  { value: 6, label: "Very Serious Problem" },
+  { value: 5, label: "A Serious Problem" },
+  { value: 6, label: "A Very Serious Problem" },
 ] as const
 
 export const POST_PHQ_QUESTIONS = [

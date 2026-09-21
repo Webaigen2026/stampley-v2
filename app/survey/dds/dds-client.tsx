@@ -127,11 +127,11 @@ const SCALE = [
   },
   {
     value: 2,
-    label: "Slight Problem",
+    label: "A Slight Problem",
   },
   {
     value: 3,
-    label: "Moderate Problem",
+    label: "A Moderate Problem",
   },
   {
     value: 4,
@@ -139,13 +139,17 @@ const SCALE = [
   },
   {
     value: 5,
-    label: "Serious Problem",
+    label: "A Serious Problem",
   },
   {
     value: 6,
-    label: "Very Serious Problem",
+    label: "A Very Serious Problem",
   },
 ] as const
+
+function officialDdsItemNumber(questionId: string): number {
+  return Number(questionId.slice(1))
+}
 
 const DOMAIN_ORDER = [
   "Emotional",
@@ -281,15 +285,6 @@ export default function DDSClient() {
 
   const isLastSection =
     currentDomainIndex === groupedQuestions.length - 1
-
-  const globalQuestionNumberStart =
-    groupedQuestions
-      .slice(0, currentDomainIndex)
-      .reduce(
-        (sum, section) =>
-          sum + section.questions.length,
-        0
-      )
 
   /* =======================================================
      ANSWER HANDLER
@@ -930,9 +925,6 @@ export default function DDSClient() {
                 }
                 answers={answers}
                 error={error}
-                globalQuestionNumberStart={
-                  globalQuestionNumberStart
-                }
                 onAnswer={handleAnswer}
                 questionRefs={
                   questionRefs
@@ -1187,14 +1179,12 @@ function DDSQuestionMatrix({
   currentQuestions,
   answers,
   error,
-  globalQuestionNumberStart,
   onAnswer,
   questionRefs,
 }: {
   currentQuestions: (typeof QUESTIONS)[number][]
   answers: Record<string, number>
   error: string
-  globalQuestionNumberStart: number
   onAnswer: (
     questionId: string,
     value: number
@@ -1309,8 +1299,7 @@ function DDSQuestionMatrix({
           <tbody>
             {currentQuestions.map(
               (
-                question,
-                index
+                question
               ) => {
                 const selectedValue =
                   answers[
@@ -1322,9 +1311,9 @@ function DDSQuestionMatrix({
                   selectedValue == null
 
                 const questionNumber =
-                  globalQuestionNumberStart +
-                  index +
-                  1
+                  officialDdsItemNumber(
+                    question.id
+                  )
 
                 return (
                   <tr
@@ -1378,7 +1367,7 @@ function DDSQuestionMatrix({
                           text-[#173B7A]
                         "
                       >
-                        Q{questionNumber}
+                        Item {questionNumber}
                       </span>
                     </td>
 
@@ -1519,7 +1508,7 @@ function DDSQuestionMatrix({
                               </span>
 
                               <span className="sr-only">
-                                Question{" "}
+                                Item{" "}
                                 {questionNumber}:{" "}
                                 {option.label}, score{" "}
                                 {option.value}
