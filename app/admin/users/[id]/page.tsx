@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma"
 import Link from "next/link"
 import { notFound } from "next/navigation"
 import { StampleySessionCard } from "@/components/admin/stampley-chats/stampley-session-card"
-import { mapStampleySessionRow } from "@/lib/admin-stampley-sessions"
+import { mapStampleySessionListRow } from "@/lib/admin-stampley-sessions"
 import {
   PostSurveyResponseDetails,
   PostSurveySummaryCards,
@@ -183,7 +183,6 @@ export default async function AdminUserProfilePage({
             userMessageCount: true,
             assistantMessageCount: true,
             summary: true,
-            messages: true,
             createdAt: true,
             user: { select: { email: true } },
             checkInSubmission: { select: { checkInDate: true } },
@@ -292,7 +291,7 @@ export default async function AdminUserProfilePage({
   }))
 
   const stampleySessions = stampleySessionRows.map((session) =>
-    mapStampleySessionRow({
+    mapStampleySessionListRow({
       id: session.id,
       user_id: session.userId,
       email: session.user.email,
@@ -304,7 +303,6 @@ export default async function AdminUserProfilePage({
       user_message_count: session.userMessageCount,
       assistant_message_count: session.assistantMessageCount,
       summary: session.summary,
-      messages: session.messages,
       created_at: session.createdAt,
       check_in_date: session.checkInSubmission?.checkInDate ?? null,
     })
@@ -317,7 +315,7 @@ export default async function AdminUserProfilePage({
     subjectUserId: user.id,
     metadata: {
       includesPhqItems: canViewPhqItems,
-      includesTranscripts: canViewTranscripts,
+      includesTranscripts: false,
     },
   })
 

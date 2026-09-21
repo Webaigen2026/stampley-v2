@@ -1,8 +1,50 @@
 import type {
   StampleyAssistantData,
   StampleyChatMessage,
-  AdminStampleySession,
 } from "@/components/admin/stampley-chats/stampley-session-card"
+
+export type AdminStampleySessionListItem = {
+  id: string
+  userId: string
+  email: string
+  checkInDate: string | null
+  domain: string | null
+  stressLevel: number | null
+  mood: number | null
+  energy: number | null
+  userMessageCount: number
+  assistantMessageCount: number
+  summary: string | null
+  createdAt: string
+}
+
+export type AdminStampleyTranscriptDetail = {
+  messages: StampleyChatMessage[]
+}
+
+export const ADMIN_STAMPLEY_SESSION_LIST_FIELDS = [
+  "id",
+  "userId",
+  "email",
+  "checkInDate",
+  "domain",
+  "stressLevel",
+  "mood",
+  "energy",
+  "userMessageCount",
+  "assistantMessageCount",
+  "summary",
+  "createdAt",
+] as const
+
+export const ADMIN_STAMPLEY_TRANSCRIPT_DETAIL_FIELDS = ["messages"] as const
+
+const STAMPLEY_SESSION_ID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+export function isStampleySessionId(value: unknown): value is string {
+  return typeof value === "string" && STAMPLEY_SESSION_ID_PATTERN.test(value)
+}
 
 function parseAssistantData(raw: unknown): StampleyAssistantData | undefined {
   if (!raw || typeof raw !== "object") return undefined
@@ -47,11 +89,15 @@ export function parseStoredStampleyMessages(raw: unknown): StampleyChatMessage[]
   })
 }
 
-export function mapStampleySessionRow(
-  row: Record<string, unknown>
-): AdminStampleySession {
-  const messages = parseStoredStampleyMessages(row.messages)
+function optionalNumber(value: unknown): number | null {
+  if (value == null || value === "") return null
+  const n = Number(value)
+  return Number.isFinite(n) ? n : null
+}
 
+export function mapStampleySessionListRow(
+  row: Record<string, unknown>
+): AdminStampleySessionListItem {
   return {
     id: String(row.id),
     userId: String(row.user_id),
@@ -60,20 +106,20 @@ export function mapStampleySessionRow(
       ? new Date(String(row.check_in_date)).toISOString()
       : null,
     domain: row.domain != null ? String(row.domain) : null,
-    stressLevel:
-      row.stress_level != null && row.stress_level !== ""
-        ? Number(row.stress_level)
-        : null,
-    mood:
-      row.mood != null && row.mood !== "" ? Number(row.mood) : null,
-    energy:
-      row.energy != null && row.energy !== ""
-        ? Number(row.energy)
-        : null,
+    stressLevel: optionalNumber(row.stress_level),
+    mood: optionalNumber(row.mood),
+    energy: optionalNumber(row.energy),
     userMessageCount: Number(row.user_message_count ?? 0),
     assistantMessageCount: Number(row.assistant_message_count ?? 0),
     summary: row.summary != null ? String(row.summary) : null,
     createdAt: new Date(String(row.created_at)).toISOString(),
-    messages,
+  }
+}
+
+export function mapStampleyTranscriptDetail(
+  rawMessages: unknown
+): AdminStampleyTranscriptDetail {
+  return {
+    messages: parseStoredStampleyMessages(rawMessages),
   }
 }

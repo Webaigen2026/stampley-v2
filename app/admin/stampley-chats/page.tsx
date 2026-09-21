@@ -5,7 +5,7 @@ import {
   parseAnalyticsFilters,
   STUDY_DOMAINS,
 } from "@/lib/admin-analytics-filters"
-import { mapStampleySessionRow } from "@/lib/admin-stampley-sessions"
+import { mapStampleySessionListRow } from "@/lib/admin-stampley-sessions"
 import { StampleySessionCard } from "@/components/admin/stampley-chats/stampley-session-card"
 import { recordPhiPageViewOrThrow } from "@/lib/admin-phi-page"
 import { filterKeysFromAnalytics } from "@/lib/audit-metadata"
@@ -39,7 +39,6 @@ export default async function AdminStampleyChatsPage({
       s.user_message_count,
       s.assistant_message_count,
       s.summary,
-      s.messages,
       s.created_at,
       c.check_in_date
     FROM stampley_chat_sessions s
@@ -50,13 +49,13 @@ export default async function AdminStampleyChatsPage({
     LIMIT 200
   `
 
-  const sessions = result.map(mapStampleySessionRow)
+  const sessions = result.map(mapStampleySessionListRow)
 
   await recordPhiPageViewOrThrow({
     action: "ADMIN_STAMPLEY_TRANSCRIPT_LIST_VIEWED",
     resourceType: "STAMPLEY_SESSION",
     metadata: {
-      includesTranscripts: true,
+      includesTranscripts: false,
       filterKeys: filterKeysFromAnalytics(filters),
     },
   })

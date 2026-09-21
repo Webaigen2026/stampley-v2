@@ -353,7 +353,7 @@ describe("HIPAA-3 PHI page reads", () => {
       session: adminSession,
       action: "ADMIN_STAMPLEY_TRANSCRIPT_LIST_VIEWED",
       resourceType: "STAMPLEY_SESSION",
-      metadata: { includesTranscripts: true },
+      metadata: { includesTranscripts: false },
       payload: {
         messages: [{ content: "full transcript text" }],
         summary: "Participant discussed hypoglycemia",
@@ -362,7 +362,29 @@ describe("HIPAA-3 PHI page reads", () => {
     const serialized = JSON.stringify(rows)
     assert.equal(rows.length, 1)
     assert.doesNotMatch(serialized, /full transcript text|hypoglycemia|messages|summary/i)
+    assert.deepEqual(rows[0].metadata, { includesTranscripts: false })
+  })
+
+  it("Stampley transcript detail audit is resource-scoped and contains no message text", async () => {
+    const { db, rows } = createAuditStore()
+    await completePhiPageAccess({
+      db,
+      session: adminSession,
+      action: "ADMIN_STAMPLEY_TRANSCRIPT_LIST_VIEWED",
+      resourceType: "STAMPLEY_SESSION",
+      resourceId: "11111111-1111-4111-8111-111111111111",
+      subjectUserId: "22222222-2222-4222-8222-222222222222",
+      metadata: { includesTranscripts: true },
+      payload: {
+        messages: [{ content: "I feel exhausted and mentioned insulin" }],
+      },
+    })
+    const serialized = JSON.stringify(rows)
+    assert.equal(rows.length, 1)
+    assert.equal(rows[0].resourceId, "11111111-1111-4111-8111-111111111111")
+    assert.equal(rows[0].subjectUserId, "22222222-2222-4222-8222-222222222222")
     assert.deepEqual(rows[0].metadata, { includesTranscripts: true })
+    assert.doesNotMatch(serialized, /I feel exhausted|insulin|messages/i)
   })
 
   it("safety audit contains no email, reflection, or distress values", async () => {

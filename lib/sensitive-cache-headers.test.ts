@@ -39,6 +39,9 @@ const STAMPLEY_ROUTES = [
   "app/api/stampley/session/route.ts",
 ] as const
 
+const ADMIN_STAMPLEY_TRANSCRIPT_ROUTE =
+  "app/api/admin/stampley-sessions/[id]/route.ts"
+
 describe("HIPAA-5.4 sensitive cache policy", () => {
   it("includes private, no-store, and max-age=0 without public or s-maxage", () => {
     const headers = new Headers(SENSITIVE_RESPONSE_HEADERS)
@@ -106,6 +109,12 @@ describe("HIPAA-5.4 check-in and Stampley JSON responses", () => {
       assert.match(source, /jsonWithSensitiveCache/)
       assert.doesNotMatch(source, /NextResponse\.json/)
     }
+  })
+
+  it("uses the shared helper on admin Stampley transcript detail responses", () => {
+    const source = read(ADMIN_STAMPLEY_TRANSCRIPT_ROUTE)
+    assert.match(source, /jsonWithSensitiveCache/)
+    assert.doesNotMatch(source, /NextResponse\.json/)
   })
 })
 
