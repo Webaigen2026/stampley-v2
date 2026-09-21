@@ -192,6 +192,14 @@ describe("HIPAA-4 export filter validation", () => {
       new URLSearchParams("from=2026-01-01&to=2026-01-31&domain=Emotional&week=2")
     )
     assert.equal(valid.ok, true)
+    const withQ = parseCodedExportFilters(
+      new URLSearchParams("q=participant@example.com&week=2")
+    )
+    assert.equal(withQ.ok, true)
+    if (withQ.ok) {
+      assert.equal(withQ.filters.q, null)
+      assert.equal(withQ.filters.week, 2)
+    }
     assert.equal(CODED_EXPORT_MAX_ROWS, 10_000)
     assert.match(GENERIC_EXPORT_FILTER_ERROR, /Invalid export filters/)
     assert.match(GENERIC_EXPORT_LIMIT_ERROR, /10000/)

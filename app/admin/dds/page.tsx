@@ -1,6 +1,7 @@
-import { prisma } from "@/lib/prisma"
-import type { Prisma } from "@/lib/generated/prisma/client"
 import Link from "next/link"
+import { DdsIdentifiedPanel } from "@/components/admin/dds/dds-identified-panel"
+import { StripIdentifiedSearchParam } from "@/components/admin/strip-identified-search-param"
+import { loadAdminDdsRows } from "@/lib/admin-directory-search"
 import { recordPhiPageViewOrThrow } from "@/lib/admin-phi-page"
 import { filterKeysFromFlags } from "@/lib/audit-metadata"
 import { requireAdminPage } from "@/lib/admin-authz"
@@ -9,63 +10,7 @@ import { hasCapability } from "@/lib/admin-capabilities"
 export const dynamic = "force-dynamic"
 
 type SearchParams = {
-  q?: string
   highDistress?: string
-}
-
-const DDS_QUESTIONS = [
-  { id: "q1", domain: "Emotional" },
-  { id: "q2", domain: "Physician" },
-  { id: "q3", domain: "Emotional" },
-  { id: "q4", domain: "Physician" },
-  { id: "q5", domain: "Regimen" },
-  { id: "q6", domain: "Regimen" },
-  { id: "q7", domain: "Interpersonal" },
-  { id: "q8", domain: "Emotional" },
-  { id: "q9", domain: "Physician" },
-  { id: "q10", domain: "Regimen" },
-  { id: "q11", domain: "Emotional" },
-  { id: "q12", domain: "Regimen" },
-  { id: "q13", domain: "Interpersonal" },
-  { id: "q14", domain: "Emotional" },
-  { id: "q15", domain: "Physician" },
-  { id: "q16", domain: "Regimen" },
-  { id: "q17", domain: "Interpersonal" },
-] as const
-
-function formatScore(value: unknown): string {
-  if (value == null || value === "") return "—"
-  const n = Number(value)
-  return Number.isFinite(n) ? n.toFixed(2) : "—"
-}
-
-function hasHighDistress(row: Record<string, unknown>): boolean {
-  const scores = [
-    row.total_score,
-    row.emotional_score,
-    row.physician_score,
-    row.regimen_score,
-    row.interpersonal_score,
-  ]
-
-  return scores.some((value) => {
-    const n = Number(value)
-    return Number.isFinite(n) && n >= 3
-  })
-}
-
-function focusDomain(row: Record<string, unknown>): string {
-  const confirmed = row.confirmed_domain
-  if (typeof confirmed === "string" && confirmed.trim()) return confirmed
-
-  const recommended = row.recommended_domain
-  if (typeof recommended === "string" && recommended.trim()) return recommended
-
-  return "—"
-}
-
-function hasStoredItemResponses(row: Record<string, unknown>): boolean {
-  return DDS_QUESTIONS.some((q) => row[q.id] != null)
 }
 
 export default async function AdminDDSPage({
@@ -79,120 +24,27 @@ export default async function AdminDDSPage({
   ])
   const canViewItems = hasCapability(actor.role, "canViewClinicalSurveyData")
   const params = await searchParams
-  const q = (params.q ?? "").trim()
   const highDistressOnly = params.highDistress === "1"
 
-  const where: Prisma.DdsResponseWhereInput = {}
-
-  if (q) {
-    where.user = {
-      OR: [
-        { email: { contains: q, mode: "insensitive" } },
-        { studyId: { contains: q, mode: "insensitive" } },
-      ],
-    }
-  }
-
-  if (highDistressOnly) {
-    where.OR = [
-      { totalScore: { gte: 3 } },
-      { emotionalScore: { gte: 3 } },
-      { physicianScore: { gte: 3 } },
-      { regimenScore: { gte: 3 } },
-      { interpersonalScore: { gte: 3 } },
-    ]
-  }
-
-  const result = await prisma.ddsResponse.findMany({
-    where,
-    orderBy: { createdAt: "desc" },
-    select: {
-      id: true,
-      userId: true,
-      createdAt: true,
-      totalScore: true,
-      emotionalScore: true,
-      physicianScore: true,
-      regimenScore: true,
-      interpersonalScore: true,
-      recommendedDomain: true,
-      confirmedDomain: true,
-      ...(canViewItems
-        ? {
-            q1: true,
-            q2: true,
-            q3: true,
-            q4: true,
-            q5: true,
-            q6: true,
-            q7: true,
-            q8: true,
-            q9: true,
-            q10: true,
-            q11: true,
-            q12: true,
-            q13: true,
-            q14: true,
-            q15: true,
-            q16: true,
-            q17: true,
-          }
-        : {}),
-      user: {
-        select: { email: true, studyId: true },
-      },
-    },
+  const rows = await loadAdminDdsRows({
+    q: null,
+    highDistressOnly,
+    canViewItems,
   })
-
-  const rows = result.map((row) => ({
-    dds_id: row.id,
-    user_id: row.userId,
-    email: row.user.email,
-    study_id: row.user.studyId,
-    created_at: row.createdAt,
-    total_score: row.totalScore != null ? Number(row.totalScore) : null,
-    emotional_score: row.emotionalScore != null ? Number(row.emotionalScore) : null,
-    physician_score: row.physicianScore != null ? Number(row.physicianScore) : null,
-    regimen_score: row.regimenScore != null ? Number(row.regimenScore) : null,
-    interpersonal_score:
-      row.interpersonalScore != null ? Number(row.interpersonalScore) : null,
-    recommended_domain: row.recommendedDomain,
-    confirmed_domain: row.confirmedDomain,
-    ...(canViewItems
-      ? {
-          q1: row.q1,
-          q2: row.q2,
-          q3: row.q3,
-          q4: row.q4,
-          q5: row.q5,
-          q6: row.q6,
-          q7: row.q7,
-          q8: row.q8,
-          q9: row.q9,
-          q10: row.q10,
-          q11: row.q11,
-          q12: row.q12,
-          q13: row.q13,
-          q14: row.q14,
-          q15: row.q15,
-          q16: row.q16,
-          q17: row.q17,
-        }
-      : {}),
-  })) as Record<string, unknown>[]
 
   await recordPhiPageViewOrThrow({
     action: "ADMIN_DDS_LIST_VIEWED",
     resourceType: "DDS",
     metadata: {
       filterKeys: filterKeysFromFlags({
-        q: Boolean(q),
+        q: false,
       }),
     },
   })
 
   return (
     <main className="space-y-8">
+      <StripIdentifiedSearchParam />
       <div>
         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
           Admin · Study
@@ -219,19 +71,6 @@ export default async function AdminDDSPage({
         </p>
 
         <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end">
-          <label className="block min-w-[220px] flex-1 text-sm">
-            <span className="mb-1.5 block text-xs font-medium text-slate-600">
-              Search participant
-            </span>
-            <input
-              type="search"
-              name="q"
-              defaultValue={q}
-              placeholder="Email or study ID…"
-              className="w-full border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
-            />
-          </label>
-
           <label className="flex items-center gap-2 pb-2 text-sm text-slate-700">
             <input
               type="checkbox"
@@ -251,215 +90,23 @@ export default async function AdminDDSPage({
               Apply
             </button>
 
-            {(q || highDistressOnly) && (
+            {highDistressOnly ? (
               <Link
                 href="/admin/dds"
                 className="border border-slate-300 bg-white px-4 py-2 text-xs font-semibold uppercase tracking-[0.08em] text-slate-700 hover:bg-slate-50"
               >
                 Clear
               </Link>
-            )}
+            ) : null}
           </div>
         </div>
       </form>
 
-      <section className="overflow-hidden border border-slate-200 bg-white shadow-sm">
-        <div className="border-b border-slate-200 bg-slate-50 px-5 py-4">
-          <h2 className="text-sm font-semibold text-slate-900">
-            Participant DDS-17 Submissions
-          </h2>
-          <p className="mt-1 text-xs text-slate-500">
-            {rows.length} response{rows.length === 1 ? "" : "s"}
-            {highDistressOnly ? " · high distress filter active" : ""}
-            {q ? ` · matching “${q}”` : ""}
-          </p>
-        </div>
-
-        {rows.length === 0 ? (
-          <div className="px-5 py-16 text-center">
-            <p className="text-sm font-medium text-slate-700">
-              No DDS-17 responses submitted yet.
-            </p>
-            {(q || highDistressOnly) && (
-              <p className="mt-2 text-sm text-slate-500">
-                Try clearing filters to see all submissions.
-              </p>
-            )}
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full border-collapse text-left text-sm">
-              <thead>
-                <tr className="border-b border-slate-200 bg-white">
-                  <th className="px-5 py-3 font-semibold text-slate-600">
-                    Participant
-                  </th>
-                  <th className="px-5 py-3 font-semibold text-slate-600">
-                    Study ID
-                  </th>
-                  <th className="px-5 py-3 font-semibold text-slate-600">
-                    Completed
-                  </th>
-                  <th className="px-5 py-3 font-semibold text-slate-600">
-                    Total
-                  </th>
-                  <th className="px-5 py-3 font-semibold text-slate-600">
-                    Emotional
-                  </th>
-                  <th className="px-5 py-3 font-semibold text-slate-600">
-                    Physician
-                  </th>
-                  <th className="px-5 py-3 font-semibold text-slate-600">
-                    Regimen
-                  </th>
-                  <th className="px-5 py-3 font-semibold text-slate-600">
-                    Interpersonal
-                  </th>
-                  <th className="px-5 py-3 font-semibold text-slate-600">
-                    Focus Domain
-                  </th>
-                  <th className="px-5 py-3 font-semibold text-slate-600">
-                    Distress
-                  </th>
-                  <th className="px-5 py-3 font-semibold text-slate-600">
-                    Items
-                  </th>
-                </tr>
-              </thead>
-
-              <tbody>
-                {rows.map((row) => {
-                  const highDistress = hasHighDistress(row)
-                  const storedItems =
-                    canViewItems && hasStoredItemResponses(row)
-                  const userId = String(row.user_id)
-
-                  return (
-                    <tr
-                      key={String(row.dds_id)}
-                      className="border-b border-slate-100 align-top hover:bg-slate-50/80"
-                    >
-                      <td className="px-5 py-4">
-                        <Link
-                          href={`/admin/users/${userId}`}
-                          className="font-medium text-[#005ea8] hover:underline"
-                        >
-                          {String(row.email)}
-                        </Link>
-                      </td>
-
-                      <td className="px-5 py-4 text-slate-700">
-                        {row.study_id != null ? String(row.study_id) : "—"}
-                      </td>
-
-                      <td className="whitespace-nowrap px-5 py-4 text-slate-600">
-                        {row.created_at
-                          ? new Date(String(row.created_at)).toLocaleString()
-                          : "—"}
-                      </td>
-
-                      <td className="px-5 py-4 font-medium text-slate-900">
-                        {formatScore(row.total_score)}
-                      </td>
-
-                      <td className="px-5 py-4 text-slate-700">
-                        {formatScore(row.emotional_score)}
-                      </td>
-
-                      <td className="px-5 py-4 text-slate-700">
-                        {formatScore(row.physician_score)}
-                      </td>
-
-                      <td className="px-5 py-4 text-slate-700">
-                        {formatScore(row.regimen_score)}
-                      </td>
-
-                      <td className="px-5 py-4 text-slate-700">
-                        {formatScore(row.interpersonal_score)}
-                      </td>
-
-                      <td className="px-5 py-4 text-slate-700">
-                        {focusDomain(row)}
-                      </td>
-
-                      <td className="px-5 py-4">
-                        {highDistress ? (
-                          <span className="border border-amber-200 bg-amber-50 px-2 py-1 text-xs font-semibold text-amber-800">
-                            ≥ 3
-                          </span>
-                        ) : (
-                          <span className="border border-green-200 bg-green-50 px-2 py-1 text-xs font-semibold text-green-700">
-                            Below 3
-                          </span>
-                        )}
-                      </td>
-
-                      <td className="px-5 py-4">
-                        {storedItems ? (
-                          <details className="group">
-                            <summary className="cursor-pointer list-none text-xs font-semibold uppercase tracking-[0.08em] text-[#005ea8] hover:underline [&::-webkit-details-marker]:hidden">
-                              View q1–q17
-                            </summary>
-
-                            <div className="mt-3 min-w-[280px] border border-slate-200 bg-slate-50 p-3">
-                              <table className="w-full text-left text-xs">
-                                <thead>
-                                  <tr className="border-b border-slate-200 text-slate-500">
-                                    <th className="pb-2 pr-3 font-semibold">
-                                      Item
-                                    </th>
-                                    <th className="pb-2 pr-3 font-semibold">
-                                      Domain
-                                    </th>
-                                    <th className="pb-2 font-semibold">
-                                      Score
-                                    </th>
-                                  </tr>
-                                </thead>
-                                <tbody>
-                                  {DDS_QUESTIONS.map((question, index) => {
-                                    const value = row[question.id]
-                                    const numeric =
-                                      value == null ? null : Number(value)
-
-                                    return (
-                                      <tr
-                                        key={question.id}
-                                        className="border-b border-slate-100 last:border-b-0"
-                                      >
-                                        <td className="py-1.5 pr-3 font-medium text-slate-800">
-                                          {index + 1}
-                                        </td>
-                                        <td className="py-1.5 pr-3 text-slate-600">
-                                          {question.domain}
-                                        </td>
-                                        <td className="py-1.5 font-medium text-slate-900">
-                                          {numeric == null ||
-                                          Number.isNaN(numeric)
-                                            ? "—"
-                                            : numeric}
-                                        </td>
-                                      </tr>
-                                    )
-                                  })}
-                                </tbody>
-                              </table>
-                            </div>
-                          </details>
-                        ) : (
-                          <span className="text-xs text-slate-500">
-                            Not stored
-                          </span>
-                        )}
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </section>
+      <DdsIdentifiedPanel
+        initial={rows}
+        canViewItems={canViewItems}
+        highDistressOnly={highDistressOnly}
+      />
 
       <p className="text-xs leading-5 text-slate-500">
         Individual item responses (q1–q17) are stored when participants submit

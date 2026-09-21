@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, Suspense, type ReactNode } from "react"
+import { useLayoutEffect, useState, Suspense, type ReactNode } from "react"
 import { useSearchParams } from "next/navigation"
 import Link from "next/link"
 import Image from "next/image"
@@ -162,11 +162,20 @@ function ResetAuthLayout({
 
 function ResetPasswordForm() {
   const searchParams = useSearchParams()
-  const token = searchParams.get("token")
+  const [token] = useState(() => searchParams.get("token"))
 
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const [success, setSuccess] = useState(false)
+
+  useLayoutEffect(() => {
+    const url = new URL(window.location.href)
+    if (!url.searchParams.has("token")) return
+    url.searchParams.delete("token")
+    const qs = url.searchParams.toString()
+    const next = `${url.pathname}${qs ? `?${qs}` : ""}${url.hash}`
+    window.history.replaceState(window.history.state, "", next)
+  }, [])
 
   if (!token) {
     return (

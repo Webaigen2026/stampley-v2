@@ -1,3 +1,5 @@
+"use client"
+
 import Link from "next/link"
 import { changeUserRole, deleteUser } from "@/actions/admin"
 import type { AppUserRole } from "@/lib/admin-capabilities"
@@ -135,8 +137,8 @@ export function UsersTable({
                     ) : (
                       <form
                         action={async (formData) => {
-                          "use server"
                           await changeUserRole(formData)
+                          return
                         }}
                         className="flex flex-col gap-2"
                       >
@@ -177,8 +179,8 @@ export function UsersTable({
                     ) : (
                       <form
                         action={async (formData) => {
-                          "use server"
                           await deleteUser(formData)
+                          return
                         }}
                         className="flex flex-col items-center gap-2"
                       >

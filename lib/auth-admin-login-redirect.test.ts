@@ -33,6 +33,14 @@ describe("HIPAA-4.3 admin login redirect", () => {
   it("preserves only safe same-origin callback paths", () => {
     assert.equal(isSafeInternalCallbackUrl("/admin/dashboard"), true)
     assert.equal(isSafeInternalCallbackUrl("/admin/analytics?week=2"), true)
+    assert.equal(isSafeInternalCallbackUrl("/admin/analytics?q=participant@example.com"), true)
+    const authConfig = read("lib/auth.config.ts")
+    assert.match(authConfig, /const requested = pathname/)
+    assert.doesNotMatch(
+      authConfig,
+      /requested = `\$\{pathname\}\$\{request\.nextUrl\.search\}`/
+    )
+    assert.doesNotMatch(authConfig, /request\.nextUrl\.search/)
     assert.equal(isSafeInternalCallbackUrl("/dashboard"), true)
     assert.equal(isSafeInternalCallbackUrl("/login"), true)
     assert.equal(isSafeInternalCallbackUrl("https://evil.test/login"), false)

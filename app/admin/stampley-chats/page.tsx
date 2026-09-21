@@ -1,12 +1,11 @@
-import { prisma } from "@/lib/prisma"
+import { StampleyChatsIdentifiedPanel } from "@/components/admin/stampley-chats/stampley-chats-identified-panel"
+import { StripIdentifiedSearchParam } from "@/components/admin/strip-identified-search-param"
 import {
-  buildPrismaSessionFilter,
-  hasActiveAnalyticsFilters,
-  parseAnalyticsFilters,
+  hasActiveUrlSafeAnalyticsFilters,
+  parseUrlSafeAnalyticsFilters,
   STUDY_DOMAINS,
 } from "@/lib/admin-analytics-filters"
-import { mapStampleySessionListRow } from "@/lib/admin-stampley-sessions"
-import { StampleySessionCard } from "@/components/admin/stampley-chats/stampley-session-card"
+import { loadAdminStampleyChatSessions } from "@/lib/admin-directory-search"
 import { recordPhiPageViewOrThrow } from "@/lib/admin-phi-page"
 import { filterKeysFromAnalytics } from "@/lib/audit-metadata"
 import { requireAdminPage } from "@/lib/admin-authz"
@@ -22,34 +21,9 @@ export default async function AdminStampleyChatsPage({
 }) {
   await requireAdminPage("canViewTranscripts")
   const params = await searchParams
-  const filters = parseAnalyticsFilters(params)
-  const filtersActive = hasActiveAnalyticsFilters(filters)
-  const sessionFilter = buildPrismaSessionFilter(filters)
-
-  const result = await prisma.$queryRaw<Array<Record<string, unknown>>>`
-    SELECT
-      s.id,
-      s.user_id,
-      u.email,
-      s.check_in_submission_id,
-      s.domain,
-      s.stress_level,
-      s.mood,
-      s.energy,
-      s.user_message_count,
-      s.assistant_message_count,
-      s.summary,
-      s.created_at,
-      c.check_in_date
-    FROM stampley_chat_sessions s
-    JOIN users u ON u.id = s.user_id
-    LEFT JOIN check_in_submissions c ON c.id = s.check_in_submission_id
-    WHERE u.role = 'PARTICIPANT'${sessionFilter.and}
-    ORDER BY s.created_at DESC
-    LIMIT 200
-  `
-
-  const sessions = result.map(mapStampleySessionListRow)
+  const filters = parseUrlSafeAnalyticsFilters(params)
+  const filtersActive = hasActiveUrlSafeAnalyticsFilters(filters)
+  const sessions = await loadAdminStampleyChatSessions(filters)
 
   await recordPhiPageViewOrThrow({
     action: "ADMIN_STAMPLEY_TRANSCRIPT_LIST_VIEWED",
@@ -62,6 +36,7 @@ export default async function AdminStampleyChatsPage({
 
   return (
     <main className="space-y-8">
+      <StripIdentifiedSearchParam />
       <div>
         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
           Admin
@@ -85,18 +60,6 @@ export default async function AdminStampleyChatsPage({
             Filters
           </p>
           <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-            <label className="block text-sm">
-              <span className="font-medium text-slate-700">
-                Participant email
-              </span>
-              <input
-                type="search"
-                name="q"
-                defaultValue={filters.q ?? ""}
-                placeholder="Search email…"
-                className="mt-1 w-full border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200"
-              />
-            </label>
             <label className="block text-sm">
               <span className="font-medium text-slate-700">From date</span>
               <input
@@ -165,33 +128,16 @@ export default async function AdminStampleyChatsPage({
         </form>
       </div>
 
-      <section className="space-y-4">
-        <div className="flex items-center justify-between gap-3">
-          <h2 className="text-sm font-semibold text-slate-900">
-            Saved sessions
-          </h2>
-          <p className="text-xs text-slate-500">
-            {sessions.length} session{sessions.length === 1 ? "" : "s"}
-            {sessions.length >= 200 ? " (most recent 200)" : ""}
-          </p>
-        </div>
-
-        {sessions.length === 0 ? (
-          <div className="border border-slate-200 bg-white px-5 py-12 text-center shadow-sm">
-            <p className="text-sm font-medium text-slate-700">
-              No Stampley chat sessions saved yet.
-            </p>
-            <p className="mt-2 text-sm text-slate-500">
-              Sessions appear here after participants complete Step 5 and save
-              their check-in.
-            </p>
-          </div>
-        ) : (
-          sessions.map((session) => (
-            <StampleySessionCard key={session.id} session={session} />
-          ))
-        )}
-      </section>
+      <StampleyChatsIdentifiedPanel
+        initial={sessions}
+        urlFilters={{
+          from: filters.from,
+          to: filters.to,
+          domain: filters.domain,
+          week: filters.week,
+          highStress: filters.highStress,
+        }}
+      />
     </main>
   )
 }

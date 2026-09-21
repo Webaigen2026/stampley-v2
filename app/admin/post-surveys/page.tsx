@@ -1,38 +1,21 @@
-import { prisma } from "@/lib/prisma"
-import type { Prisma } from "@/lib/generated/prisma/client"
 import Link from "next/link"
+import { PostSurveyIdentifiedPanel } from "@/components/admin/post-surveys/post-survey-identified-panel"
+import { StripIdentifiedSearchParam } from "@/components/admin/strip-identified-search-param"
 import {
-  PostSurveyResponseDetails,
-  getDdsDomainScores,
-  getDdsTotal,
-  asJsonObject,
-  formatPostSurveyNumber,
-  formatPostSurveyScore,
-} from "@/components/admin/post-surveys/post-survey-response-details"
+  loadAdminPostSurveyRows,
+  PHQ_SEVERITY_OPTIONS,
+} from "@/lib/admin-directory-search"
 import { recordPhiPageViewOrThrow } from "@/lib/admin-phi-page"
 import { filterKeysFromFlags } from "@/lib/audit-metadata"
 import { requireAdminPage } from "@/lib/admin-authz"
-import {
-  mapPostSurveyListRow,
-  postSurveySelect,
-  surveyViewCapabilities,
-} from "@/lib/admin-phi-minimization"
+import { surveyViewCapabilities } from "@/lib/admin-phi-minimization"
 
 export const dynamic = "force-dynamic"
 
 type SearchParams = {
-  q?: string
   phqSeverity?: string
   futureContact?: string
 }
-
-const PHQ_SEVERITY_OPTIONS = [
-  "Minimal",
-  "Mild",
-  "Moderate",
-  "Moderately Severe",
-  "Severe",
-] as const
 
 export default async function AdminPostSurveysPage({
   searchParams,
@@ -45,50 +28,24 @@ export default async function AdminPostSurveysPage({
   ])
   const caps = surveyViewCapabilities(actor.role)
   const params = await searchParams
-  const q = (params.q ?? "").trim()
   const phqSeverity = (params.phqSeverity ?? "").trim()
   const futureContact = (params.futureContact ?? "").trim()
 
-  const where: Prisma.PostSurveyResponseWhereInput = {
-    completedAt: { not: null },
-  }
-
-  if (q) {
-    where.user = caps.canViewIdentifiedAnalytics
-      ? { email: { contains: q, mode: "insensitive" } }
-      : { studyId: { contains: q, mode: "insensitive" } }
-  }
-
-  if (
-    caps.canViewClinicalSurveyScores &&
-    phqSeverity &&
-    PHQ_SEVERITY_OPTIONS.includes(phqSeverity as (typeof PHQ_SEVERITY_OPTIONS)[number])
-  ) {
-    where.phqSeverity = phqSeverity
-  }
-
-  if (futureContact === "yes") {
-    where.futureResearchContact = true
-  } else if (futureContact === "no") {
-    where.futureResearchContact = false
-  }
-
-  const result = await prisma.postSurveyResponse.findMany({
-    where,
-    orderBy: { completedAt: "desc" },
-    select: postSurveySelect(caps),
+  const rows = await loadAdminPostSurveyRows({
+    q: null,
+    phqSeverity,
+    futureContact,
+    caps,
   })
 
-  const rows = result.map((row) => mapPostSurveyListRow(row, caps))
-
-  const hasFilters = Boolean(q || phqSeverity || futureContact)
+  const hasUrlFilters = Boolean(phqSeverity || futureContact)
 
   await recordPhiPageViewOrThrow({
     action: "ADMIN_POST_SURVEY_LIST_VIEWED",
     resourceType: "POST_SURVEY",
     metadata: {
       filterKeys: filterKeysFromFlags({
-        q: Boolean(q),
+        q: false,
       }),
       includesNarratives: false,
     },
@@ -96,6 +53,7 @@ export default async function AdminPostSurveysPage({
 
   return (
     <main className="space-y-8">
+      <StripIdentifiedSearchParam />
       <div>
         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
           Admin · Study
@@ -121,39 +79,24 @@ export default async function AdminPostSurveysPage({
         </p>
 
         <div className="mt-4 flex flex-col gap-4 lg:flex-row lg:flex-wrap lg:items-end">
-          <label className="block min-w-[220px] flex-1 text-sm">
-            <span className="mb-1.5 block text-xs font-medium text-slate-600">
-              Search participant
-            </span>
-            <input
-              type="search"
-              name="q"
-              defaultValue={q}
-              placeholder={
-                caps.canViewIdentifiedAnalytics ? "Email…" : "Study ID…"
-              }
-              className="w-full border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
-            />
-          </label>
-
           {caps.canViewClinicalSurveyScores ? (
-          <label className="block min-w-[180px] text-sm">
-            <span className="mb-1.5 block text-xs font-medium text-slate-600">
-              PHQ severity
-            </span>
-            <select
-              name="phqSeverity"
-              defaultValue={phqSeverity}
-              className="w-full border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
-            >
-              <option value="">All severities</option>
-              {PHQ_SEVERITY_OPTIONS.map((option) => (
-                <option key={option} value={option}>
-                  {option}
-                </option>
-              ))}
-            </select>
-          </label>
+            <label className="block min-w-[180px] text-sm">
+              <span className="mb-1.5 block text-xs font-medium text-slate-600">
+                PHQ severity
+              </span>
+              <select
+                name="phqSeverity"
+                defaultValue={phqSeverity}
+                className="w-full border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
+              >
+                <option value="">All severities</option>
+                {PHQ_SEVERITY_OPTIONS.map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
+            </label>
           ) : null}
 
           <label className="block min-w-[180px] text-sm">
@@ -179,164 +122,24 @@ export default async function AdminPostSurveysPage({
               Apply
             </button>
 
-            {hasFilters && (
+            {hasUrlFilters ? (
               <Link
                 href="/admin/post-surveys"
                 className="border border-slate-300 bg-white px-4 py-2 text-xs font-semibold uppercase tracking-[0.08em] text-slate-700 hover:bg-slate-50"
               >
                 Clear
               </Link>
-            )}
+            ) : null}
           </div>
         </div>
       </form>
 
-      <section className="overflow-hidden border border-slate-200 bg-white shadow-sm">
-        <div className="border-b border-slate-200 bg-slate-50 px-5 py-4">
-          <h2 className="text-sm font-semibold text-slate-900">
-            Participant Post-Study Submissions
-          </h2>
-          <p className="mt-1 text-xs text-slate-500">
-            {rows.length} response{rows.length === 1 ? "" : "s"}
-            {q ? ` · matching “${q}”` : ""}
-            {phqSeverity ? ` · PHQ ${phqSeverity}` : ""}
-            {futureContact ? ` · future contact ${futureContact}` : ""}
-          </p>
-        </div>
-
-        {rows.length === 0 ? (
-          <div className="px-5 py-16 text-center">
-            <p className="text-sm font-medium text-slate-700">
-              No post-survey responses yet.
-            </p>
-            {hasFilters && (
-              <p className="mt-2 text-sm text-slate-500">
-                Try clearing filters to see all submissions.
-              </p>
-            )}
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full border-collapse text-left text-sm">
-              <thead>
-                <tr className="border-b border-slate-200 bg-white">
-                  <th className="px-5 py-3 font-semibold text-slate-600">
-                    {caps.canViewIdentifiedAnalytics ? "Participant" : "Study ID"}
-                  </th>
-                  <th className="px-5 py-3 font-semibold text-slate-600">
-                    Submitted
-                  </th>
-                  {caps.canViewClinicalSurveyScores ? (
-                    <>
-                      <th className="px-5 py-3 font-semibold text-slate-600">
-                        DDS Total
-                      </th>
-                      <th className="px-5 py-3 font-semibold text-slate-600">
-                        Domains
-                      </th>
-                      <th className="px-5 py-3 font-semibold text-slate-600">
-                        PHQ
-                      </th>
-                      <th className="px-5 py-3 font-semibold text-slate-600">
-                        SUS
-                      </th>
-                    </>
-                  ) : null}
-                  <th className="px-5 py-3 font-semibold text-slate-600">
-                    Future Contact
-                  </th>
-                  <th className="px-5 py-3 font-semibold text-slate-600">
-                    Details
-                  </th>
-                </tr>
-              </thead>
-
-              <tbody>
-                {rows.map((row) => {
-                  const ddsScores = caps.canViewClinicalSurveyScores
-                    ? asJsonObject(row.dds_scores)
-                    : null
-                  const domains = getDdsDomainScores(ddsScores)
-
-                  return (
-                    <tr
-                      key={String(row.id)}
-                      className="border-b border-slate-100 align-top hover:bg-slate-50/80"
-                    >
-                      <td className="px-5 py-4 font-medium text-slate-900">
-                        {caps.canViewIdentifiedAnalytics
-                          ? String(row.email ?? "—")
-                          : String(row.study_id)}
-                      </td>
-
-                      <td className="whitespace-nowrap px-5 py-4 text-slate-600">
-                        {row.completed_at
-                          ? new Date(String(row.completed_at)).toLocaleString()
-                          : "—"}
-                      </td>
-
-                      {caps.canViewClinicalSurveyScores ? (
-                        <>
-                          <td className="px-5 py-4 font-medium text-slate-900">
-                            {getDdsTotal(ddsScores)}
-                          </td>
-                          <td className="px-5 py-4 text-xs text-slate-700">
-                            <div className="space-y-1">
-                              <p>E: {domains.emotional}</p>
-                              <p>P: {domains.physician}</p>
-                              <p>R: {domains.regimen}</p>
-                              <p>I: {domains.interpersonal}</p>
-                            </div>
-                          </td>
-                          <td className="px-5 py-4 text-slate-700">
-                            <p className="font-medium text-slate-900">
-                              {formatPostSurveyNumber(row.phq_total)}
-                            </p>
-                            <p className="mt-1 text-xs text-slate-500">
-                              {typeof row.phq_severity === "string"
-                                ? row.phq_severity
-                                : "—"}
-                            </p>
-                          </td>
-                          <td className="px-5 py-4 font-medium text-slate-900">
-                            {formatPostSurveyScore(row.sus_score)}
-                          </td>
-                        </>
-                      ) : null}
-
-                      <td className="px-5 py-4">
-                        {row.future_research_contact === true ? (
-                          <span className="border border-green-200 bg-green-50 px-2 py-1 text-xs font-semibold text-green-700">
-                            Yes
-                          </span>
-                        ) : row.future_research_contact === false ? (
-                          <span className="text-xs text-slate-500">No</span>
-                        ) : (
-                          <span className="text-xs text-slate-500">—</span>
-                        )}
-                      </td>
-
-                      <td className="px-5 py-4">
-                        <PostSurveyResponseDetails
-                          record={row}
-                          responseId={
-                            caps.canViewSurveyFreeText ? String(row.id) : undefined
-                          }
-                          showPhqItems={caps.canViewPhqItem9}
-                          showClinicalScores={caps.canViewClinicalSurveyScores}
-                          showFreeText={caps.canViewSurveyFreeText}
-                          showOpenReflection={caps.canViewSurveyFreeText}
-                          showContact={caps.canViewContactInformation}
-                        />
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </section>
+      <PostSurveyIdentifiedPanel
+        initial={rows}
+        caps={caps}
+        phqSeverity={phqSeverity}
+        futureContact={futureContact}
+      />
     </main>
   )
 }

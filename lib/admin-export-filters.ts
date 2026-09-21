@@ -1,8 +1,9 @@
 import {
   parseAnalyticsFilters,
   STUDY_DOMAINS,
+  withoutIdentifiedSearch,
   type AnalyticsFilters,
-} from "@/lib/admin-analytics-filters"
+} from "@/lib/admin-analytics-url"
 
 export const CHECK_IN_EXPORT_HEADERS = [
   "study_id",
@@ -117,7 +118,8 @@ export function parseCodedExportFilters(
     return { ok: false, error: GENERIC_EXPORT_FILTER_ERROR }
   }
 
-  return { ok: true, filters: parseAnalyticsFilters(source) }
+  const filters = withoutIdentifiedSearch(parseAnalyticsFilters(source))
+  return { ok: true, filters }
 }
 
 export function codedStudyId(value: unknown): string {

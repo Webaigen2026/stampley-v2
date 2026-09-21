@@ -83,7 +83,7 @@ export const baseAuthConfig = {
 
       if (pathname.startsWith("/admin")) {
         if (!isLoggedIn) {
-          const requested = `${pathname}${request.nextUrl.search}`;
+          const requested = pathname;
           return canonicalSignInRedirect(request, requested);
         }
         if (!isStaffRole(role)) {

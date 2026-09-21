@@ -1,8 +1,10 @@
+"use client"
+
 type KeyRow = {
     id: string
     key: string
     is_used: boolean
-    created_at: string | Date
+    created_at: string | Date | null
     participant_email: string | null
   }
   
@@ -14,7 +16,7 @@ type KeyRow = {
     CopyButton,
   }: {
     keys: KeyRow[]
-    deleteStudyKey: (id: string) => Promise<void>
+    deleteStudyKey: (id: string) => Promise<unknown>
     CopyButton: CopyButtonComponent
   }) {
     return (
@@ -79,11 +81,13 @@ type KeyRow = {
                 </td>
   
                 <td className="px-6 py-4 text-sm text-gray-500">
-                  {new Date(k.created_at).toLocaleDateString("en-US", {
-                    year: "numeric",
-                    month: "short",
-                    day: "numeric",
-                  })}
+                  {k.created_at
+                    ? new Date(k.created_at).toLocaleDateString("en-US", {
+                        year: "numeric",
+                        month: "short",
+                        day: "numeric",
+                      })
+                    : "—"}
                 </td>
   
                 <td className="px-6 py-4">
@@ -93,8 +97,8 @@ type KeyRow = {
                     {!k.is_used ? (
                       <form
                         action={async () => {
-                          "use server"
                           await deleteStudyKey(k.id)
+                          return
                         }}
                       >
                         <button

@@ -86,12 +86,14 @@ describe("HIPAA-5.6.2A Stampley list DTO minimization", () => {
 
   it("admin Stampley list and profile queries do not select messages", () => {
     const list = read("app/admin/stampley-chats/page.tsx")
+    const query = read("lib/admin-directory-search.ts")
     const profile = read("app/admin/users/[id]/page.tsx")
     assert.doesNotMatch(list, /\bs\.messages\b/)
+    assert.doesNotMatch(query, /\bs\.messages\b/)
     assert.doesNotMatch(list, /\bmessages,\s*$/m)
-    assert.match(list, /s\.summary/)
+    assert.match(query, /s\.summary/)
     assert.match(list, /includesTranscripts:\s*false/)
-    assert.match(list, /mapStampleySessionListRow/)
+    assert.match(query, /mapStampleySessionListRow/)
     assert.doesNotMatch(profile, /messages:\s*true/)
     assert.match(profile, /mapStampleySessionListRow/)
     assert.match(profile, /includesTranscripts:\s*false/)

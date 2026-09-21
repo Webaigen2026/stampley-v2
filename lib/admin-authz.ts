@@ -45,6 +45,25 @@ export async function requireAdminCapability(
   return gate
 }
 
+export async function requireAnyAdminCapability(
+  capabilities: readonly AdminCapability[]
+): Promise<
+  | { ok: true; actor: AuditActor }
+  | { ok: false; error: typeof GENERIC_ADMIN_ACTION_ERROR }
+> {
+  const gate = await requireStaffActor()
+  if (!gate.ok) return gate
+  if (!hasAnyCapability(gate.actor.role, capabilities)) {
+    await appendAuditEventFailOpen(prisma, gate.actor, {
+      action: "AUTH_ADMIN_ACCESS_DENIED",
+      resourceType: "AUTH_SESSION",
+      outcome: "DENIED",
+    })
+    return { ok: false, error: GENERIC_ADMIN_ACTION_ERROR }
+  }
+  return gate
+}
+
 export async function requireAdminPage(
   capability: AdminCapability | readonly AdminCapability[]
 ): Promise<AuditActor> {

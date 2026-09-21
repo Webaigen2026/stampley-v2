@@ -5,7 +5,6 @@ export function KeysPagination({
   pageSize,
   totalItems,
   totalPages,
-  q,
   status,
   sort,
 }: {
@@ -13,7 +12,6 @@ export function KeysPagination({
   pageSize: number
   totalItems: number
   totalPages: number
-  q: string
   status: string
   sort: string
 }) {
@@ -23,7 +21,6 @@ export function KeysPagination({
   function buildHref(nextPage: number) {
     const params = new URLSearchParams()
 
-    if (q) params.set("q", q)
     if (status && status !== "ALL") params.set("status", status)
     if (sort) params.set("sort", sort)
 
