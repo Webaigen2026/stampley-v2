@@ -18,27 +18,35 @@ import { getRecentEmotionalThemes } from "@/lib/stampley-memory"
 import {
   buildStampleyOpenAIContext,
   isHighStress,
-  isStampleyGenerateAuthorized,
   parseScore,
   sanitizeHistory,
   stampleyGenerateLog,
   type LongitudinalScoreRow,
 } from "@/lib/stampley-openai-context"
+import { resolveCheckInMutationAccess } from "@/lib/check-in-mutation-authz"
+import {
+  createPrismaOpenSessionRunner,
+  persistOwnedAssistantTurn,
+  persistOwnedParticipantTurn,
+  resolveIncomingParticipantTurn,
+} from "@/lib/stampley-open-session"
 import type { Domain } from "@/store/checkin-store"
 
 export async function POST(req: NextRequest) {
   stampleyGenerateLog(console, { event: "route_entered" })
 
   const session = await auth()
-
-  if (!isStampleyGenerateAuthorized(session)) {
+  const access = resolveCheckInMutationAccess(session)
+  if (!access.ok) {
     stampleyGenerateLog(console, { event: "auth_failure" })
-    return jsonWithSensitiveCache({ error: "Unauthorized" }, { status: 401 })
+    return jsonWithSensitiveCache(
+      { error: access.error },
+      { status: access.status }
+    )
   }
+  const userId = access.userId
 
   stampleyGenerateLog(console, { event: "auth_ok" })
-
-  const userId = session!.user!.id as string
 
   try {
     const body = await req.json()
@@ -54,6 +62,31 @@ export async function POST(req: NextRequest) {
       messageHistory,
       conversationPhase,
     } = body
+
+    const incomingTurn = resolveIncomingParticipantTurn(messageHistory)
+    if (incomingTurn.kind === "rejected") {
+      return jsonWithSensitiveCache(
+        { error: "Message cannot be empty" },
+        { status: 400 }
+      )
+    }
+
+    let openSessionId: string | null = null
+    if (incomingTurn.kind === "accepted") {
+      const persisted = await persistOwnedParticipantTurn(
+        createPrismaOpenSessionRunner(prisma),
+        userId,
+        incomingTurn.content
+      )
+      if (!persisted.ok) {
+        stampleyGenerateLog(console, { event: "db_failure" })
+        return jsonWithSensitiveCache(
+          { error: "Failed to generate response" },
+          { status: 500 }
+        )
+      }
+      openSessionId = persisted.sessionId
+    }
 
     const resolvedDomain = normalizeDomain(domain)
     const distressScore = parseScore(distress)
@@ -181,6 +214,18 @@ export async function POST(req: NextRequest) {
         openaiContext.phase,
         openaiContext.highStress
       )
+    }
+
+    if (openSessionId) {
+      const assistantPersist = await persistOwnedAssistantTurn(
+        createPrismaOpenSessionRunner(prisma),
+        userId,
+        openSessionId,
+        stampleyResponse
+      )
+      if (!assistantPersist.ok) {
+        stampleyGenerateLog(console, { event: "db_failure" })
+      }
     }
 
     return jsonWithSensitiveCache({

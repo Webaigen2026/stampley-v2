@@ -77,6 +77,37 @@ describe("Daily Check-In mutation authorization", () => {
     assert.equal(isStaffRole("STAFF"), false)
   })
 
+  it("fail-closes missing and unknown roles with 403", () => {
+    assert.deepEqual(
+      resolveCheckInMutationAccess({ user: { id: "user-1" } }),
+      {
+        ok: false,
+        status: 403,
+        error: CHECK_IN_MUTATION_FORBIDDEN,
+      }
+    )
+    assert.deepEqual(
+      resolveCheckInMutationAccess({
+        user: { id: "user-1", role: null },
+      }),
+      {
+        ok: false,
+        status: 403,
+        error: CHECK_IN_MUTATION_FORBIDDEN,
+      }
+    )
+    assert.deepEqual(
+      resolveCheckInMutationAccess({
+        user: { id: "user-1", role: "UNKNOWN" },
+      }),
+      {
+        ok: false,
+        status: 403,
+        error: CHECK_IN_MUTATION_FORBIDDEN,
+      }
+    )
+  })
+
   it("does not trust a client-supplied userId and only returns session.user.id", () => {
     const access = resolveCheckInMutationAccess({
       user: { id: "session-user", role: "PARTICIPANT" },
@@ -105,5 +136,38 @@ describe("Daily Check-In mutation route wiring", () => {
     assert.match(post, /const userId = access\.userId/)
     assert.doesNotMatch(get, /resolveCheckInMutationAccess/)
     assert.match(get, /session\.user\.id/)
+  })
+
+  it("Stampley generate uses the participant gate before body or OpenAI work", () => {
+    const source = read("app/api/stampley/generate/route.ts")
+    const post = functionSource(source, "POST")
+    const authIndex = post.indexOf("resolveCheckInMutationAccess(session)")
+    const bodyIndex = post.indexOf("await req.json()")
+    const openaiIndex = post.indexOf("openai.chat.completions.create")
+    const persistIndex = post.indexOf("persistOwnedParticipantTurn")
+
+    assert.notEqual(authIndex, -1)
+    assert.ok(authIndex < bodyIndex)
+    assert.ok(bodyIndex < persistIndex)
+    assert.ok(persistIndex < openaiIndex)
+    assert.match(post, /const userId = access\.userId/)
+    assert.doesNotMatch(post, /body\.userId/)
+    assert.doesNotMatch(post, /session\.user\.id/)
+  })
+
+  it("Stampley session uses the participant gate before body or Prisma create", () => {
+    const source = read("app/api/stampley/session/route.ts")
+    const post = functionSource(source, "POST")
+    const authIndex = post.indexOf("resolveCheckInMutationAccess(session)")
+    const bodyIndex = post.indexOf("await req.json()")
+    const createIndex = post.indexOf("stampleyChatSession.create")
+
+    assert.notEqual(authIndex, -1)
+    assert.ok(authIndex < bodyIndex)
+    assert.ok(bodyIndex < createIndex)
+    assert.match(post, /const userId = access\.userId/)
+    assert.doesNotMatch(post, /body\.userId/)
+    assert.doesNotMatch(post, /session\.user\.id/)
+    assert.doesNotMatch(post, /stampleyChatSession\.update/)
   })
 })

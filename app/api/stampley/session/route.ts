@@ -5,12 +5,15 @@ import { NextRequest } from "next/server"
 import { auth } from "@/lib/auth"
 import { jsonWithSensitiveCache } from "@/lib/sensitive-cache-headers"
 import { prisma } from "@/lib/prisma"
+import { resolveCheckInMutationAccess } from "@/lib/check-in-mutation-authz"
 
 export async function POST(req: NextRequest) {
   const session = await auth()
-  if (!session?.user?.id) {
-    return jsonWithSensitiveCache({ error: "Unauthorized" }, { status: 401 })
+  const access = resolveCheckInMutationAccess(session)
+  if (!access.ok) {
+    return jsonWithSensitiveCache({ error: access.error }, { status: access.status })
   }
+  const userId = access.userId
 
   try {
     const body = await req.json()
@@ -39,7 +42,7 @@ export async function POST(req: NextRequest) {
     const owned = await prisma.checkInSubmission.findFirst({
       where: {
         id: checkInSubmissionId.trim(),
-        userId: session.user.id,
+        userId,
       },
       select: { id: true },
     })
@@ -51,9 +54,12 @@ export async function POST(req: NextRequest) {
       )
     }
 
+    // Compatibility create for the current Complete Check-In client.
+    // This must create a new linked row. It must not update() an open
+    // (checkInSubmissionId = null) server-owned transcript.
     await prisma.stampleyChatSession.create({
       data: {
-        userId: session.user.id,
+        userId,
         checkInSubmissionId: checkInSubmissionId.trim(),
         domain: typeof domain === "string" ? domain : null,
         stressLevel: Number.isFinite(Number(stressLevel))

@@ -445,7 +445,19 @@ describe("auth and logging", () => {
     )
     assert.equal(
       isStampleyGenerateAuthorized({ user: { id: USER_ID } }),
+      false
+    )
+    assert.equal(
+      isStampleyGenerateAuthorized({
+        user: { id: USER_ID, role: "PARTICIPANT" },
+      }),
       true
+    )
+    assert.equal(
+      isStampleyGenerateAuthorized({
+        user: { id: USER_ID, role: "ADMIN" },
+      }),
+      false
     )
   })
 
@@ -503,8 +515,9 @@ describe("generate route source guards", () => {
       "../app/api/stampley/generate/route.ts"
     )
     const source = readFileSync(routePath, "utf8")
-    assert.match(source, /isStampleyGenerateAuthorized/)
-    assert.match(source, /Unauthorized/)
+    assert.match(source, /resolveCheckInMutationAccess/)
+    assert.match(source, /access\.error/)
+    assert.match(source, /access\.status/)
     assert.doesNotMatch(source, /email/)
     assert.doesNotMatch(source, /firstName/)
     assert.doesNotMatch(source, /completions\.create\(\{[\s\S]*user:/)

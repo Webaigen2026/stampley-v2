@@ -139,7 +139,7 @@ describe("HIPAA-5.6.1 unused participant DTO minimization", () => {
       source,
       /getStampleyFallbackResponse\(\s*openaiContext\.phase,\s*openaiContext\.highStress/
     )
-    assert.match(source, /isStampleyGenerateAuthorized/)
+    assert.match(source, /resolveCheckInMutationAccess/)
   })
 
   it("Stampley sidebar DdsSummary type no longer includes unused summary fields", () => {

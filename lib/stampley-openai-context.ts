@@ -4,6 +4,7 @@ import {
   REFLECTION_MAX_LENGTH,
 } from "@/lib/check-in-submit-validation"
 import { DOMAIN_SUBSCALES, isCheckInDomain } from "@/lib/check-in-subscale"
+import { resolveCheckInMutationAccess } from "@/lib/check-in-mutation-authz"
 
 export const SUPPORT_DOMAINS = [
   "Emotional",
@@ -185,9 +186,9 @@ export function isHighStress(distress: number): boolean {
 }
 
 export function isStampleyGenerateAuthorized(
-  session: { user?: { id?: string | null } | null } | null | undefined
+  session: { user?: { id?: string | null; role?: unknown } | null } | null | undefined
 ): boolean {
-  return typeof session?.user?.id === "string" && session.user.id.length > 0
+  return resolveCheckInMutationAccess(session).ok
 }
 
 export function toStressBand(distress: number): StressBand {
