@@ -25,6 +25,7 @@ import {
   parseParticipantMessageId,
   persistOwnedAssistantTurn,
   persistOwnedParticipantTurn,
+  createPrismaOpenSessionRunner,
   protectAuthoritativeTranscript,
   resolveIncomingParticipantTurn,
   resolveRecoverableFinalizedCheckIn,
@@ -1423,6 +1424,21 @@ describe("Phase 3D.2A-1 open-session lock and messageId idempotency", () => {
       open,
       /hashtextextended\(\s*\(\$\{userId\} \|\| \(':' \|\| CURRENT_DATE::text\)\),\s*0\s*\)/
     )
+    // P2010 regression: void return from pg_advisory_xact_lock must not go
+    // through $queryRaw (Prisma driver cannot deserialize PostgreSQL void).
+    assert.match(
+      open,
+      /\$executeRaw`[\s\S]*pg_advisory_xact_lock[\s\S]*hashtextextended/
+    )
+    const acquireFn = open.slice(
+      open.indexOf("async acquireCurrentDayOpenSessionLock")
+    )
+    const acquireBody = acquireFn.slice(
+      0,
+      acquireFn.indexOf("async hasCurrentDayCheckInSubmission")
+    )
+    assert.match(acquireBody, /\$executeRaw/)
+    assert.doesNotMatch(acquireBody, /await tx\.\$queryRaw/)
     assert.doesNotMatch(open, /convert_to/)
     assert.match(open, /CURRENT_DATE/)
     assert.match(open, /transcript_origin::text = \$\{STAMPLEY_TRANSCRIPT_ORIGIN\.SERVER_AUTHORITATIVE\}/)
@@ -1458,6 +1474,65 @@ describe("Phase 3D.2A-1 open-session lock and messageId idempotency", () => {
       page,
       /\.\.\.\(typeof messageId === "string" \? \{ messageId \} : \{\}\)/
     )
+  })
+
+  it("prisma advisory lock uses $executeRaw so void is not deserialized via $queryRaw", async () => {
+    let executeSql = ""
+    let queryRawSawAdvisoryLock = false
+    const messageId = "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee"
+    const db = {
+      async $transaction<T>(fn: (tx: never) => Promise<T>): Promise<T> {
+        const tx = {
+          async $executeRaw(strings: TemplateStringsArray) {
+            executeSql = Array.from(strings).join("")
+            return 0
+          },
+          async $queryRaw(strings: TemplateStringsArray) {
+            const sql = Array.from(strings).join("")
+            if (sql.includes("pg_advisory_xact_lock")) {
+              queryRawSawAdvisoryLock = true
+            }
+            if (sql.includes("check_in_submissions")) return []
+            if (sql.includes("ORDER BY created_at")) return []
+            if (sql.includes("WHERE id =") && sql.includes("FOR UPDATE")) {
+              return [
+                {
+                  id: "sess-1",
+                  messages: [],
+                  user_message_count: 0,
+                  assistant_message_count: 0,
+                },
+              ]
+            }
+            return []
+          },
+          stampleyChatSession: {
+            async create() {
+              return { id: "sess-1" }
+            },
+            async findFirst() {
+              return null
+            },
+            async updateMany() {
+              return { count: 1 }
+            },
+          },
+        }
+        return fn(tx as never)
+      },
+    }
+
+    const result = await persistOwnedParticipantTurn(
+      createPrismaOpenSessionRunner(db),
+      "user-synthetic-1",
+      "hello from regression",
+      messageId
+    )
+    assert.equal(result.ok, true)
+    assert.match(executeSql, /pg_advisory_xact_lock/)
+    assert.match(executeSql, /hashtextextended/)
+    assert.match(executeSql, /CURRENT_DATE/)
+    assert.equal(queryRawSawAdvisoryLock, false)
   })
 
   it("messageId cannot select another participant session", async () => {

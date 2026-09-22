@@ -1037,6 +1037,10 @@ type PrismaOpenSessionClient = {
     query: TemplateStringsArray,
     ...values: unknown[]
   ): Promise<T>
+  $executeRaw(
+    query: TemplateStringsArray,
+    ...values: unknown[]
+  ): Promise<number>
   stampleyChatSession: {
     create(args: {
       data: {
@@ -1088,7 +1092,9 @@ function prismaOpenSessionStore(
   return {
     async acquireCurrentDayOpenSessionLock(userId) {
       // Transaction-scoped lock: authenticated user + DB CURRENT_DATE only.
-      await tx.$queryRaw`
+      // Use executeRaw — pg_advisory_xact_lock returns PostgreSQL void, which
+      // Prisma queryRaw cannot deserialize (P2010 UnsupportedNativeDataType).
+      await tx.$executeRaw`
         SELECT pg_advisory_xact_lock(
           hashtextextended(
             (${userId} || (':' || CURRENT_DATE::text)),
