@@ -186,6 +186,7 @@ export function isPracticalSupportRequest(text: unknown): boolean {
 /**
  * Explicit participant intent to end the Stampley chat turn.
  * Does not win over medical/practical requests (checked later in precedence).
+ * Soft-close eligibility may still block CLOSE when an unresolved question remains.
  */
 export function isExplicitClosingIntent(text: unknown): boolean {
   const n = normalizeParticipantTextForMode(text)
@@ -212,16 +213,116 @@ export function isExplicitClosingIntent(text: unknown): boolean {
   return false
 }
 
+/**
+ * Closure-eligibility helper only — does NOT route to PRACTICAL_SUPPORT.
+ * Blocks forced/soft CLOSE when the participant still appears to be asking something.
+ */
+export function hasUnresolvedQuestion(text: unknown): boolean {
+  const n = normalizeParticipantTextForMode(text)
+  if (!n) return false
+
+  if (/\?/.test(n)) return true
+  if (/\bi (don't|do not) understand\b/.test(n)) return true
+  if (/\bcan you explain\b/.test(n)) return true
+  if (
+    /^(what|why|how|can|could|would|should|do|does|is|are|who|when|where)\b/.test(
+      n
+    )
+  ) {
+    return true
+  }
+
+  return false
+}
+
+/**
+ * Late-conversation continuation / new concern — prefer REFLECT over CLOSE.
+ */
+export function hasContinuingOrNewConcern(text: unknown): boolean {
+  const n = normalizeParticipantTextForMode(text)
+  if (!n) return false
+
+  if (
+    /\b(still worried|worried about|scared|afraid|anxious|nervous|bothering me|something else|another thing)\b/.test(
+      n
+    )
+  ) {
+    return true
+  }
+  if (/\bi (don't|do not) understand\b/.test(n)) return true
+
+  return false
+}
+
+/**
+ * Quiet affirmative ending suitable for soft close in late phase.
+ * Conservative — does not treat bare "thanks" / "ok" as close.
+ */
+export function isQuietAffirmativeEnding(text: unknown): boolean {
+  const n = normalizeParticipantTextForMode(text)
+  if (!n) return false
+  if (hasUnresolvedQuestion(n) || hasContinuingOrNewConcern(n)) return false
+
+  if (
+    /\bi feel (a little |somewhat |much )?better\b/.test(n) ||
+    /\bi'?m (feeling )?(a little |somewhat )?better\b/.test(n) ||
+    /\bi feel (okay|ok|alright|all right) now\b/.test(n) ||
+    /\bthat (helps|helped|was helpful)\b/.test(n)
+  ) {
+    return true
+  }
+
+  return false
+}
+
+export type SoftCloseEligibilityInput = {
+  phase: ConversationPhase
+  participantText: string | null | undefined
+}
+
+/**
+ * Soft/terminal CLOSE eligibility (prompt behavior only — not DB state).
+ *
+ * CLOSE when:
+ * - no medical/practical intent
+ * - no unresolved question
+ * - no continuing/new concern
+ * - AND (explicit closing intent OR quiet affirmative in late/closure phase)
+ *
+ * If uncertain: not eligible → prefer REFLECT over forced CLOSE.
+ */
+export function isSoftCloseEligible(input: SoftCloseEligibilityInput): boolean {
+  const text = input.participantText
+  if (isPersonalizedMedicalDecisionRequest(text)) return false
+  if (isPracticalSupportRequest(text)) return false
+  if (hasUnresolvedQuestion(text)) return false
+  if (hasContinuingOrNewConcern(text)) return false
+
+  if (isExplicitClosingIntent(text)) return true
+
+  if (
+    input.phase === "closure" &&
+    isQuietAffirmativeEnding(text)
+  ) {
+    return true
+  }
+
+  return false
+}
+
+/**
+ * Phase is soft pacing only.
+ * Late/closure phase alone does NOT select CLOSE — that requires soft-close
+ * eligibility (explicit close or quiet affirmative without unresolved ask).
+ */
 function defaultModeForPhase(phase: ConversationPhase): StampleyResponseMode {
   switch (phase) {
     case "opening":
       return "EMPATHY"
     case "exploration":
     case "coping":
-      return "REFLECT"
     case "closure":
-      // Soft close candidate only — stronger intents override.
-      return "CLOSE"
+      return "REFLECT"
     default:
       return "EMPATHY"
   }
@@ -229,7 +330,9 @@ function defaultModeForPhase(phase: ConversationPhase): StampleyResponseMode {
 
 /**
  * Deterministic response-mode selection.
- * Precedence: MEDICAL_BOUNDARY > PRACTICAL_SUPPORT > CLOSE intent > phase default.
+ * Precedence:
+ * MEDICAL_BOUNDARY > PRACTICAL_SUPPORT > soft/explicit CLOSE > phase default.
+ * Phase default for late/closure pacing is REFLECT (not forced CLOSE).
  * highStress is intentionally NOT a mode — keep it as an independent modifier.
  *
  * CLARIFY is reserved for a later phase (no weak heuristics here).
@@ -245,7 +348,7 @@ export function selectStampleyResponseMode(
   if (isPracticalSupportRequest(text)) {
     return "PRACTICAL_SUPPORT"
   }
-  if (isExplicitClosingIntent(text)) {
+  if (isSoftCloseEligible({ participantText: text, phase: input.phase })) {
     return "CLOSE"
   }
 
@@ -271,7 +374,7 @@ PRIORITY: The participant appears ready to wrap up. Keep validation calm and bri
 PRIORITY: Offer specific emotional acknowledgment tied to what they shared. Follow existing phase pacing.`
     case "REFLECT":
       return `RESPONSE MODE: REFLECT
-PRIORITY: Deepen awareness gently. Follow existing phase pacing. Do not jump to closure unless they ask to stop.`
+PRIORITY: Deepen awareness gently. Follow existing phase pacing as soft guidance only — do not jump to closure unless RESPONSE MODE is CLOSE. Prefer acknowledging the newest content over wrap-up.`
     default:
       return `RESPONSE MODE: EMPATHY
 PRIORITY: Follow existing phase pacing.`

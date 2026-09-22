@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url"
 import {
   buildStampleyTurnInstruction,
   buildOpenAIMessages,
+  buildStampleySystemPrompt,
   getStampleyFallbackResponse,
   type StampleyOpenAIContext,
 } from "./stampley-prompt"
@@ -284,7 +285,7 @@ describe("response-mode precedence", () => {
         participantText: "Just reflecting on the day.",
         phase: "closure",
       }),
-      "CLOSE"
+      "REFLECT"
     )
   })
 
@@ -296,6 +297,150 @@ describe("response-mode precedence", () => {
       }),
       "EMPATHY"
     )
+  })
+})
+
+describe("B-3 closure eligibility", () => {
+  it("turn count / closure phase alone does not force CLOSE", () => {
+    assert.equal(
+      selectStampleyResponseMode({
+        participantText: "I'm still worried about tomorrow.",
+        phase: "closure",
+      }),
+      "REFLECT"
+    )
+    assert.equal(
+      selectStampleyResponseMode({
+        participantText: "I don't understand.",
+        phase: "closure",
+      }),
+      "REFLECT"
+    )
+    assert.equal(
+      selectStampleyResponseMode({
+        participantText: "Can you explain what you mean?",
+        phase: "closure",
+      }),
+      "REFLECT"
+    )
+  })
+
+  it("quiet affirmative in late phase is soft CLOSE", () => {
+    assert.equal(
+      selectStampleyResponseMode({
+        participantText: "I feel a little better.",
+        phase: "closure",
+      }),
+      "CLOSE"
+    )
+  })
+
+  it("explicit close works without reply-count threshold", () => {
+    assert.equal(
+      selectStampleyResponseMode({
+        participantText: "Thanks, that's all.",
+        phase: "closure",
+      }),
+      "CLOSE"
+    )
+    assert.equal(
+      selectStampleyResponseMode({
+        participantText: "I'm done for today.",
+        phase: "exploration",
+      }),
+      "CLOSE"
+    )
+  })
+
+  it("mixed close + unresolved question is not CLOSE", () => {
+    assert.equal(
+      selectStampleyResponseMode({
+        participantText: "I'm done, but can you explain one more thing?",
+        phase: "closure",
+      }),
+      "REFLECT"
+    )
+  })
+
+  it("mixed close + practical/medical keeps stronger intent", () => {
+    assert.equal(
+      selectStampleyResponseMode({
+        participantText: "Thanks, but what else can I do?",
+        phase: "closure",
+      }),
+      "PRACTICAL_SUPPORT"
+    )
+    assert.equal(
+      selectStampleyResponseMode({
+        participantText: "That's all, but should I change my medication?",
+        phase: "closure",
+      }),
+      "MEDICAL_BOUNDARY"
+    )
+  })
+
+  it("new substantive concern suppresses closure", () => {
+    assert.equal(
+      selectStampleyResponseMode({
+        participantText: "Actually, I'm scared about tomorrow.",
+        phase: "closure",
+      }),
+      "REFLECT"
+    )
+    assert.equal(
+      selectStampleyResponseMode({
+        participantText: "Something else is bothering me.",
+        phase: "closure",
+      }),
+      "REFLECT"
+    )
+  })
+
+  it("highStress does not force CLOSE on new concern or change strong intent", () => {
+    // highStress is not an input to selection — mode is independent.
+    assert.equal(
+      selectStampleyResponseMode({
+        participantText: "Actually, I'm scared about tomorrow.",
+        phase: "closure",
+      }),
+      "REFLECT"
+    )
+    assert.equal(
+      selectStampleyResponseMode({
+        participantText: "What else can I do?",
+        phase: "closure",
+      }),
+      "PRACTICAL_SUPPORT"
+    )
+    assert.equal(
+      selectStampleyResponseMode({
+        participantText: "Should I increase my insulin?",
+        phase: "closure",
+      }),
+      "MEDICAL_BOUNDARY"
+    )
+  })
+})
+
+describe("B-3 anti-repetition prompt", () => {
+  it("system and late-pacing prompts discourage repetition and forced closure", () => {
+    const ctx = baseCtx("closure")
+    const system = buildStampleySystemPrompt(ctx)
+    assert.match(system, /do not repeat the same validation formula/i)
+    assert.match(system, /Build on what was already said/i)
+    assert.match(system, /Do not force closure from turn count/i)
+    assert.match(system, /not every turn needs a question/i)
+
+    const reflect = buildStampleyTurnInstruction(ctx, "REFLECT")
+    assert.match(reflect, /LATE PACING/i)
+    assert.match(reflect, /do not force wrap-up from turn count alone/i)
+    assert.match(reflect, /avoid repeating recent validation/i)
+    assert.doesNotMatch(reflect, /You do not need to solve everything tonight/)
+    assert.doesNotMatch(reflect, /CLOSURE goal: emotional release/)
+
+    const practical = buildStampleyTurnInstruction(ctx, "PRACTICAL_SUPPORT")
+    assert.match(practical, /prefer a different safe category/i)
+    assert.match(practical, /do not mandatorily say "one small step"/i)
   })
 })
 
@@ -484,5 +629,21 @@ describe("mode-aware fallbacks", () => {
     assert.doesNotMatch(practical.closure, /solve everything tonight/i)
     assert.doesNotMatch(medical.closure, /solve everything tonight/i)
     assert.doesNotMatch(practical.validation, /Thank you for checking in honestly/i)
+  })
+
+  it("REFLECT + late phase fallback is not forced CLOSE copy", () => {
+    const fb = getStampleyFallbackResponse("closure", false, "REFLECT")
+    assert.doesNotMatch(
+      Object.values(fb).join(" "),
+      /solve everything tonight/i
+    )
+    assert.equal(fb.closure, "")
+    assert.match(fb.validation, /still something on your mind|heavy/i)
+  })
+
+  it("CLOSE mode fallback allows wrap-up without canned tonight line", () => {
+    const fb = getStampleyFallbackResponse("closure", false, "CLOSE")
+    assert.match(fb.closure, /Complete Check-in/i)
+    assert.doesNotMatch(fb.closure, /solve everything tonight/i)
   })
 })

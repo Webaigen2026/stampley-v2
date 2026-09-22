@@ -211,7 +211,7 @@ const PHASE_GUIDANCE: Record<ConversationPhase, string> = {
   coping:
     "COPING — Emotional regulation and decompression. Validate + one gentle micro_skill. reflection_question is OPTIONAL — often skip it and let validation + skill be enough.",
   closure:
-    "CLOSURE — Emotional release and permission to stop. Validate, then education_chip OR closure (not always both). reflection_question is RARE. Reduce pressure; no forced inspiration.",
+    "LATE PACING — Continue support without forcing wrap-up from turn count alone. Prefer specific acknowledgment of the latest message; at most one purposeful question if needed. Close only when RESPONSE MODE is CLOSE.",
 }
 
 function getWeeklyPacingBlock(weekNumber: number): string {
@@ -349,8 +349,13 @@ REFERENCE (only if phase rules call for micro_skill or education_chip):
 
 MULTI-TURN BEHAVIOR:
 - One continuous check-in — not separate sessions
-- validation reflects their latest message, not only the original reflection
-- When included, reflection_question must be new — not a rephrase of prior questions
+- Answer the latest participant intent first
+- Review recent assistant replies in this thread: do not repeat the same validation formula, advice, closing line, or follow-up question
+- Build on what was already said; if a suggestion was already offered, use a different safe angle (or skip advice) unless they ask to revisit it
+- validation reflects their latest message with specific wording — avoid reusing recent empathy openers
+- reflection_question is optional — not every turn needs a question; when used it must be new, not a rephrase of prior questions
+- Do not force closure from turn count / phase alone — wrap up only when RESPONSE MODE is CLOSE
+- MEDICAL_BOUNDARY: keep the safety boundary consistent (novelty of wording is optional; never invent treatment advice to sound different)
 - greeting: "" on follow-up turns unless one short natural bridge is needed
 - Leave unused JSON fields as "" — choose only sections appropriate for this phase and emotional state`
 }
@@ -379,9 +384,10 @@ export function buildStampleyTurnInstruction(
         : ""
 
   const sharedRules = `- Use "" for fields not needed this turn
-- reflection_question is optional in coping and closure — do not ask out of habit
+- reflection_question is optional — do not ask out of habit; not every response needs a question
 - At most ONE question when reflection_question is populated
-- Do NOT repeat prior "Question asked" lines from the thread
+- Do NOT repeat prior "Question asked" lines or the same advice/validation/closing phrasing from recent assistant replies
+- Build on the recent thread instead of restarting with a generic scripted line
 - Stay aligned with ${ctx.supportDomain} domain
 - Address the participant as "you" — do not use or invent a personal name
 - NEVER diagnose or give medical treatment advice
@@ -406,6 +412,7 @@ PRACTICAL_SUPPORT structure:
 - Answer the newest actionable request first — before reflection or wrap-up
 - Provide 1–3 bounded, non-clinical practical options (short mobile-friendly list is fine across validation / micro_skill / education_chip)
   Allowed: jot readings/symptoms for care team; prepare 1–2 clinician questions; follow the care plan already prescribed; take medications only as already prescribed; one manageable routine step; ask a trusted person for support; organize info for an appointment; contact care team when symptoms/readings are concerning or persist
+- If recent assistant replies already offered a tip, prefer a different safe category (or skip repeating it) unless they ask to revisit it — do not mandatorily say "one small step" every turn
 - NEVER diagnose, prescribe, recommend dose amounts, or tell them to start/stop/skip/change medication or treatment
 - Blood sugar or medication context does not authorize treatment advice — stay non-prescriptive; if personalized medical judgment is needed, note clinician/care team while still giving safe prep options (do not answer with only "talk to your doctor")
 - reflection_question: at most ONE, and only if it materially helps; usually "" when the practical answer is enough — do not force another reflective question
@@ -453,10 +460,11 @@ Study week ${week}.
 Produce a single JSON object with exactly these keys:
 ${jsonSchema}
 
-Usually populate:
-- validation: 1–2 calm sentences
-- closure: brief permission to stop / Complete Check-in available — no pressure
-- reflection_question: usually ""
+CLOSE structure (soft wrap-up — participant appears ready to stop):
+- validation: 1–2 calm sentences affirming effort; be specific to this turn — do not reuse a canned closing phrase from earlier replies
+- closure: brief permission to pause or note Complete Check-in is available — no pressure; vary wording; do not invent a new problem
+- reflection_question: usually "" — no new open-ended question
+- Do not repeat a fixed "solve everything" / "tonight" closing line
 
 Leave empty (""):
 - greeting
@@ -546,28 +554,27 @@ It is valid to respond with only validation + micro_skill and no question.
 ${sharedRules}${highStressBlock}`
 
     case "closure":
+      // Late pacing only — forced wrap-up is RESPONSE MODE CLOSE (handled above).
       return `${modeBlock}
 
-Continue check-in (CLOSURE phase). Study week ${week}. Participant replied three or more times.
+Continue check-in (late pacing; study week ${week}). Participant has replied several times — phase is soft pacing, not an automatic close.
 
 Produce a single JSON object with exactly these keys:
 ${jsonSchema}
 
-CLOSURE goal: emotional release, permission to stop, reduce pressure.
+LATE PACING goal: stay with the newest content; do not force wrap-up from turn count alone.
 
 Usually populate:
-- validation: 1–2 sentences gently summarizing — affirm without overpraise or clichés
-- closure OR education_chip: pick one or both briefly — calm, grounding, non-performative
-  Examples: "You do not need to solve everything tonight." / "Thank you for checking in honestly today."
-  May mention Complete Check-in is available — no pressure
-
-reflection_question — RARE (usually ""):
-- Prefer no question; let them land
-- Week 4: almost always ""
+- validation: 1–2 sentences specifically acknowledging what they just shared — avoid repeating recent validation formulas
+- reflection_question: at most ONE purposeful question if it deepens understanding; often "" if acknowledgment alone is enough
+- Optional micro_skill: only if a tiny non-clinical grounding tip is new and useful — do not mandatorily reduce every turn to "one small step"
 
 Leave empty (""):
 - greeting
-- micro_skill (unless one-word reminder — usually "")
+- education_chip (usually)
+- closure (do not push wrap-up unless they clearly want to stop)
+
+Do not invent a new problem. Do not reuse the same closing line or same reflective question from recent assistant replies.
 
 ${sharedRules}${highStressBlock}`
   }
@@ -654,17 +661,71 @@ function medicalBoundaryFallback(highStress: boolean) {
   }
 }
 
+function closeModeFallback(highStress: boolean) {
+  if (highStress) {
+    return {
+      greeting: "",
+      validation: "You've been carrying a lot — it's okay to pause here.",
+      reflection_question: "",
+      micro_skill: "",
+      education_chip: "",
+      closure:
+        "Complete Check-in is available whenever you're ready — no rush.",
+    }
+  }
+
+  return {
+    greeting: "",
+    validation: "Thank you for checking in honestly today.",
+    reflection_question: "",
+    micro_skill: "",
+    education_chip: "",
+    closure:
+      "You can pause here. Complete Check-in is available when you are ready — no pressure.",
+  }
+}
+
+function lateReflectFallback(highStress: boolean) {
+  if (highStress) {
+    return {
+      greeting: "",
+      validation:
+        "Today sounds really heavy, and it makes sense you'd feel that way.",
+      reflection_question: "",
+      micro_skill:
+        "Small reset: relax your shoulders once before moving to the next thing.",
+      education_chip: "",
+      closure: "",
+    }
+  }
+
+  return {
+    greeting: "",
+    validation: "It sounds like there's still something on your mind.",
+    reflection_question: "What feels most present about that right now?",
+    micro_skill: "",
+    education_chip: "",
+    closure: "",
+  }
+}
+
 export function getStampleyFallbackResponse(
   phase: ConversationPhase,
   highStress: boolean,
   responseMode: StampleyResponseMode = "EMPATHY"
 ) {
-  // Mode-aware fallbacks take priority over phase defaults (including closure).
+  // Mode-aware fallbacks take priority over phase defaults (including late pacing).
   if (responseMode === "PRACTICAL_SUPPORT") {
     return practicalSupportFallback(highStress)
   }
   if (responseMode === "MEDICAL_BOUNDARY") {
     return medicalBoundaryFallback(highStress)
+  }
+  if (responseMode === "CLOSE") {
+    return closeModeFallback(highStress)
+  }
+  if (responseMode === "REFLECT" && phase === "closure") {
+    return lateReflectFallback(highStress)
   }
 
   const microSkill =
@@ -679,7 +740,7 @@ export function getStampleyFallbackResponse(
       micro_skill: microSkill,
       education_chip: "",
       closure:
-        "You do not need to figure everything out right now. Support is available if you need someone to talk to.",
+        "Support is available if you need someone to talk to — no pressure to keep going.",
     }
   }
 
@@ -718,15 +779,8 @@ export function getStampleyFallbackResponse(
       }
 
     case "closure":
-      return {
-        greeting: "",
-        validation: "Thank you for checking in honestly today.",
-        reflection_question: "",
-        micro_skill: "",
-        education_chip: "",
-        closure:
-          "You do not need to solve everything tonight. Complete Check-in is here when you are ready — no rush.",
-      }
+      // Late pacing without forced CLOSE mode — continue gently, no canned tonight line.
+      return lateReflectFallback(false)
   }
 }
 
