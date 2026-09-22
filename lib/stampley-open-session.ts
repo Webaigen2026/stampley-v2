@@ -426,6 +426,8 @@ export type ServerOwnedStampleyTurn = {
   data?: unknown
   timestamp: string
   source: typeof SERVER_OWNED_TURN_SOURCE
+  /** Present on new 3D.2A-2+ authoritative assistant turns; optional for history. */
+  inReplyToMessageId?: string
 }
 
 export type IncomingParticipantTurn =
@@ -485,6 +487,28 @@ export type OpenSessionStoreRunner = {
 export type PersistTurnResult =
   | { ok: true; sessionId: string }
   | { ok: false }
+
+export type PersistAssistantTurnResult =
+  | {
+      ok: true
+      sessionId: string
+      assistantAlreadyPersisted: boolean
+      response: unknown
+    }
+  | {
+      ok: false
+      error:
+        | "invalid_user"
+        | "invalid_session"
+        | "invalid_message_id"
+        | "session_unavailable"
+        | "missing_participant"
+        | "persist_failed"
+    }
+
+export type FindOwnedAssistantReplyResult =
+  | { found: true; response: unknown }
+  | { found: false }
 
 /** Opaque participant retry id (UUID). Normalized to lowercase. */
 const PARTICIPANT_MESSAGE_ID_RE =
@@ -595,6 +619,46 @@ export function findServerOwnedParticipantTurnByMessageId(
   return null
 }
 
+function hasAuthoritativeAssistantPayload(
+  turn: ServerOwnedStampleyTurn
+): boolean {
+  if (typeof turn.content === "string" && turn.content.trim().length > 0) {
+    return true
+  }
+  return turn.data !== undefined && turn.data !== null
+}
+
+/** Extract API response payload from an authoritative assistant turn. */
+export function extractAuthoritativeAssistantResponse(
+  turn: ServerOwnedStampleyTurn
+): unknown {
+  if (turn.data !== undefined && turn.data !== null) return turn.data
+  if (typeof turn.content === "string") return turn.content
+  return null
+}
+
+/**
+ * Find authoritative assistant reply linked to a participant messageId.
+ * Requires role/source/server ownership, valid inReplyToMessageId, and payload.
+ * Historical assistants without linkage never match. Client/malformed never match.
+ */
+export function findServerOwnedAssistantReplyByParticipantMessageId(
+  messages: unknown,
+  participantMessageId: string
+): ServerOwnedStampleyTurn | null {
+  const parsed = parseParticipantMessageId(participantMessageId)
+  if (!parsed) return null
+
+  for (const item of parseStoredTurns(messages)) {
+    if (!isServerOwnedTurn(item) || item.role !== "assistant") continue
+    if (!hasAuthoritativeAssistantPayload(item)) continue
+    const linked = parseParticipantMessageId(item.inReplyToMessageId)
+    if (!linked || linked !== parsed) continue
+    return item
+  }
+  return null
+}
+
 /**
  * Build a server-owned user turn.
  * `messageId` is the validated client opaque UUID stored as turn.id for idempotency.
@@ -614,17 +678,28 @@ export function buildServerOwnedUserTurn(
   }
 }
 
+/**
+ * Build a server-owned assistant turn.
+ * When `inReplyToMessageId` is provided and valid, linkage is stored for idempotency.
+ * Historical/unlinked assistants omit the field.
+ */
 export function buildServerOwnedAssistantTurn(
   response: unknown,
+  inReplyToMessageId?: string,
   now = new Date()
 ): ServerOwnedStampleyTurn {
-  return {
+  const turn: ServerOwnedStampleyTurn = {
     id: crypto.randomUUID(),
     role: "assistant",
     data: response,
     timestamp: now.toISOString(),
     source: SERVER_OWNED_TURN_SOURCE,
   }
+  const linked = parseParticipantMessageId(inReplyToMessageId)
+  if (linked) {
+    turn.inReplyToMessageId = linked
+  }
+  return turn
 }
 
 export function appendServerOwnedTurn(
@@ -720,22 +795,52 @@ export async function persistOwnedAssistantTurn(
   runner: OpenSessionStoreRunner,
   userId: string,
   sessionId: string,
-  response: unknown
-): Promise<PersistTurnResult> {
+  response: unknown,
+  participantMessageId: unknown
+): Promise<PersistAssistantTurnResult> {
   if (typeof userId !== "string" || userId.length === 0) {
-    return { ok: false }
+    return { ok: false, error: "invalid_user" }
   }
   if (typeof sessionId !== "string" || sessionId.length === 0) {
-    return { ok: false }
+    return { ok: false, error: "invalid_session" }
+  }
+  const parsedMessageId = parseParticipantMessageId(participantMessageId)
+  if (!parsedMessageId) {
+    return { ok: false, error: "invalid_message_id" }
   }
 
   return runner.run(async (store) => {
-    const owned = await store.loadOwnedOpenSession(userId, sessionId)
-    if (!owned) return { ok: false }
+    // Exact session id from participant persist; FOR UPDATE for JSON RMW.
+    const owned = await store.lockOwnedOpenSession(userId, sessionId)
+    if (!owned) {
+      // Linked/finalized, wrong origin, or not owned — do not mutate.
+      return { ok: false, error: "session_unavailable" }
+    }
+
+    const participant = findServerOwnedParticipantTurnByMessageId(
+      owned.messages,
+      parsedMessageId
+    )
+    if (!participant) {
+      return { ok: false, error: "missing_participant" }
+    }
+
+    const existing = findServerOwnedAssistantReplyByParticipantMessageId(
+      owned.messages,
+      parsedMessageId
+    )
+    if (existing) {
+      return {
+        ok: true,
+        sessionId,
+        assistantAlreadyPersisted: true,
+        response: extractAuthoritativeAssistantResponse(existing),
+      }
+    }
 
     const next = appendServerOwnedTurn(
       owned.messages,
-      buildServerOwnedAssistantTurn(response)
+      buildServerOwnedAssistantTurn(response, parsedMessageId)
     )
     const saved = await store.saveOwnedOpenSession({
       userId,
@@ -744,8 +849,47 @@ export async function persistOwnedAssistantTurn(
       userMessageCount: countServerOwnedParticipantTurns(next),
       assistantMessageCount: countServerOwnedAssistantTurns(next),
     })
-    if (!saved) return { ok: false }
-    return { ok: true, sessionId }
+    if (!saved) return { ok: false, error: "persist_failed" }
+    return {
+      ok: true,
+      sessionId,
+      assistantAlreadyPersisted: false,
+      response,
+    }
+  })
+}
+
+/**
+ * Short-transaction lookup for an existing linked assistant reply.
+ * Used before model generation to skip duplicate calls after a successful prior turn.
+ */
+export async function findOwnedAuthoritativeAssistantReply(
+  runner: OpenSessionStoreRunner,
+  userId: string,
+  sessionId: string,
+  participantMessageId: unknown
+): Promise<FindOwnedAssistantReplyResult> {
+  if (typeof userId !== "string" || userId.length === 0) {
+    return { found: false }
+  }
+  if (typeof sessionId !== "string" || sessionId.length === 0) {
+    return { found: false }
+  }
+  const parsedMessageId = parseParticipantMessageId(participantMessageId)
+  if (!parsedMessageId) return { found: false }
+
+  return runner.run(async (store) => {
+    const owned = await store.lockOwnedOpenSession(userId, sessionId)
+    if (!owned) return { found: false }
+    const existing = findServerOwnedAssistantReplyByParticipantMessageId(
+      owned.messages,
+      parsedMessageId
+    )
+    if (!existing) return { found: false }
+    return {
+      found: true,
+      response: extractAuthoritativeAssistantResponse(existing),
+    }
   })
 }
 
@@ -788,6 +932,7 @@ type PrismaOpenSessionClient = {
         id: string
         userId: string
         checkInSubmissionId: null
+        transcriptOrigin: typeof STAMPLEY_TRANSCRIPT_ORIGIN.SERVER_AUTHORITATIVE
       }
       data: {
         messages: Prisma.InputJsonValue
@@ -898,6 +1043,7 @@ function prismaOpenSessionStore(
           id: input.sessionId,
           userId: input.userId,
           checkInSubmissionId: null,
+          transcriptOrigin: STAMPLEY_TRANSCRIPT_ORIGIN.SERVER_AUTHORITATIVE,
         },
         data: {
           messages: input.messages as Prisma.InputJsonValue,

@@ -26,6 +26,8 @@ import {
 import { resolveCheckInMutationAccess } from "@/lib/check-in-mutation-authz"
 import {
   createPrismaOpenSessionRunner,
+  findOwnedAuthoritativeAssistantReply,
+  parseParticipantMessageId,
   persistOwnedAssistantTurn,
   persistOwnedParticipantTurn,
   resolveIncomingParticipantTurn,
@@ -74,10 +76,10 @@ export async function POST(req: NextRequest) {
     }
 
     let openSessionId: string | null = null
+    let participantMessageId: string | null = null
     if (incomingTurn.kind === "accepted") {
       // 3D.2A-1: participant turn is idempotent by messageId.
-      // Assistant linkage/idempotency is deferred to 3D.2A-2; OpenAI may still run
-      // after a duplicate participant persist.
+      // 3D.2A-2: assistant replies are linked + idempotent by the same messageId.
       const persisted = await persistOwnedParticipantTurn(
         createPrismaOpenSessionRunner(prisma),
         userId,
@@ -98,6 +100,23 @@ export async function POST(req: NextRequest) {
         )
       }
       openSessionId = persisted.sessionId
+      participantMessageId = parseParticipantMessageId(messageId)
+
+      // Pre-OpenAI idempotency: successful prior assistant for this messageId.
+      if (openSessionId && participantMessageId) {
+        const existingReply = await findOwnedAuthoritativeAssistantReply(
+          createPrismaOpenSessionRunner(prisma),
+          userId,
+          openSessionId,
+          participantMessageId
+        )
+        if (existingReply.found) {
+          return jsonWithSensitiveCache({
+            success: true,
+            response: existingReply.response,
+          })
+        }
+      }
     }
 
     const resolvedDomain = normalizeDomain(domain)
@@ -228,15 +247,34 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    if (openSessionId) {
+    // OpenAI completed outside any DB transaction. Append under row lock next.
+    if (openSessionId && participantMessageId) {
       const assistantPersist = await persistOwnedAssistantTurn(
         createPrismaOpenSessionRunner(prisma),
         userId,
         openSessionId,
-        stampleyResponse
+        stampleyResponse,
+        participantMessageId
       )
       if (!assistantPersist.ok) {
         stampleyGenerateLog(console, { event: "db_failure" })
+        if (
+          assistantPersist.error === "session_unavailable" ||
+          assistantPersist.error === "missing_participant"
+        ) {
+          // Do not mutate finalized/unavailable sessions; do not return a
+          // response that implies an authoritative linked assistant was stored.
+          return jsonWithSensitiveCache(
+            { error: "Failed to generate response" },
+            { status: 500 }
+          )
+        }
+      } else {
+        // Prefer authoritative persisted (or prior duplicate) response.
+        return jsonWithSensitiveCache({
+          success: true,
+          response: assistantPersist.response,
+        })
       }
     }
 

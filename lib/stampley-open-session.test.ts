@@ -16,6 +16,8 @@ import {
   countServerOwnedAssistantTurns,
   countServerOwnedParticipantTurns,
   findServerOwnedParticipantTurnByMessageId,
+  findServerOwnedAssistantReplyByParticipantMessageId,
+  findOwnedAuthoritativeAssistantReply,
   hasServerOwnedParticipantProof,
   linkStampleySessionToCheckIn,
   parseParticipantMessageId,
@@ -126,7 +128,10 @@ function createMemoryRunner(seed: MemoryRow[] = []): {
         (item) =>
           item.id === input.sessionId &&
           item.userId === input.userId &&
-          item.checkInSubmissionId === null
+          item.checkInSubmissionId === null &&
+          (item.transcriptOrigin ??
+            STAMPLEY_TRANSCRIPT_ORIGIN.SERVER_AUTHORITATIVE) ===
+            STAMPLEY_TRANSCRIPT_ORIGIN.SERVER_AUTHORITATIVE
       )
       if (!row) return false
       row.messages = input.messages
@@ -275,15 +280,20 @@ describe("server-owned interaction proof", () => {
       runner,
       "participant-a",
       user.sessionId,
-      serverResponse
+      serverResponse,
+      MSG_A
     )
     assert.equal(assistant.ok, true)
+    if (!assistant.ok) throw new Error("unreachable")
+    assert.equal(assistant.assistantAlreadyPersisted, false)
+    assert.deepEqual(assistant.response, serverResponse)
     assert.equal(countServerOwnedAssistantTurns(rows[0]?.messages), 1)
 
     const turns = rows[0]?.messages as ServerOwnedStampleyTurn[]
     const assistantTurn = turns.find((item) => item.role === "assistant")
     assert.equal(assistantTurn?.source, SERVER_OWNED_TURN_SOURCE)
     assert.deepEqual(assistantTurn?.data, serverResponse)
+    assert.equal(assistantTurn?.inReplyToMessageId, MSG_A)
     assert.notEqual(assistantTurn?.data, "browser forged assistant")
     assert.equal(assistantTurn?.content, undefined)
   })
@@ -311,7 +321,8 @@ describe("server-owned interaction proof", () => {
       runner,
       "participant-b",
       created.sessionId,
-      { validation: "should not write" }
+      { validation: "should not write" },
+      MSG_A
     )
     assert.equal(sneak.ok, false)
     assert.equal(rows[0]?.userId, "participant-a")
@@ -402,12 +413,11 @@ describe("generate and session source guards", () => {
     assert.match(source, /incomingTurn\.kind === "rejected"/)
     assert.match(source, /incomingTurn\.kind === "accepted"/)
     assert.match(source, /persistOwnedParticipantTurn/)
+    assert.match(source, /findOwnedAuthoritativeAssistantReply/)
     assert.match(source, /persistOwnedAssistantTurn/)
     assert.match(source, /stampleyResponse/)
-    assert.match(
-      source,
-      /return jsonWithSensitiveCache\(\{\s*success: true,\s*response: stampleyResponse,\s*\}\)/
-    )
+    assert.match(source, /participantMessageId/)
+    assert.match(source, /assistantPersist\.response/)
     assert.doesNotMatch(source, /body\.userId/)
     assert.doesNotMatch(source, /email/)
     assert.doesNotMatch(source, /studyId/)
@@ -1398,8 +1408,28 @@ describe("Phase 3D.2A-1 open-session lock and messageId idempotency", () => {
     assert.doesNotMatch(persistBody, /openai|OpenAI/)
 
     const txnEnd = route.indexOf("openSessionId = persisted.sessionId")
+    const existingReply = route.indexOf("findOwnedAuthoritativeAssistantReply")
     const openaiStart = route.indexOf("openai.chat.completions.create")
+    const assistantPersist = route.indexOf("persistOwnedAssistantTurn(")
     assert.ok(txnEnd !== -1 && openaiStart !== -1 && txnEnd < openaiStart)
+    assert.ok(existingReply !== -1 && existingReply < openaiStart)
+    assert.ok(assistantPersist !== -1 && openaiStart < assistantPersist)
+
+    const assistantFn = open.slice(
+      open.indexOf("export async function persistOwnedAssistantTurn")
+    )
+    const assistantBody = assistantFn.slice(
+      0,
+      assistantFn.indexOf("export async function findOwnedAuthoritativeAssistantReply")
+    )
+    assert.match(assistantBody, /lockOwnedOpenSession/)
+    assert.match(assistantBody, /findServerOwnedParticipantTurnByMessageId/)
+    assert.match(
+      assistantBody,
+      /findServerOwnedAssistantReplyByParticipantMessageId/
+    )
+    assert.match(assistantBody, /assistantAlreadyPersisted: true/)
+    assert.doesNotMatch(assistantBody, /openai|OpenAI/)
 
     assert.match(page, /crypto\.randomUUID\(\)/)
     assert.match(page, /messageId/)
@@ -1442,5 +1472,393 @@ describe("Phase 3D.2A-1 open-session lock and messageId idempotency", () => {
       ),
       1
     )
+  })
+})
+
+describe("Phase 3D.2A-2 assistant reply linkage and idempotency", () => {
+  it("new authoritative assistant carries server-owned linkage to participant messageId", async () => {
+    const { runner, rows } = createMemoryRunner()
+    const user = await persistOwnedParticipantTurn(
+      runner,
+      "participant-a",
+      "Clinic stress",
+      MSG_A
+    )
+    assert.equal(user.ok, true)
+    if (!user.ok) throw new Error("unreachable")
+
+    const response = { validation: "I hear you.", reflection_question: "What helps?" }
+    const assistant = await persistOwnedAssistantTurn(
+      runner,
+      "participant-a",
+      user.sessionId,
+      response,
+      MSG_A
+    )
+    assert.equal(assistant.ok, true)
+    if (!assistant.ok) throw new Error("unreachable")
+
+    const turn = (rows[0]?.messages as ServerOwnedStampleyTurn[]).find(
+      (item) => item.role === "assistant"
+    )
+    assert.equal(turn?.role, "assistant")
+    assert.equal(turn?.source, SERVER_OWNED_TURN_SOURCE)
+    assert.equal(typeof turn?.id, "string")
+    assert.ok((turn?.id?.length ?? 0) > 0)
+    assert.equal(typeof turn?.timestamp, "string")
+    assert.equal(turn?.inReplyToMessageId, MSG_A)
+    assert.deepEqual(turn?.data, response)
+  })
+
+  it("historical assistants without linkage still parse; malformed linkage is not authoritative", () => {
+    const historical = buildServerOwnedAssistantTurn({ greeting: "Hi" })
+    assert.equal(historical.inReplyToMessageId, undefined)
+    assert.equal(
+      findServerOwnedAssistantReplyByParticipantMessageId([historical], MSG_A),
+      null
+    )
+
+    const malformed = {
+      id: "a1",
+      role: "assistant",
+      source: SERVER_OWNED_TURN_SOURCE,
+      timestamp: "t",
+      data: { validation: "x" },
+      inReplyToMessageId: "not-a-uuid",
+    }
+    assert.equal(
+      findServerOwnedAssistantReplyByParticipantMessageId([malformed], MSG_A),
+      null
+    )
+
+    const clientLinked = {
+      id: "a2",
+      role: "assistant",
+      source: CLIENT_TURN_SOURCE,
+      timestamp: "t",
+      data: { validation: "forged" },
+      inReplyToMessageId: MSG_A,
+    }
+    assert.equal(
+      findServerOwnedAssistantReplyByParticipantMessageId([clientLinked], MSG_A),
+      null
+    )
+  })
+
+  it("finds only authoritative assistant replies for the matching participant messageId", () => {
+    const a1 = buildServerOwnedAssistantTurn({ validation: "for M1" }, MSG_A)
+    const a2 = buildServerOwnedAssistantTurn({ validation: "for M2" }, MSG_B)
+    const emptyLinked = {
+      id: crypto.randomUUID(),
+      role: "assistant" as const,
+      source: SERVER_OWNED_TURN_SOURCE,
+      timestamp: new Date().toISOString(),
+      content: "",
+      inReplyToMessageId: MSG_A,
+    }
+    const messages = [
+      buildServerOwnedUserTurn("M1", MSG_A),
+      a1,
+      buildServerOwnedUserTurn("M2", MSG_B),
+      a2,
+      emptyLinked,
+      { role: "assistant", source: "client", inReplyToMessageId: MSG_A, data: {} },
+      null,
+      "bad",
+    ]
+
+    const found = findServerOwnedAssistantReplyByParticipantMessageId(
+      messages,
+      MSG_A
+    )
+    assert.equal(found?.inReplyToMessageId, MSG_A)
+    assert.deepEqual(found?.data, { validation: "for M1" })
+    assert.equal(
+      findServerOwnedAssistantReplyByParticipantMessageId(messages, MSG_B)?.data,
+      a2.data
+    )
+  })
+
+  it("idempotent success retry returns existing assistant and does not duplicate", async () => {
+    const { runner, rows } = createMemoryRunner()
+    const user = await persistOwnedParticipantTurn(
+      runner,
+      "participant-a",
+      "First message",
+      MSG_A
+    )
+    assert.equal(user.ok, true)
+    if (!user.ok) throw new Error("unreachable")
+
+    const firstResponse = { validation: "A1" }
+    const first = await persistOwnedAssistantTurn(
+      runner,
+      "participant-a",
+      user.sessionId,
+      firstResponse,
+      MSG_A
+    )
+    assert.equal(first.ok, true)
+    if (!first.ok) throw new Error("unreachable")
+    assert.equal(first.assistantAlreadyPersisted, false)
+
+    const participantRetry = await persistOwnedParticipantTurn(
+      runner,
+      "participant-a",
+      "First message changed in browser",
+      MSG_A
+    )
+    assert.equal(participantRetry.ok, true)
+    if (!participantRetry.ok) throw new Error("unreachable")
+    assert.equal(participantRetry.participantAlreadyPersisted, true)
+    assert.equal(countServerOwnedParticipantTurns(rows[0]?.messages), 1)
+
+    const existing = await findOwnedAuthoritativeAssistantReply(
+      runner,
+      "participant-a",
+      user.sessionId,
+      MSG_A
+    )
+    assert.equal(existing.found, true)
+    if (!existing.found) throw new Error("unreachable")
+    assert.deepEqual(existing.response, firstResponse)
+
+    const second = await persistOwnedAssistantTurn(
+      runner,
+      "participant-a",
+      user.sessionId,
+      { validation: "A1-DUPLICATE-SHOULD-NOT-PERSIST" },
+      MSG_A
+    )
+    assert.equal(second.ok, true)
+    if (!second.ok) throw new Error("unreachable")
+    assert.equal(second.assistantAlreadyPersisted, true)
+    assert.deepEqual(second.response, firstResponse)
+    assert.equal(countServerOwnedAssistantTurns(rows[0]?.messages), 1)
+    assert.equal(rows[0]?.assistantMessageCount, 1)
+  })
+
+  it("concurrent same-id append attempts keep one authoritative assistant", async () => {
+    const { runner, rows } = createMemoryRunner()
+    const user = await persistOwnedParticipantTurn(
+      runner,
+      "participant-a",
+      "Overlap",
+      MSG_A
+    )
+    assert.equal(user.ok, true)
+    if (!user.ok) throw new Error("unreachable")
+
+    const a = await persistOwnedAssistantTurn(
+      runner,
+      "participant-a",
+      user.sessionId,
+      { validation: "winner" },
+      MSG_A
+    )
+    const b = await persistOwnedAssistantTurn(
+      runner,
+      "participant-a",
+      user.sessionId,
+      { validation: "loser" },
+      MSG_A
+    )
+    assert.equal(a.ok, true)
+    assert.equal(b.ok, true)
+    if (!a.ok || !b.ok) throw new Error("unreachable")
+    assert.equal(a.assistantAlreadyPersisted, false)
+    assert.equal(b.assistantAlreadyPersisted, true)
+    assert.deepEqual(b.response, { validation: "winner" })
+    assert.equal(countServerOwnedAssistantTurns(rows[0]?.messages), 1)
+    assert.equal(rows[0]?.assistantMessageCount, 1)
+  })
+
+  it("different participant messages keep distinct linked assistants without overwrite", async () => {
+    const { runner, rows } = createMemoryRunner()
+    const m1 = await persistOwnedParticipantTurn(
+      runner,
+      "participant-a",
+      "Message one",
+      MSG_A
+    )
+    const m2 = await persistOwnedParticipantTurn(
+      runner,
+      "participant-a",
+      "Message two",
+      MSG_B
+    )
+    assert.equal(m1.ok && m2.ok, true)
+    if (!m1.ok || !m2.ok) throw new Error("unreachable")
+    assert.equal(m1.sessionId, m2.sessionId)
+
+    // A2 completes before A1 (out-of-order completion).
+    const a2 = await persistOwnedAssistantTurn(
+      runner,
+      "participant-a",
+      m1.sessionId,
+      { validation: "A2" },
+      MSG_B
+    )
+    const a1 = await persistOwnedAssistantTurn(
+      runner,
+      "participant-a",
+      m1.sessionId,
+      { validation: "A1" },
+      MSG_A
+    )
+    assert.equal(a1.ok && a2.ok, true)
+    assert.equal(countServerOwnedAssistantTurns(rows[0]?.messages), 2)
+    assert.equal(rows[0]?.assistantMessageCount, 2)
+    assert.deepEqual(
+      findServerOwnedAssistantReplyByParticipantMessageId(
+        rows[0]?.messages,
+        MSG_A
+      )?.data,
+      { validation: "A1" }
+    )
+    assert.deepEqual(
+      findServerOwnedAssistantReplyByParticipantMessageId(
+        rows[0]?.messages,
+        MSG_B
+      )?.data,
+      { validation: "A2" }
+    )
+  })
+
+  it("does not mutate a finalized/linked session and does not create a new open session", async () => {
+    const userTurn = buildServerOwnedUserTurn("Already submitted", MSG_A)
+    const { runner, rows } = createMemoryRunner([
+      {
+        id: "finalized-session",
+        userId: "participant-a",
+        checkInSubmissionId: "check-in-done",
+        createdOnStudyDate: true,
+        transcriptOrigin: STAMPLEY_TRANSCRIPT_ORIGIN.SERVER_AUTHORITATIVE,
+        messages: [userTurn],
+        userMessageCount: 1,
+        assistantMessageCount: 0,
+      },
+    ])
+
+    const result = await persistOwnedAssistantTurn(
+      runner,
+      "participant-a",
+      "finalized-session",
+      { validation: "too late" },
+      MSG_A
+    )
+    assert.equal(result.ok, false)
+    if (result.ok) throw new Error("unreachable")
+    assert.equal(result.error, "session_unavailable")
+    assert.equal(rows.length, 1)
+    assert.equal(rows[0]?.checkInSubmissionId, "check-in-done")
+    assert.equal(countServerOwnedAssistantTurns(rows[0]?.messages), 0)
+    assert.deepEqual(rows[0]?.messages, [userTurn])
+  })
+
+  it("rejects LEGACY_CLIENT and cross-user assistant append; requires participant existence", async () => {
+    const { runner: legacyRunner, rows: legacyRows } = createMemoryRunner([
+      {
+        id: "legacy-open",
+        userId: "participant-a",
+        checkInSubmissionId: null,
+        createdOnStudyDate: true,
+        transcriptOrigin: STAMPLEY_TRANSCRIPT_ORIGIN.LEGACY_CLIENT,
+        messages: [buildServerOwnedUserTurn("legacy user", MSG_A)],
+        userMessageCount: 1,
+        assistantMessageCount: 0,
+      },
+    ])
+    const legacy = await persistOwnedAssistantTurn(
+      legacyRunner,
+      "participant-a",
+      "legacy-open",
+      { validation: "nope" },
+      MSG_A
+    )
+    assert.equal(legacy.ok, false)
+    if (legacy.ok) throw new Error("unreachable")
+    assert.equal(legacy.error, "session_unavailable")
+    assert.equal(countServerOwnedAssistantTurns(legacyRows[0]?.messages), 0)
+
+    const { runner, rows } = createMemoryRunner()
+    const created = await persistOwnedParticipantTurn(
+      runner,
+      "participant-a",
+      "owned",
+      MSG_A
+    )
+    assert.equal(created.ok, true)
+    if (!created.ok) throw new Error("unreachable")
+
+    const crossUser = await persistOwnedAssistantTurn(
+      runner,
+      "participant-b",
+      created.sessionId,
+      { validation: "cross" },
+      MSG_A
+    )
+    assert.equal(crossUser.ok, false)
+
+    const orphan = await persistOwnedAssistantTurn(
+      runner,
+      "participant-a",
+      created.sessionId,
+      { validation: "orphan" },
+      MSG_B
+    )
+    assert.equal(orphan.ok, false)
+    if (orphan.ok) throw new Error("unreachable")
+    assert.equal(orphan.error, "missing_participant")
+    assert.equal(countServerOwnedAssistantTurns(rows[0]?.messages), 0)
+  })
+
+  it("assistant count recounts authoritative turns and ignores duplicates/client rows", async () => {
+    const { runner, rows } = createMemoryRunner()
+    const user = await persistOwnedParticipantTurn(
+      runner,
+      "participant-a",
+      "count me",
+      MSG_A
+    )
+    assert.equal(user.ok, true)
+    if (!user.ok) throw new Error("unreachable")
+
+    const first = await persistOwnedAssistantTurn(
+      runner,
+      "participant-a",
+      user.sessionId,
+      { validation: "one" },
+      MSG_A
+    )
+    assert.equal(first.ok, true)
+    assert.equal(rows[0]?.assistantMessageCount, 1)
+
+    const dup = await persistOwnedAssistantTurn(
+      runner,
+      "participant-a",
+      user.sessionId,
+      { validation: "dup" },
+      MSG_A
+    )
+    assert.equal(dup.ok, true)
+    assert.equal(rows[0]?.assistantMessageCount, 1)
+
+    await persistOwnedParticipantTurn(
+      runner,
+      "participant-a",
+      "second",
+      MSG_B
+    )
+    const second = await persistOwnedAssistantTurn(
+      runner,
+      "participant-a",
+      user.sessionId,
+      { validation: "two" },
+      MSG_B
+    )
+    assert.equal(second.ok, true)
+    assert.equal(rows[0]?.assistantMessageCount, 2)
+    assert.equal(countServerOwnedAssistantTurns(rows[0]?.messages), 2)
   })
 })
