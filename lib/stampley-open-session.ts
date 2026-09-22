@@ -1,5 +1,174 @@
 import { Prisma } from "@/lib/generated/prisma/client"
-import { USER_MESSAGE_MAX_CHARS } from "@/lib/stampley-openai-context"
+import {
+  USER_MESSAGE_MAX_CHARS,
+  buildChatSessionSummary,
+} from "@/lib/stampley-openai-context"
+
+export const MISSING_STAMPLEY_PROOF_MESSAGE =
+  "Complete a Stampley chat reply before submitting today's check-in."
+
+export class MissingStampleyProofError extends Error {
+  constructor() {
+    super(MISSING_STAMPLEY_PROOF_MESSAGE)
+    this.name = "MissingStampleyProofError"
+  }
+}
+
+export class StampleySessionLinkError extends Error {
+  constructor() {
+    super("Failed to link Stampley session")
+    this.name = "StampleySessionLinkError"
+  }
+}
+
+export type LockedOpenStampleySessionCandidate = {
+  id: string
+  messages: unknown
+}
+
+export type LinkStampleySessionInput = {
+  sessionId: string
+  userId: string
+  checkInSubmissionId: string
+  domain: string
+  stressLevel: number
+  mood: number
+  energy: number
+  messages: unknown
+}
+
+/** Newest-first candidates; first row with server-owned participant proof wins. */
+export function selectNewestStampleySessionWithParticipantProof(
+  candidatesNewestFirst: LockedOpenStampleySessionCandidate[]
+): LockedOpenStampleySessionCandidate | null {
+  for (const candidate of candidatesNewestFirst) {
+    if (hasServerOwnedParticipantProof(candidate.messages)) {
+      return candidate
+    }
+  }
+  return null
+}
+
+/** Deterministic metadata-only summary for admin surfaces after finalization. */
+export function buildServerOwnedFinalizationSummary(
+  domain: string | null,
+  messages: unknown
+): string {
+  return buildChatSessionSummary(
+    { domain },
+    countServerOwnedParticipantTurns(messages),
+    countServerOwnedAssistantTurns(messages)
+  )
+}
+
+type FinalizationQueryClient = {
+  $queryRaw<T = unknown>(
+    query: TemplateStringsArray,
+    ...values: unknown[]
+  ): Promise<T>
+}
+
+type FinalizationLinkClient = {
+  stampleyChatSession: {
+    updateMany(args: {
+      where: {
+        id: string
+        userId: string
+        checkInSubmissionId: null
+      }
+      data: {
+        checkInSubmissionId: string
+        domain: string
+        stressLevel: number
+        mood: number
+        energy: number
+        userMessageCount: number
+        assistantMessageCount: number
+        summary: string
+      }
+    }): Promise<{ count: number }>
+  }
+}
+
+/** Lock all current-day owned open sessions (newest first). Does not inspect linked rows. */
+export async function lockCurrentDayOpenStampleySessionsForFinalization(
+  tx: FinalizationQueryClient,
+  userId: string
+): Promise<LockedOpenStampleySessionCandidate[]> {
+  if (typeof userId !== "string" || userId.length === 0) {
+    return []
+  }
+
+  const rows = await tx.$queryRaw<
+    Array<{ id: string; messages: unknown }>
+  >`
+    SELECT id, messages
+    FROM stampley_chat_sessions
+    WHERE user_id = ${userId}
+      AND check_in_submission_id IS NULL
+      AND created_at::date = CURRENT_DATE
+    ORDER BY created_at DESC
+    FOR UPDATE
+  `
+
+  return rows.map((row) => ({
+    id: row.id,
+    messages: row.messages,
+  }))
+}
+
+export async function resolveAuthoritativeStampleySessionForFinalization(
+  tx: FinalizationQueryClient,
+  userId: string
+): Promise<LockedOpenStampleySessionCandidate> {
+  const candidates = await lockCurrentDayOpenStampleySessionsForFinalization(
+    tx,
+    userId
+  )
+  const winner = selectNewestStampleySessionWithParticipantProof(candidates)
+  if (!winner) {
+    throw new MissingStampleyProofError()
+  }
+  return winner
+}
+
+/**
+ * Conditionally link an open owned session to a check-in.
+ * Does not overwrite authoritative messages. Requires exactly one row updated.
+ */
+export async function linkStampleySessionToCheckIn(
+  tx: FinalizationLinkClient,
+  input: LinkStampleySessionInput
+): Promise<void> {
+  const userMessageCount = countServerOwnedParticipantTurns(input.messages)
+  const assistantMessageCount = countServerOwnedAssistantTurns(input.messages)
+  const summary = buildServerOwnedFinalizationSummary(
+    input.domain,
+    input.messages
+  )
+
+  const result = await tx.stampleyChatSession.updateMany({
+    where: {
+      id: input.sessionId,
+      userId: input.userId,
+      checkInSubmissionId: null,
+    },
+    data: {
+      checkInSubmissionId: input.checkInSubmissionId,
+      domain: input.domain,
+      stressLevel: input.stressLevel,
+      mood: input.mood,
+      energy: input.energy,
+      userMessageCount,
+      assistantMessageCount,
+      summary,
+    },
+  })
+
+  if (result.count !== 1) {
+    throw new StampleySessionLinkError()
+  }
+}
 
 export const SERVER_OWNED_TURN_SOURCE = "server" as const
 

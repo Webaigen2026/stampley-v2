@@ -19,6 +19,13 @@ import {
   resolveSubmitWeeklyDomain,
 } from "@/lib/weekly-domain-progress"
 import { validateCheckInSubmitBody } from "@/lib/check-in-submit-validation"
+import {
+  MISSING_STAMPLEY_PROOF_MESSAGE,
+  MissingStampleyProofError,
+  StampleySessionLinkError,
+  linkStampleySessionToCheckIn,
+  resolveAuthoritativeStampleySessionForFinalization,
+} from "@/lib/stampley-open-session"
 
 const DUPLICATE_CHECK_IN_MESSAGE =
   "You have already completed today's check-in."
@@ -128,6 +135,9 @@ export async function POST(req: NextRequest) {
 
     const { checkInSubmissionId, needsSafetyEscalation, subscale } = await prisma.$transaction(
       async (tx) => {
+        const stampleySession =
+          await resolveAuthoritativeStampleySessionForFinalization(tx, userId)
+
         let domain = domainDecision.domain
 
         if (domainDecision.shouldPersist) {
@@ -220,6 +230,17 @@ export async function POST(req: NextRequest) {
           throw insertError
         }
 
+        await linkStampleySessionToCheckIn(tx, {
+          sessionId: stampleySession.id,
+          userId,
+          checkInSubmissionId: created.id,
+          domain,
+          stressLevel: distress,
+          mood,
+          energy,
+          messages: stampleySession.messages,
+        })
+
         await tx.userStudyProgress.upsert({
           where: { userId },
           create: {
@@ -261,11 +282,21 @@ export async function POST(req: NextRequest) {
     })
 
   } catch (error) {
+    if (error instanceof MissingStampleyProofError) {
+      return jsonWithSensitiveCache(
+        { error: MISSING_STAMPLEY_PROOF_MESSAGE },
+        { status: 400 }
+      )
+    }
     if (error instanceof DuplicateCheckInError || isUniqueViolation(error)) {
       return jsonWithSensitiveCache(
         { error: DUPLICATE_CHECK_IN_MESSAGE },
         { status: 409 }
       )
+    }
+    if (error instanceof StampleySessionLinkError) {
+      console.error("[check-in/submit] stampley session link failed")
+      return jsonWithSensitiveCache({ error: "Failed to submit" }, { status: 500 })
     }
     console.error("[check-in/submit]", error)
     return jsonWithSensitiveCache({ error: "Failed to submit" }, { status: 500 })

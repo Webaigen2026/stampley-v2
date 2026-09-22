@@ -6,16 +6,21 @@ import { fileURLToPath } from "node:url"
 import { USER_MESSAGE_MAX_CHARS } from "./stampley-openai-context"
 import {
   SERVER_OWNED_TURN_SOURCE,
+  StampleySessionLinkError,
   appendServerOwnedTurn,
   buildServerOwnedAssistantTurn,
+  buildServerOwnedFinalizationSummary,
   buildServerOwnedUserTurn,
   countServerOwnedAssistantTurns,
   countServerOwnedParticipantTurns,
   hasServerOwnedParticipantProof,
+  linkStampleySessionToCheckIn,
   persistOwnedAssistantTurn,
   persistOwnedParticipantTurn,
   protectAuthoritativeTranscript,
   resolveIncomingParticipantTurn,
+  selectNewestStampleySessionWithParticipantProof,
+  type LockedOpenStampleySessionCandidate,
   type OpenSessionRecord,
   type OpenSessionStore,
   type OpenSessionStoreRunner,
@@ -383,16 +388,298 @@ describe("generate and session source guards", () => {
     assert.doesNotMatch(source, /persistOwnedParticipantTurn/)
     assert.match(source, /must not update\(\) an open/)
   })
+})
 
-  it("check-in submit behavior is unchanged in Phase 3B", () => {
+describe("Phase 3C finalization selection and summary", () => {
+  it("rejects empty, assistant-only, client-only, and malformed messages as proof", () => {
+    assert.equal(selectNewestStampleySessionWithParticipantProof([]), null)
+    assert.equal(
+      selectNewestStampleySessionWithParticipantProof([
+        { id: "empty", messages: [] },
+      ]),
+      null
+    )
+    assert.equal(
+      selectNewestStampleySessionWithParticipantProof([
+        {
+          id: "assistant-only",
+          messages: [buildServerOwnedAssistantTurn({ greeting: "Hi" })],
+        },
+      ]),
+      null
+    )
+    assert.equal(
+      selectNewestStampleySessionWithParticipantProof([
+        {
+          id: "client-only",
+          messages: [{ role: "user", content: "forged", source: "client" }],
+        },
+      ]),
+      null
+    )
+    assert.equal(
+      selectNewestStampleySessionWithParticipantProof([
+        { id: "malformed", messages: null },
+      ]),
+      null
+    )
+    assert.equal(
+      selectNewestStampleySessionWithParticipantProof([
+        { id: "string", messages: "not-an-array" },
+      ]),
+      null
+    )
+    assert.equal(
+      selectNewestStampleySessionWithParticipantProof([
+        {
+          id: "empty-user",
+          messages: [
+            {
+              id: "u1",
+              role: "user",
+              content: "",
+              timestamp: "t",
+              source: SERVER_OWNED_TURN_SOURCE,
+            },
+          ],
+        },
+      ]),
+      null
+    )
+    assert.equal(
+      selectNewestStampleySessionWithParticipantProof([
+        {
+          id: "whitespace-user",
+          messages: [
+            {
+              id: "u1",
+              role: "user",
+              content: "   ",
+              timestamp: "t",
+              source: SERVER_OWNED_TURN_SOURCE,
+            },
+          ],
+        },
+      ]),
+      null
+    )
+  })
+
+  it("accepts a valid server-owned participant turn", () => {
+    const winner = selectNewestStampleySessionWithParticipantProof([
+      {
+        id: "qualifying",
+        messages: [buildServerOwnedUserTurn("Clinic was hard.")],
+      },
+    ])
+    assert.equal(winner?.id, "qualifying")
+  })
+
+  it("skips a newer empty open row and selects an older qualifying row", () => {
+    const candidates: LockedOpenStampleySessionCandidate[] = [
+      { id: "newer-empty", messages: [] },
+      {
+        id: "older-qualifying",
+        messages: [buildServerOwnedUserTurn("Still counts.")],
+      },
+    ]
+    const winner = selectNewestStampleySessionWithParticipantProof(candidates)
+    assert.equal(winner?.id, "older-qualifying")
+  })
+
+  it("picks the newest qualifying session when multiple qualify", () => {
+    const candidates: LockedOpenStampleySessionCandidate[] = [
+      {
+        id: "newest-qualifying",
+        messages: [buildServerOwnedUserTurn("latest")],
+      },
+      {
+        id: "older-qualifying",
+        messages: [buildServerOwnedUserTurn("earlier")],
+      },
+    ]
+    const winner = selectNewestStampleySessionWithParticipantProof(candidates)
+    assert.equal(winner?.id, "newest-qualifying")
+  })
+
+  it("builds a metadata-only server summary from domain and authoritative counts", () => {
+    const messages = appendServerOwnedTurn(
+      [buildServerOwnedUserTurn("one"), buildServerOwnedUserTurn("two")],
+      buildServerOwnedAssistantTurn({ validation: "ok" })
+    )
+    const summary = buildServerOwnedFinalizationSummary("Emotional", messages)
+    assert.match(summary, /Emotional/)
+    assert.match(summary, /2 participant/)
+    assert.match(summary, /1 Stampley/)
+    assert.doesNotMatch(summary, /one/)
+    assert.doesNotMatch(summary, /two/)
+    assert.doesNotMatch(summary, /ok/)
+    assert.doesNotMatch(summary, /user-/)
+    assert.doesNotMatch(summary, /@/)
+  })
+
+  it("link requires owned open session and does not overwrite messages", async () => {
+    const originalMessages = [buildServerOwnedUserTurn("authoritative")]
+    let storedMessages: unknown = originalMessages
+    let storedLink: string | null = null
+    let storedSummary: string | null = null
+    let storedUserCount = 0
+    let storedAssistantCount = 0
+    let updateCalls = 0
+
+    const tx = {
+      stampleyChatSession: {
+        async updateMany(args: {
+          where: {
+            id: string
+            userId: string
+            checkInSubmissionId: null
+          }
+          data: {
+            checkInSubmissionId: string
+            domain: string
+            stressLevel: number
+            mood: number
+            energy: number
+            userMessageCount: number
+            assistantMessageCount: number
+            summary: string
+          }
+        }) {
+          updateCalls += 1
+          assert.equal(args.where.id, "open-1")
+          assert.equal(args.where.userId, "participant-a")
+          assert.equal(args.where.checkInSubmissionId, null)
+          assert.equal("messages" in args.data, false)
+          storedLink = args.data.checkInSubmissionId
+          storedSummary = args.data.summary
+          storedUserCount = args.data.userMessageCount
+          storedAssistantCount = args.data.assistantMessageCount
+          return { count: 1 }
+        },
+      },
+    }
+
+    await linkStampleySessionToCheckIn(tx, {
+      sessionId: "open-1",
+      userId: "participant-a",
+      checkInSubmissionId: "check-in-1",
+      domain: "Emotional",
+      stressLevel: 4,
+      mood: 5,
+      energy: 6,
+      messages: originalMessages,
+    })
+
+    assert.equal(updateCalls, 1)
+    assert.equal(storedLink, "check-in-1")
+    assert.equal(storedUserCount, 1)
+    assert.equal(storedAssistantCount, 0)
+    assert.match(String(storedSummary), /Emotional/)
+    assert.deepEqual(storedMessages, originalMessages)
+
+    await assert.rejects(
+      () =>
+        linkStampleySessionToCheckIn(
+          {
+            stampleyChatSession: {
+              async updateMany() {
+                return { count: 0 }
+              },
+            },
+          },
+          {
+            sessionId: "open-1",
+            userId: "participant-a",
+            checkInSubmissionId: "check-in-2",
+            domain: "Emotional",
+            stressLevel: 4,
+            mood: 5,
+            energy: 6,
+            messages: originalMessages,
+          }
+        ),
+      (error: unknown) => error instanceof StampleySessionLinkError
+    )
+  })
+})
+
+describe("Phase 3C submit and client wiring", () => {
+  it("submit locks proof, links session, and maps missing proof to 400", () => {
     const source = read("app/api/check-in/submit/route.ts")
+    const txnStart = source.indexOf("prisma.$transaction")
+    const txnBody = source.slice(txnStart)
+
     assert.match(source, /resolveCheckInMutationAccess\(session\)/)
-    assert.doesNotMatch(source, /stampley-open-session/)
-    assert.doesNotMatch(source, /persistOwnedParticipantTurn/)
-    assert.doesNotMatch(source, /StampleyChatSession/)
-    assert.doesNotMatch(source, /stampleyChatSession/)
-    assert.doesNotMatch(source, /hasServerOwnedParticipantProof/)
     assert.match(source, /validateCheckInSubmitBody/)
     assert.match(source, /resolveSubmitWeeklyDomain/)
+    assert.match(
+      source,
+      /resolveAuthoritativeStampleySessionForFinalization\(tx, userId\)/
+    )
+    assert.match(source, /linkStampleySessionToCheckIn\(tx,/)
+    assert.match(source, /MissingStampleyProofError/)
+    assert.match(source, /MISSING_STAMPLEY_PROOF_MESSAGE/)
+    assert.match(source, /status: 400/)
+
+    const proofIndex = txnBody.indexOf(
+      "resolveAuthoritativeStampleySessionForFinalization"
+    )
+    const domainIndex = txnBody.indexOf("userWeeklyDomain.create")
+    const createIndex = txnBody.indexOf("checkInSubmission.create")
+    const linkIndex = txnBody.indexOf("linkStampleySessionToCheckIn")
+    const progressIndex = txnBody.indexOf("userStudyProgress.upsert")
+
+    assert.notEqual(proofIndex, -1)
+    assert.ok(proofIndex < domainIndex)
+    assert.ok(domainIndex < createIndex)
+    assert.ok(createIndex < linkIndex)
+    assert.ok(linkIndex < progressIndex)
+    assert.doesNotMatch(source, /body\.userId/)
+    assert.doesNotMatch(txnBody, /openai|OpenAI/)
+  })
+
+  it("submit still rejects non-participants and preserves duplicate-day 409", () => {
+    const source = read("app/api/check-in/submit/route.ts")
+    assert.match(source, /resolveCheckInMutationAccess\(session\)/)
+    assert.match(source, /STUDY_TOTAL_CHECKINS/)
+    assert.match(source, /status: 403/)
+    assert.match(source, /DUPLICATE_CHECK_IN_MESSAGE/)
+    assert.match(source, /status: 409/)
+    assert.match(source, /StampleySessionLinkError/)
+  })
+
+  it("successful Complete Check-In no longer POSTs compatibility session endpoint", () => {
+    const source = read("app/check-in/stampley-support/page.tsx")
+    const completeStart = source.indexOf("const handleCompleteCheckIn")
+    const completeEnd = source.indexOf("useEffect(() => {", completeStart)
+    const complete = source.slice(completeStart, completeEnd)
+
+    assert.match(complete, /\/api\/check-in\/submit/)
+    assert.doesNotMatch(complete, /fetch\(\s*["']\/api\/stampley\/session["']/)
+    assert.doesNotMatch(complete, /saveStampleySessionWithRetry/)
+    assert.doesNotMatch(complete, /backupUnsavedTranscript/)
+    assert.match(complete, /clearActiveChatDraft/)
+    assert.match(complete, /clearUnsavedTranscript/)
+    assert.match(complete, /store\.reset/)
+    assert.match(complete, /router\.push\("\/dashboard"\)/)
+  })
+
+  it("finalization SQL requires owner, open, and CURRENT_DATE before proof", () => {
+    const source = read("lib/stampley-open-session.ts")
+    const lockFn = source.slice(
+      source.indexOf("lockCurrentDayOpenStampleySessionsForFinalization")
+    )
+    const sql = lockFn.slice(0, lockFn.indexOf("return rows.map"))
+    assert.match(sql, /user_id = \$\{userId\}/)
+    assert.match(sql, /check_in_submission_id IS NULL/)
+    assert.match(sql, /created_at::date = CURRENT_DATE/)
+    assert.match(sql, /ORDER BY created_at DESC/)
+    assert.match(sql, /FOR UPDATE/)
+    assert.match(
+      source,
+      /selectNewestStampleySessionWithParticipantProof\(candidates\)/
+    )
+    assert.match(source, /hasServerOwnedParticipantProof/)
   })
 })

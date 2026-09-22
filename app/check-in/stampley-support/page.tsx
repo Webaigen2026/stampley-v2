@@ -43,13 +43,9 @@ import {
   hasStampleyFieldText,
   type StampleyHistoryMessage,
 } from "@/lib/stampley-prompt"
-import { buildChatSessionSummary } from "@/lib/stampley-openai-context"
 import {
-  backupFromSessionPayload,
-  backupUnsavedTranscript,
   clearUnsavedTranscript,
   resendUnsavedTranscriptIfPresent,
-  saveStampleySessionWithRetry,
 } from "@/lib/stampley-transcript-backup"
 import {
   clearActiveChatDraft,
@@ -479,53 +475,10 @@ export default function StampleySupportPage() {
 
       setNeedsSafety(Boolean(submitData.needsSafetyEscalation))
 
-      const userMessageCount = messages.filter((m) => m.role === "user").length
-      const assistantMessageCount = messages.filter(
-        (m) => m.role === "assistant"
-      ).length
-
-      const summary = buildChatSessionSummary(
-        chatSnapshot,
-        userMessageCount,
-        assistantMessageCount
-      )
-
-      const sessionPayload = {
-        checkInSubmissionId,
-        domain: chatSnapshot.domain,
-        stressLevel: chatSnapshot.distress,
-        mood: chatSnapshot.mood,
-        energy: chatSnapshot.energy,
-        userMessageCount,
-        assistantMessageCount,
-        summary,
-        messages,
-      }
-
-      const sessionSave = await saveStampleySessionWithRetry(sessionPayload)
-
+      // Phase 3C: authoritative Stampley session is linked inside submit.
+      // Do not create a second linked client transcript on success.
       clearActiveChatDraft()
-
-      if (sessionSave.ok) {
-        clearUnsavedTranscript()
-      } else if (ownerUserId) {
-        backupUnsavedTranscript(
-          ownerUserId,
-          backupFromSessionPayload(sessionPayload, {
-            domain: chatSnapshot.domain,
-            distress: chatSnapshot.distress,
-            mood: chatSnapshot.mood,
-            energy: chatSnapshot.energy,
-            contextTags: chatSnapshot.contextTags,
-            reflection: chatSnapshot.reflection,
-            copingAction: chatSnapshot.copingAction,
-            weekNumber: chatSnapshot.weekNumber,
-            dayNumber: chatSnapshot.dayNumber,
-            subscale: chatSnapshot.subscale,
-          })
-        )
-      }
-
+      clearUnsavedTranscript()
       store.reset()
       router.push("/dashboard")
     } catch {
@@ -539,11 +492,9 @@ export default function StampleySupportPage() {
     loading,
     chatStarted,
     chatSnapshot,
-    messages,
     store,
     router,
     dailyReflectionComplete,
-    ownerUserId,
   ])
 
   useEffect(() => {
