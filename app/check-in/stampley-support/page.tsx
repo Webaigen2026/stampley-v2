@@ -43,6 +43,7 @@ import {
   hasStampleyFieldText,
   type StampleyHistoryMessage,
 } from "@/lib/stampley-prompt"
+import { defaultExpandedCardForAssistantMessage } from "@/lib/stampley-micro-skill-ui"
 import {
   clearUnsavedTranscript,
   resendUnsavedTranscriptIfPresent,
@@ -407,7 +408,7 @@ export default function StampleySupportPage() {
           timestamp: getCurrentTime(),
         },
       ])
-      setExpandedCard(null)
+      setExpandedCard(defaultExpandedCardForAssistantMessage(msgId, response))
       setChatStarted(true)
       setActiveView("chat")
     } catch {
@@ -561,24 +562,27 @@ export default function StampleySupportPage() {
           timestamp: getCurrentTime(),
         },
       ])
-      setExpandedCard(null)
+      setExpandedCard(defaultExpandedCardForAssistantMessage(msgId, response))
     } catch {
       const msgId = Date.now().toString()
+      const fallbackData = {
+            validation: "I'm having a little trouble connecting right now.",
+            reflection_question: "Would you like to try again?",
+            micro_skill: "Take one slow breath — in for 4, hold 4, out for 4.",
+            education_chip: "Connectivity issues can happen. Your data is safe.",
+          }
       setMessages((prev) => [
         ...prev,
         {
           id: msgId,
           role: "assistant",
-          data: {
-            validation: "I'm having a little trouble connecting right now.",
-            reflection_question: "Would you like to try again?",
-            micro_skill: "Take one slow breath — in for 4, hold 4, out for 4.",
-            education_chip: "Connectivity issues can happen. Your data is safe.",
-          },
+          data: fallbackData,
           timestamp: getCurrentTime(),
         },
       ])
-      setExpandedCard(null)
+      setExpandedCard(
+        defaultExpandedCardForAssistantMessage(msgId, fallbackData)
+      )
     } finally {
       setLoading(false)
     }
@@ -1989,6 +1993,7 @@ function ChipButton({
     <button
       type="button"
       onClick={onClick}
+      aria-expanded={active}
       className={`flex cursor-pointer items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] uppercase tracking-[0.1em] transition ${
         active
           ? "bg-[#EAF4FF] font-semibold text-[#173B7A]"
