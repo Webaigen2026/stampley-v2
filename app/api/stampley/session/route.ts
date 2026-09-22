@@ -6,6 +6,10 @@ import { auth } from "@/lib/auth"
 import { jsonWithSensitiveCache } from "@/lib/sensitive-cache-headers"
 import { prisma } from "@/lib/prisma"
 import { resolveCheckInMutationAccess } from "@/lib/check-in-mutation-authz"
+import {
+  STAMPLEY_TRANSCRIPT_ORIGIN,
+  sanitizeCompatibilityMessages,
+} from "@/lib/stampley-open-session"
 
 export async function POST(req: NextRequest) {
   const session = await auth()
@@ -55,8 +59,9 @@ export async function POST(req: NextRequest) {
     }
 
     // Compatibility create for the current Complete Check-In client.
-    // This must create a new linked row. It must not update() an open
-    // (checkInSubmissionId = null) server-owned transcript.
+    // This must create a new linked LEGACY_CLIENT row. It must not update() an open
+    // (checkInSubmissionId = null) server-owned transcript, and it must never
+    // accept client-controlled transcriptOrigin / source:"server".
     await prisma.stampleyChatSession.create({
       data: {
         userId,
@@ -74,7 +79,8 @@ export async function POST(req: NextRequest) {
           ? Number(assistantMessageCount)
           : 0,
         summary: typeof summary === "string" ? summary : null,
-        messages: Array.isArray(messages) ? messages : [],
+        messages: sanitizeCompatibilityMessages(messages),
+        transcriptOrigin: STAMPLEY_TRANSCRIPT_ORIGIN.LEGACY_CLIENT,
       },
     })
 

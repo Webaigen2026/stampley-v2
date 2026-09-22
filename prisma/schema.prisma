@@ -81,19 +81,29 @@ model CheckInSubmission {
   @@map("check_in_submissions")
 }
 
+enum StampleyTranscriptOrigin {
+  LEGACY_CLIENT
+  SERVER_AUTHORITATIVE
+
+  @@map("stampley_transcript_origin")
+}
+
 model StampleyChatSession {
-  id                    String    @id @default(dbgenerated("gen_random_uuid()::text"))
-  userId                String    @map("user_id")
-  checkInSubmissionId   String?   @map("check_in_submission_id")
+  id                    String                   @id @default(dbgenerated("gen_random_uuid()::text"))
+  userId                String                   @map("user_id")
+  checkInSubmissionId   String?                  @map("check_in_submission_id")
   domain                String?
-  stressLevel           Int?      @map("stress_level")
+  stressLevel           Int?                     @map("stress_level")
   mood                  Int?
   energy                Int?
-  userMessageCount      Int?      @default(0) @map("user_message_count")
-  assistantMessageCount Int?      @default(0) @map("assistant_message_count")
+  userMessageCount      Int?                     @default(0) @map("user_message_count")
+  assistantMessageCount Int?                     @default(0) @map("assistant_message_count")
   summary               String?
-  messages              Json?     @default(dbgenerated("'[]'::jsonb")) @db.JsonB
-  createdAt             DateTime? @default(now()) @map("created_at") @db.Timestamp(6)
+  messages              Json?                    @default(dbgenerated("'[]'::jsonb")) @db.JsonB
+  /// Fail-closed origin. Only trusted generate open-session creation may set SERVER_AUTHORITATIVE.
+  /// Compatibility/legacy rows remain LEGACY_CLIENT. Never accept from client JSON.
+  transcriptOrigin      StampleyTranscriptOrigin @default(LEGACY_CLIENT) @map("transcript_origin")
+  createdAt             DateTime?                @default(now()) @map("created_at") @db.Timestamp(6)
 
   user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   checkInSubmission CheckInSubmission? @relation(fields: [checkInSubmissionId], references: [id], onDelete: SetNull)

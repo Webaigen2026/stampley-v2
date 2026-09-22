@@ -23,8 +23,10 @@ import {
   MISSING_STAMPLEY_PROOF_MESSAGE,
   MissingStampleyProofError,
   StampleySessionLinkError,
+  findRecoverableFinalizedCheckInForCurrentDay,
   linkStampleySessionToCheckIn,
   resolveAuthoritativeStampleySessionForFinalization,
+  type RecoverableFinalizedCheckIn,
 } from "@/lib/stampley-open-session"
 
 const DUPLICATE_CHECK_IN_MESSAGE =
@@ -50,6 +52,19 @@ function isUniqueViolation(error: unknown): boolean {
     "code" in error &&
     (error as { code: string }).code === "23505"
   )
+}
+
+function recoveredCompletionResponse(recovered: RecoverableFinalizedCheckIn) {
+  return jsonWithSensitiveCache({
+    success: true,
+    id: recovered.checkInSubmissionId,
+    checkInSubmissionId: recovered.checkInSubmissionId,
+    needsSafetyEscalation: recovered.needsSafetyEscalation,
+    subscale: recovered.subscale,
+    dayNumber: recovered.dayNumber,
+    weekNumber: recovered.weekNumber,
+    alreadyCompleted: true,
+  })
 }
 
 export async function POST(req: NextRequest) {
@@ -99,6 +114,13 @@ export async function POST(req: NextRequest) {
     `
 
     if (existingToday.length > 0) {
+      const recovered = await findRecoverableFinalizedCheckInForCurrentDay(
+        prisma,
+        userId
+      )
+      if (recovered) {
+        return recoveredCompletionResponse(recovered)
+      }
       return jsonWithSensitiveCache(
         { error: DUPLICATE_CHECK_IN_MESSAGE },
         { status: 409 }
@@ -279,16 +301,31 @@ export async function POST(req: NextRequest) {
       subscale,
       dayNumber,
       weekNumber,
+      alreadyCompleted: false,
     })
 
   } catch (error) {
     if (error instanceof MissingStampleyProofError) {
+      const recovered = await findRecoverableFinalizedCheckInForCurrentDay(
+        prisma,
+        userId
+      )
+      if (recovered) {
+        return recoveredCompletionResponse(recovered)
+      }
       return jsonWithSensitiveCache(
         { error: MISSING_STAMPLEY_PROOF_MESSAGE },
         { status: 400 }
       )
     }
     if (error instanceof DuplicateCheckInError || isUniqueViolation(error)) {
+      const recovered = await findRecoverableFinalizedCheckInForCurrentDay(
+        prisma,
+        userId
+      )
+      if (recovered) {
+        return recoveredCompletionResponse(recovered)
+      }
       return jsonWithSensitiveCache(
         { error: DUPLICATE_CHECK_IN_MESSAGE },
         { status: 409 }

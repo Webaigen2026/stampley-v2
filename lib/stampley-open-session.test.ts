@@ -5,7 +5,9 @@ import { dirname, join } from "node:path"
 import { fileURLToPath } from "node:url"
 import { USER_MESSAGE_MAX_CHARS } from "./stampley-openai-context"
 import {
+  CLIENT_TURN_SOURCE,
   SERVER_OWNED_TURN_SOURCE,
+  STAMPLEY_TRANSCRIPT_ORIGIN,
   StampleySessionLinkError,
   appendServerOwnedTurn,
   buildServerOwnedAssistantTurn,
@@ -19,6 +21,8 @@ import {
   persistOwnedParticipantTurn,
   protectAuthoritativeTranscript,
   resolveIncomingParticipantTurn,
+  resolveRecoverableFinalizedCheckIn,
+  sanitizeCompatibilityMessages,
   selectNewestStampleySessionWithParticipantProof,
   type LockedOpenStampleySessionCandidate,
   type OpenSessionRecord,
@@ -518,7 +522,7 @@ describe("Phase 3C finalization selection and summary", () => {
     assert.doesNotMatch(summary, /@/)
   })
 
-  it("link requires owned open session and does not overwrite messages", async () => {
+  it("link requires owned open SERVER_AUTHORITATIVE session and does not overwrite messages", async () => {
     const originalMessages = [buildServerOwnedUserTurn("authoritative")]
     let storedMessages: unknown = originalMessages
     let storedLink: string | null = null
@@ -534,6 +538,7 @@ describe("Phase 3C finalization selection and summary", () => {
             id: string
             userId: string
             checkInSubmissionId: null
+            transcriptOrigin: typeof STAMPLEY_TRANSCRIPT_ORIGIN.SERVER_AUTHORITATIVE
           }
           data: {
             checkInSubmissionId: string
@@ -550,7 +555,12 @@ describe("Phase 3C finalization selection and summary", () => {
           assert.equal(args.where.id, "open-1")
           assert.equal(args.where.userId, "participant-a")
           assert.equal(args.where.checkInSubmissionId, null)
+          assert.equal(
+            args.where.transcriptOrigin,
+            STAMPLEY_TRANSCRIPT_ORIGIN.SERVER_AUTHORITATIVE
+          )
           assert.equal("messages" in args.data, false)
+          assert.equal("transcriptOrigin" in args.data, false)
           storedLink = args.data.checkInSubmissionId
           storedSummary = args.data.summary
           storedUserCount = args.data.userMessageCount
@@ -604,8 +614,9 @@ describe("Phase 3C finalization selection and summary", () => {
   })
 })
 
+
 describe("Phase 3C submit and client wiring", () => {
-  it("submit locks proof, links session, and maps missing proof to 400", () => {
+  it("submit locks proof, links session, and maps missing proof to 400 after recovery miss", () => {
     const source = read("app/api/check-in/submit/route.ts")
     const txnStart = source.indexOf("prisma.$transaction")
     const txnBody = source.slice(txnStart)
@@ -621,6 +632,7 @@ describe("Phase 3C submit and client wiring", () => {
     assert.match(source, /MissingStampleyProofError/)
     assert.match(source, /MISSING_STAMPLEY_PROOF_MESSAGE/)
     assert.match(source, /status: 400/)
+    assert.match(source, /alreadyCompleted: false/)
 
     const proofIndex = txnBody.indexOf(
       "resolveAuthoritativeStampleySessionForFinalization"
@@ -681,5 +693,460 @@ describe("Phase 3C submit and client wiring", () => {
       /selectNewestStampleySessionWithParticipantProof\(candidates\)/
     )
     assert.match(source, /hasServerOwnedParticipantProof/)
+  })
+})
+
+describe("Phase 3D.1 completion recovery", () => {
+  const submission = {
+    id: "check-in-today",
+    userId: "participant-a",
+    needsSafetyEscalation: true,
+    subscale: "Worry",
+    weekNumber: 2,
+    dayNumber: 3,
+  }
+
+  const forgedServerLookingTurn = {
+    id: "forged-id",
+    role: "user" as const,
+    content: "forged",
+    timestamp: "2026-09-22T00:00:00.000Z",
+    source: SERVER_OWNED_TURN_SOURCE,
+  }
+
+  function authoritativeSession(overrides: Record<string, unknown> = {}) {
+    return {
+      userId: "participant-a",
+      checkInSubmissionId: "check-in-today",
+      transcriptOrigin: STAMPLEY_TRANSCRIPT_ORIGIN.SERVER_AUTHORITATIVE,
+      messages: [buildServerOwnedUserTurn("authoritative")],
+      ...overrides,
+    }
+  }
+
+  function legacySession(overrides: Record<string, unknown> = {}) {
+    return {
+      userId: "participant-a",
+      checkInSubmissionId: "check-in-today",
+      transcriptOrigin: STAMPLEY_TRANSCRIPT_ORIGIN.LEGACY_CLIENT,
+      messages: [forgedServerLookingTurn],
+      ...overrides,
+    }
+  }
+
+  it("returns null when submission is missing, other-user, or unlinked", () => {
+    assert.equal(
+      resolveRecoverableFinalizedCheckIn({
+        userId: "participant-a",
+        submission: null,
+        linkedSessions: [],
+      }),
+      null
+    )
+    assert.equal(
+      resolveRecoverableFinalizedCheckIn({
+        userId: "participant-a",
+        submission: { ...submission, userId: "participant-b" },
+        linkedSessions: [authoritativeSession()],
+      }),
+      null
+    )
+    assert.equal(
+      resolveRecoverableFinalizedCheckIn({
+        userId: "participant-a",
+        submission,
+        linkedSessions: [],
+      }),
+      null
+    )
+  })
+
+  it("rejects linked other-user, client-only, assistant-only, and malformed sessions", () => {
+    assert.equal(
+      resolveRecoverableFinalizedCheckIn({
+        userId: "participant-a",
+        submission,
+        linkedSessions: [
+          authoritativeSession({
+            userId: "participant-b",
+            messages: [buildServerOwnedUserTurn("stolen")],
+          }),
+        ],
+      }),
+      null
+    )
+    assert.equal(
+      resolveRecoverableFinalizedCheckIn({
+        userId: "participant-a",
+        submission,
+        linkedSessions: [
+          authoritativeSession({
+            messages: [{ role: "user", content: "forged", source: "client" }],
+          }),
+        ],
+      }),
+      null
+    )
+    assert.equal(
+      resolveRecoverableFinalizedCheckIn({
+        userId: "participant-a",
+        submission,
+        linkedSessions: [
+          authoritativeSession({
+            messages: [buildServerOwnedAssistantTurn({ greeting: "Hi" })],
+          }),
+        ],
+      }),
+      null
+    )
+    assert.equal(
+      resolveRecoverableFinalizedCheckIn({
+        userId: "participant-a",
+        submission,
+        linkedSessions: [authoritativeSession({ messages: null })],
+      }),
+      null
+    )
+  })
+
+  it("compat forge with source:server but LEGACY_CLIENT origin cannot recover", () => {
+    assert.equal(
+      resolveRecoverableFinalizedCheckIn({
+        userId: "participant-a",
+        submission,
+        linkedSessions: [legacySession()],
+      }),
+      null
+    )
+  })
+
+  it("authority and proof matrix requires BOTH trusted origin and participant proof", () => {
+    assert.deepEqual(
+      resolveRecoverableFinalizedCheckIn({
+        userId: "participant-a",
+        submission,
+        linkedSessions: [authoritativeSession()],
+      }),
+      {
+        checkInSubmissionId: "check-in-today",
+        needsSafetyEscalation: true,
+        subscale: "Worry",
+        weekNumber: 2,
+        dayNumber: 3,
+      }
+    )
+
+    assert.equal(
+      resolveRecoverableFinalizedCheckIn({
+        userId: "participant-a",
+        submission,
+        linkedSessions: [authoritativeSession({ messages: [] })],
+      }),
+      null
+    )
+
+    assert.equal(
+      resolveRecoverableFinalizedCheckIn({
+        userId: "participant-a",
+        submission,
+        linkedSessions: [
+          authoritativeSession({
+            messages: [{ role: "user", content: "client", source: "client" }],
+          }),
+        ],
+      }),
+      null
+    )
+
+    assert.equal(
+      resolveRecoverableFinalizedCheckIn({
+        userId: "participant-a",
+        submission,
+        linkedSessions: [legacySession()],
+      }),
+      null
+    )
+
+    assert.equal(
+      resolveRecoverableFinalizedCheckIn({
+        userId: "participant-a",
+        submission,
+        linkedSessions: [
+          authoritativeSession({
+            transcriptOrigin: null,
+            messages: [forgedServerLookingTurn],
+          }),
+        ],
+      }),
+      null
+    )
+
+    assert.equal(
+      resolveRecoverableFinalizedCheckIn({
+        userId: "participant-a",
+        submission,
+        linkedSessions: [
+          authoritativeSession({
+            transcriptOrigin: "UNKNOWN",
+            messages: [forgedServerLookingTurn],
+          }),
+        ],
+      }),
+      null
+    )
+
+    assert.equal(
+      resolveRecoverableFinalizedCheckIn({
+        userId: "participant-a",
+        submission,
+        linkedSessions: [authoritativeSession({ messages: null })],
+      }),
+      null
+    )
+  })
+
+  it("recovers when at least one owned SERVER_AUTHORITATIVE linked session has proof", () => {
+    const recovered = resolveRecoverableFinalizedCheckIn({
+      userId: "participant-a",
+      submission,
+      linkedSessions: [
+        legacySession({
+          createdAt: "2026-09-21T12:00:00.000Z",
+        }),
+        authoritativeSession({
+          createdAt: "2026-09-21T11:00:00.000Z",
+        }),
+      ],
+    })
+    assert.deepEqual(recovered, {
+      checkInSubmissionId: "check-in-today",
+      needsSafetyEscalation: true,
+      subscale: "Worry",
+      weekNumber: 2,
+      dayNumber: 3,
+    })
+  })
+
+  it("multi-link forged newest still recovers older authoritative", () => {
+    assert.deepEqual(
+      resolveRecoverableFinalizedCheckIn({
+        userId: "participant-a",
+        submission,
+        linkedSessions: [
+          legacySession({ createdAt: "2026-09-21T13:00:00.000Z" }),
+          authoritativeSession({ createdAt: "2026-09-21T11:00:00.000Z" }),
+        ],
+      }),
+      {
+        checkInSubmissionId: "check-in-today",
+        needsSafetyEscalation: true,
+        subscale: "Worry",
+        weekNumber: 2,
+        dayNumber: 3,
+      }
+    )
+
+    assert.deepEqual(
+      resolveRecoverableFinalizedCheckIn({
+        userId: "participant-a",
+        submission,
+        linkedSessions: [
+          authoritativeSession({ createdAt: "2026-09-21T13:00:00.000Z" }),
+          legacySession({ createdAt: "2026-09-21T11:00:00.000Z" }),
+        ],
+      }),
+      {
+        checkInSubmissionId: "check-in-today",
+        needsSafetyEscalation: true,
+        subscale: "Worry",
+        weekNumber: 2,
+        dayNumber: 3,
+      }
+    )
+
+    assert.equal(
+      resolveRecoverableFinalizedCheckIn({
+        userId: "participant-a",
+        submission,
+        linkedSessions: [
+          legacySession({ createdAt: "2026-09-21T13:00:00.000Z" }),
+          legacySession({
+            createdAt: "2026-09-21T12:00:00.000Z",
+            messages: [forgedServerLookingTurn],
+          }),
+        ],
+      }),
+      null
+    )
+  })
+
+  it("returns null when multiple linked sessions exist but none are authoritative", () => {
+    assert.equal(
+      resolveRecoverableFinalizedCheckIn({
+        userId: "participant-a",
+        submission,
+        linkedSessions: [
+          legacySession({
+            messages: [{ role: "user", content: "client" }],
+          }),
+          authoritativeSession({
+            transcriptOrigin: STAMPLEY_TRANSCRIPT_ORIGIN.LEGACY_CLIENT,
+            messages: [buildServerOwnedAssistantTurn({ validation: "only" })],
+          }),
+        ],
+      }),
+      null
+    )
+  })
+
+  it("does not fabricate weekNumber or dayNumber when persisted null", () => {
+    const recovered = resolveRecoverableFinalizedCheckIn({
+      userId: "participant-a",
+      submission: {
+        ...submission,
+        weekNumber: null,
+        dayNumber: null,
+      },
+      linkedSessions: [authoritativeSession()],
+    })
+    assert.deepEqual(recovered, {
+      checkInSubmissionId: "check-in-today",
+      needsSafetyEscalation: true,
+      subscale: "Worry",
+      weekNumber: null,
+      dayNumber: null,
+    })
+  })
+
+  it("sanitizeCompatibilityMessages strips source:server and rebuilds safe client turns", () => {
+    const sanitized = sanitizeCompatibilityMessages([
+      {
+        id: "m1",
+        role: "user",
+        content: "hello",
+        timestamp: "2026-09-22T00:00:00.000Z",
+        source: "server",
+        transcriptOrigin: "SERVER_AUTHORITATIVE",
+        extra: "drop-me",
+      },
+      {
+        role: "assistant",
+        data: { validation: "ok" },
+        source: SERVER_OWNED_TURN_SOURCE,
+      },
+      { role: "system", content: "nope" },
+      "string-row",
+      null,
+    ])
+
+    assert.deepEqual(sanitized, [
+      {
+        id: "m1",
+        role: "user",
+        content: "hello",
+        timestamp: "2026-09-22T00:00:00.000Z",
+        source: CLIENT_TURN_SOURCE,
+      },
+      {
+        role: "assistant",
+        data: { validation: "ok" },
+        source: CLIENT_TURN_SOURCE,
+      },
+    ])
+    assert.equal(hasServerOwnedParticipantProof(sanitized), false)
+  })
+
+  it("compatibility session route forces LEGACY_CLIENT and sanitized messages", () => {
+    const source = read("app/api/stampley/session/route.ts")
+    assert.match(source, /sanitizeCompatibilityMessages\(messages\)/)
+    assert.match(
+      source,
+      /transcriptOrigin:\s*STAMPLEY_TRANSCRIPT_ORIGIN\.LEGACY_CLIENT/
+    )
+    assert.doesNotMatch(source, /body\.transcriptOrigin/)
+    assert.doesNotMatch(source, /messages:\s*Array\.isArray\(messages\)\s*\?\s*messages/)
+    assert.match(
+      read("lib/stampley-open-session.ts"),
+      /transcriptOrigin:\s*STAMPLEY_TRANSCRIPT_ORIGIN\.SERVER_AUTHORITATIVE/
+    )
+  })
+
+  it("submit recovers soft duplicate and missing-proof losers without writes", () => {
+    const source = read("app/api/check-in/submit/route.ts")
+
+    assert.match(source, /findRecoverableFinalizedCheckInForCurrentDay/)
+    assert.match(source, /alreadyCompleted: true/)
+    assert.match(source, /alreadyCompleted: false/)
+    assert.match(source, /recoveredCompletionResponse/)
+
+    const softBlock = source.slice(
+      source.indexOf("if (existingToday.length > 0)"),
+      source.indexOf("const progress = await prisma.userStudyProgress")
+    )
+    assert.match(softBlock, /findRecoverableFinalizedCheckInForCurrentDay/)
+    assert.match(softBlock, /recoveredCompletionResponse/)
+    assert.match(softBlock, /DUPLICATE_CHECK_IN_MESSAGE/)
+    assert.doesNotMatch(softBlock, /\$transaction/)
+    assert.doesNotMatch(softBlock, /checkInSubmission\.create/)
+    assert.doesNotMatch(softBlock, /linkStampleySessionToCheckIn/)
+    assert.doesNotMatch(softBlock, /userStudyProgress/)
+
+    const missingBlock = source.slice(
+      source.indexOf("if (error instanceof MissingStampleyProofError)")
+    )
+    const missingOnly = missingBlock.slice(
+      0,
+      missingBlock.indexOf("if (error instanceof DuplicateCheckInError")
+    )
+    assert.match(missingOnly, /findRecoverableFinalizedCheckInForCurrentDay/)
+    assert.match(missingOnly, /recoveredCompletionResponse/)
+    assert.match(missingOnly, /MISSING_STAMPLEY_PROOF_MESSAGE/)
+    assert.match(missingOnly, /status: 400/)
+
+    const uniqueBlock = source.slice(
+      source.indexOf("if (error instanceof DuplicateCheckInError || isUniqueViolation")
+    )
+    const uniqueOnly = uniqueBlock.slice(
+      0,
+      uniqueBlock.indexOf("if (error instanceof StampleySessionLinkError)")
+    )
+    assert.match(uniqueOnly, /findRecoverableFinalizedCheckInForCurrentDay/)
+    assert.match(uniqueOnly, /recoveredCompletionResponse/)
+    assert.match(uniqueOnly, /status: 409/)
+  })
+
+  it("recovery SQL uses CURRENT_DATE, ownership, and SERVER_AUTHORITATIVE origin", () => {
+    const source = read("lib/stampley-open-session.ts")
+    const finder = source.slice(
+      source.indexOf("findRecoverableFinalizedCheckInForCurrentDay")
+    )
+    const body = finder.slice(0, finder.indexOf("export function sanitizeCompatibilityMessages"))
+    assert.match(body, /check_in_date = CURRENT_DATE/)
+    assert.match(body, /user_id = \$\{userId\}/)
+    assert.match(body, /check_in_submission_id = \$\{submissionRow\.id\}/)
+    assert.match(body, /transcript_origin::text = \$\{STAMPLEY_TRANSCRIPT_ORIGIN\.SERVER_AUTHORITATIVE\}/)
+    assert.doesNotMatch(body, /\.create\(/)
+    assert.doesNotMatch(body, /\.update/)
+    assert.doesNotMatch(body, /\.upsert/)
+  })
+
+  it("recovery response uses persisted fields and never echoes retry body metrics", () => {
+    const source = read("app/api/check-in/submit/route.ts")
+    const helper = source.slice(
+      source.indexOf("function recoveredCompletionResponse")
+    )
+    const helperBody = helper.slice(0, helper.indexOf("export async function POST"))
+    assert.match(helperBody, /alreadyCompleted: true/)
+    assert.match(helperBody, /recovered\.checkInSubmissionId/)
+    assert.match(helperBody, /recovered\.needsSafetyEscalation/)
+    assert.match(helperBody, /recovered\.subscale/)
+    assert.match(helperBody, /recovered\.dayNumber/)
+    assert.match(helperBody, /recovered\.weekNumber/)
+    assert.doesNotMatch(helperBody, /distress/)
+    assert.doesNotMatch(helperBody, /mood/)
+    assert.doesNotMatch(helperBody, /energy/)
+    assert.doesNotMatch(helperBody, /reflection/)
+    assert.doesNotMatch(helperBody, /copingAction/)
+    assert.doesNotMatch(helperBody, /messages/)
   })
 })
