@@ -14,6 +14,8 @@ import {
   isExplicitClosingIntent,
   isPersonalizedMedicalDecisionRequest,
   isPracticalSupportRequest,
+  isReadinessToActionSignal,
+  hasMedicationTreatmentActionLanguage,
   selectStampleyResponseMode,
 } from "./stampley-response-mode"
 
@@ -430,17 +432,316 @@ describe("B-3 anti-repetition prompt", () => {
     assert.match(system, /Build on what was already said/i)
     assert.match(system, /Do not force closure from turn count/i)
     assert.match(system, /not every turn needs a question/i)
+    assert.match(system, /prefer concise synthesis or specific validation/i)
+    assert.match(system, /do not ask another question merely to keep the conversation going/i)
 
     const reflect = buildStampleyTurnInstruction(ctx, "REFLECT")
     assert.match(reflect, /LATE PACING/i)
     assert.match(reflect, /do not force wrap-up from turn count alone/i)
     assert.match(reflect, /avoid repeating recent validation/i)
+    assert.match(reflect, /OPTIONAL/i)
+    assert.match(reflect, /do not manufacture a question/i)
+    assert.match(reflect, /actionable options belong in PRACTICAL_SUPPORT/i)
     assert.doesNotMatch(reflect, /You do not need to solve everything tonight/)
     assert.doesNotMatch(reflect, /CLOSURE goal: emotional release/)
+
+    const exploration = buildStampleyTurnInstruction(
+      baseCtx("exploration"),
+      "REFLECT"
+    )
+    assert.match(exploration, /OPTIONAL/i)
+    assert.match(exploration, /materially advances understanding/i)
+    assert.match(exploration, /do not manufacture a question/i)
+    assert.match(exploration, /actionable options belong in PRACTICAL_SUPPORT/i)
+    assert.doesNotMatch(
+      exploration,
+      /reflection_question: ONE curious deepening question/
+    )
 
     const practical = buildStampleyTurnInstruction(ctx, "PRACTICAL_SUPPORT")
     assert.match(practical, /prefer a different safe category/i)
     assert.match(practical, /do not mandatorily say "one small step"/i)
+    assert.match(practical, /observation or hypothesis/i)
+    assert.match(practical, /do not confirm medical causation/i)
+  })
+})
+
+describe("B-4 readiness-to-action detector", () => {
+  it("observation alone stays REFLECT", () => {
+    const text = "I notice this tends to happen in the morning."
+    assert.equal(isReadinessToActionSignal(text), false)
+    assert.equal(
+      selectStampleyResponseMode({ participantText: text, phase: "exploration" }),
+      "REFLECT"
+    )
+  })
+
+  it("pattern / possible contributor alone stays REFLECT", () => {
+    const text = "I think this happens after certain drinks."
+    assert.equal(isReadinessToActionSignal(text), false)
+    assert.equal(
+      selectStampleyResponseMode({ participantText: text, phase: "coping" }),
+      "REFLECT"
+    )
+  })
+
+  it("emotional / difficult-day statements stay REFLECT", () => {
+    for (const text of [
+      "Today was difficult.",
+      "I'm worried about tomorrow.",
+      "I don't know why.",
+    ]) {
+      assert.equal(isReadinessToActionSignal(text), false)
+      assert.equal(
+        selectStampleyResponseMode({
+          participantText: text,
+          phase: "exploration",
+        }),
+        "REFLECT"
+      )
+    }
+  })
+
+  const intentionPositives = [
+    "I want to try cutting back on late-night snacks.",
+    "I'd like to try a short walk after dinner.",
+    "I plan to drink water instead of soda with lunch.",
+    "I think I should try setting a bedtime reminder.",
+  ]
+
+  for (const text of intentionPositives) {
+    it(`intention readiness -> PRACTICAL: ${text}`, () => {
+      assert.equal(isReadinessToActionSignal(text), true)
+      assert.equal(isPracticalSupportRequest(text), false)
+      assert.equal(
+        selectStampleyResponseMode({ participantText: text, phase: "closure" }),
+        "PRACTICAL_SUPPORT"
+      )
+    })
+  }
+
+  const willingnessPositives = [
+    "I can try writing down what I eat for a few days.",
+    "I could try taking a short break when stress builds.",
+    "I'm willing to try a calmer evening routine.",
+    "I'll try packing snacks the night before.",
+  ]
+
+  for (const text of willingnessPositives) {
+    it(`willingness readiness -> PRACTICAL: ${text}`, () => {
+      assert.equal(isReadinessToActionSignal(text), true)
+      assert.equal(
+        selectStampleyResponseMode({
+          participantText: text,
+          phase: "exploration",
+        }),
+        "PRACTICAL_SUPPORT"
+      )
+    })
+  }
+
+  const selfProposed = [
+    "I'll start keeping a simple meal log.",
+    "I'll stop checking my phone during meals.",
+    "I'll reduce how often I have sugary drinks.",
+    "I'll switch to water with dinner.",
+    "I'll keep track of my evening stress for a week.",
+    "I'll set a reminder to stretch after work.",
+  ]
+
+  for (const text of selfProposed) {
+    it(`self-proposed action -> PRACTICAL: ${text}`, () => {
+      assert.equal(isReadinessToActionSignal(text), true)
+      assert.equal(
+        selectStampleyResponseMode({ participantText: text, phase: "opening" }),
+        "PRACTICAL_SUPPORT"
+      )
+    })
+  }
+
+  it("acceptance with action language -> PRACTICAL", () => {
+    for (const text of [
+      "Yes, I can try that.",
+      "That sounds doable.",
+      "I think that could work.",
+    ]) {
+      assert.equal(isReadinessToActionSignal(text), true)
+      assert.equal(
+        selectStampleyResponseMode({ participantText: text, phase: "coping" }),
+        "PRACTICAL_SUPPORT"
+      )
+    }
+  })
+
+  it("bare affirmatives are not readiness", () => {
+    for (const text of ["yes", "yeah", "okay", "sure", "got it", "ok", "yep"]) {
+      assert.equal(isReadinessToActionSignal(text), false)
+      assert.notEqual(
+        selectStampleyResponseMode({
+          participantText: text,
+          phase: "exploration",
+        }),
+        "PRACTICAL_SUPPORT"
+      )
+    }
+  })
+
+  it("negation / refusal is not readiness", () => {
+    for (const text of [
+      "I don't want to change anything.",
+      "I'm not ready to change.",
+      "I can't try that.",
+      "I won't try that.",
+      "I don't think I can do that.",
+      "I was going to try that but didn't.",
+      "I planned to do it but didn't.",
+      "I wasn't able to do that.",
+    ]) {
+      assert.equal(isReadinessToActionSignal(text), false)
+      assert.notEqual(
+        selectStampleyResponseMode({
+          participantText: text,
+          phase: "closure",
+        }),
+        "PRACTICAL_SUPPORT"
+      )
+    }
+  })
+
+  it("uncertainty is not readiness", () => {
+    for (const text of ["Maybe.", "I don't know.", "Not sure."]) {
+      assert.equal(isReadinessToActionSignal(text), false)
+      assert.notEqual(
+        selectStampleyResponseMode({
+          participantText: text,
+          phase: "exploration",
+        }),
+        "PRACTICAL_SUPPORT"
+      )
+    }
+  })
+
+  it("third-party intention is not readiness", () => {
+    const text = "My doctor wants me to change it."
+    assert.equal(isReadinessToActionSignal(text), false)
+    assert.notEqual(
+      selectStampleyResponseMode({ participantText: text, phase: "closure" }),
+      "PRACTICAL_SUPPORT"
+    )
+  })
+
+  it("failed / past plans are not readiness", () => {
+    for (const text of [
+      "I was going to change it but I couldn't.",
+      "I tried that already and it didn't work.",
+    ]) {
+      assert.equal(isReadinessToActionSignal(text), false)
+      assert.notEqual(
+        selectStampleyResponseMode({
+          participantText: text,
+          phase: "coping",
+        }),
+        "PRACTICAL_SUPPORT"
+      )
+    }
+  })
+
+  it("readiness works in all phases", () => {
+    const text = "I'll try taking a short walk after meals."
+    for (const phase of [
+      "opening",
+      "exploration",
+      "coping",
+      "closure",
+    ] as const) {
+      assert.equal(
+        selectStampleyResponseMode({ participantText: text, phase }),
+        "PRACTICAL_SUPPORT"
+      )
+    }
+  })
+
+  it("readiness blocks soft CLOSE", () => {
+    assert.equal(
+      selectStampleyResponseMode({
+        participantText: "I'll try a calmer bedtime routine.",
+        phase: "closure",
+      }),
+      "PRACTICAL_SUPPORT"
+    )
+  })
+
+  it("explicit practical request still wins without readiness patterns", () => {
+    assert.equal(isReadinessToActionSignal("Any tips?"), false)
+    assert.equal(isPracticalSupportRequest("Any tips?"), true)
+    assert.equal(
+      selectStampleyResponseMode({
+        participantText: "Any tips?",
+        phase: "closure",
+      }),
+      "PRACTICAL_SUPPORT"
+    )
+  })
+})
+
+describe("B-4 medication/treatment exclusion from readiness", () => {
+  const collisions = [
+    "I'll increase my insulin.",
+    "I want to reduce my insulin.",
+    "I plan to take more medication.",
+    "I'll skip my medication.",
+    "I think I should double my next dose.",
+    "I can take another pill.",
+    "I'll change my dosage.",
+    "I'll try taking more insulin.",
+    "I'm willing to lower my dose.",
+    "I'll stop my medication.",
+  ]
+
+  for (const text of collisions) {
+    it(`treatment-action never PRACTICAL via readiness: ${text}`, () => {
+      assert.equal(hasMedicationTreatmentActionLanguage(text), true)
+      assert.equal(isReadinessToActionSignal(text), false)
+      assert.notEqual(
+        selectStampleyResponseMode({
+          participantText: text,
+          phase: "closure",
+        }),
+        "PRACTICAL_SUPPORT"
+      )
+      const mode = selectStampleyResponseMode({
+        participantText: text,
+        phase: "closure",
+      })
+      if (isPersonalizedMedicalDecisionRequest(text)) {
+        assert.equal(mode, "MEDICAL_BOUNDARY")
+      } else {
+        // Fail closed: REFLECT (or CLOSE only if soft-close — should not)
+        assert.equal(mode, "REFLECT")
+      }
+    })
+  }
+})
+
+describe("B-4 multi-turn progression regression", () => {
+  it("observation -> pattern -> readiness progresses to PRACTICAL", () => {
+    const turn1 = selectStampleyResponseMode({
+      participantText: "I've been feeling worn down by my routine lately.",
+      phase: "exploration",
+    })
+    assert.equal(turn1, "REFLECT")
+
+    const turn2 = selectStampleyResponseMode({
+      participantText: "I notice it builds when evenings get busy.",
+      phase: "coping",
+    })
+    assert.equal(turn2, "REFLECT")
+
+    const turn3 = selectStampleyResponseMode({
+      participantText: "I want to try a shorter evening wind-down.",
+      phase: "closure",
+    })
+    assert.equal(turn3, "PRACTICAL_SUPPORT")
   })
 })
 

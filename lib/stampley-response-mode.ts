@@ -118,6 +118,136 @@ export function isPersonalizedMedicalDecisionRequest(text: unknown): boolean {
 }
 
 /**
+ * Defensive exclusion: medication/treatment-action language must never
+ * route to PRACTICAL_SUPPORT via readiness (even if the medical detector
+ * misses a variant). Fail closed for readiness only — does not expand
+ * MEDICAL_BOUNDARY selection.
+ */
+export function hasMedicationTreatmentActionLanguage(text: unknown): boolean {
+  const n = normalizeParticipantTextForMode(text)
+  if (!n) return false
+
+  const hasMedNoun =
+    /\b(insulin|metformin|medication|medicine|meds|pills?|dose|dosage|prescription)\b/.test(
+      n
+    )
+  if (!hasMedNoun) return false
+
+  if (
+    /\b(increase|increasing|decrease|decreasing|reduc(e|ing)|lower|raise|chang(e|ing)|adjust(ing)?|stop|skip|double|doubling)\b/.test(
+      n
+    )
+  ) {
+    return true
+  }
+  if (/\btake (more|less)\b/.test(n)) return true
+  if (/\btaking (more|less)\b/.test(n)) return true
+  if (/\banother (dose|pill)\b/.test(n)) return true
+  if (/\b(higher|lower) dose\b/.test(n)) return true
+  if (/\b(start|stop) (taking )?(my )?(insulin|metformin|medication|medicine|meds|pills?)\b/.test(n)) {
+    return true
+  }
+
+  return false
+}
+
+/**
+ * Participant-owned non-medical readiness / change-goal / self-proposed action.
+ * Feeds PRACTICAL_SUPPORT. Does NOT merge into isPracticalSupportRequest.
+ * Fail closed on negation, uncertainty, bare affirmatives, third-party intent,
+ * failed/past plans, and medication/treatment-action language.
+ */
+export function isReadinessToActionSignal(text: unknown): boolean {
+  const n = normalizeParticipantTextForMode(text)
+  if (!n) return false
+
+  // Safety: never treat treatment-action language as behavioral readiness.
+  if (hasMedicationTreatmentActionLanguage(n)) return false
+
+  // Bare affirmatives alone are never readiness.
+  if (
+    /^(yes|yeah|yep|yup|ok|okay|sure|got it|i understand|alright|all right)\.?$/.test(
+      n
+    )
+  ) {
+    return false
+  }
+
+  // Uncertainty — not readiness.
+  if (
+    /^(maybe|not sure|i (don't|do not) know|idk)\.?$/.test(n) ||
+    /^i (don't|do not) know\b/.test(n)
+  ) {
+    return false
+  }
+
+  // Negation / refusal — fail closed before positive patterns.
+  if (
+    /\b(don't|do not|doesn't|does not) want to\b/.test(n) ||
+    /\b(i'?m|i am) not ready\b/.test(n) ||
+    /\bnot ready to\b/.test(n) ||
+    /\b(can't|cannot|won't|will not) try\b/.test(n) ||
+    /\b(don't|do not) think i can\b/.test(n) ||
+    /\b(won't|will not) (try|do|change)\b/.test(n)
+  ) {
+    return false
+  }
+
+  // Past / failed plans — not current readiness.
+  if (
+    /\b(was going to|planned to|was planning to)\b.{0,48}\b(but|and)\b.{0,24}\b(didn't|did not|couldn't|could not|wasn't able|was not able)\b/.test(
+      n
+    ) ||
+    /\bwasn't able to\b/.test(n) ||
+    /\bwas not able to\b/.test(n) ||
+    /\bi tried that (already|before)\b/.test(n) ||
+    /\btried that (already|before)\b.{0,40}\b(didn't|did not) work\b/.test(n) ||
+    /\btried .{0,40}\band it (didn't|did not) work\b/.test(n)
+  ) {
+    return false
+  }
+
+  // Third-party intention — not participant-owned readiness.
+  if (
+    /\b(my )?(doctor|clinician|care team|nurse|pharmacist) (wants|wanted|told|said|advised|asked) (me )?(to )?\b/.test(
+      n
+    )
+  ) {
+    return false
+  }
+
+  // Positive readiness / change-goal / self-proposed action (conservative).
+  if (
+    // Intention
+    /\bi want to try\b/.test(n) ||
+    /\bi('d| would) like to try\b/.test(n) ||
+    /\bi plan to\b/.test(n) ||
+    /\bi think i should try\b/.test(n) ||
+    // Willingness
+    /\bi can try\b/.test(n) ||
+    /\bi could try\b/.test(n) ||
+    /\bi('m| am) willing to\b/.test(n) ||
+    /\bi('ll| will) try\b/.test(n) ||
+    // Self-proposed behavioral action
+    /\bi('ll| will) start\b/.test(n) ||
+    /\bi('ll| will) stop\b/.test(n) ||
+    /\bi('ll| will) reduce\b/.test(n) ||
+    /\bi('ll| will) switch\b/.test(n) ||
+    /\bi('ll| will) keep track\b/.test(n) ||
+    /\bi('ll| will) set a reminder\b/.test(n) ||
+    // Acceptance with explicit action language (not bare yes)
+    /\byes[, ]+i can try (that|it|this)\b/.test(n) ||
+    /\bthat sounds doable\b/.test(n) ||
+    /\bi think that could work\b/.test(n) ||
+    /\bthat could work\b/.test(n)
+  ) {
+    return true
+  }
+
+  return false
+}
+
+/**
  * High-confidence practical guidance / actionable-support requests.
  * Emotional "I don't know what to do anymore" does NOT match.
  */
@@ -284,7 +414,7 @@ export type SoftCloseEligibilityInput = {
  * Soft/terminal CLOSE eligibility (prompt behavior only — not DB state).
  *
  * CLOSE when:
- * - no medical/practical intent
+ * - no medical/practical/readiness intent
  * - no unresolved question
  * - no continuing/new concern
  * - AND (explicit closing intent OR quiet affirmative in late/closure phase)
@@ -295,6 +425,7 @@ export function isSoftCloseEligible(input: SoftCloseEligibilityInput): boolean {
   const text = input.participantText
   if (isPersonalizedMedicalDecisionRequest(text)) return false
   if (isPracticalSupportRequest(text)) return false
+  if (isReadinessToActionSignal(text)) return false
   if (hasUnresolvedQuestion(text)) return false
   if (hasContinuingOrNewConcern(text)) return false
 
@@ -331,7 +462,8 @@ function defaultModeForPhase(phase: ConversationPhase): StampleyResponseMode {
 /**
  * Deterministic response-mode selection.
  * Precedence:
- * MEDICAL_BOUNDARY > PRACTICAL_SUPPORT > soft/explicit CLOSE > phase default.
+ * MEDICAL_BOUNDARY > explicit PRACTICAL_SUPPORT > readiness-to-action
+ * (also PRACTICAL_SUPPORT) > soft/explicit CLOSE > phase default.
  * Phase default for late/closure pacing is REFLECT (not forced CLOSE).
  * highStress is intentionally NOT a mode — keep it as an independent modifier.
  *
@@ -346,6 +478,9 @@ export function selectStampleyResponseMode(
     return "MEDICAL_BOUNDARY"
   }
   if (isPracticalSupportRequest(text)) {
+    return "PRACTICAL_SUPPORT"
+  }
+  if (isReadinessToActionSignal(text)) {
     return "PRACTICAL_SUPPORT"
   }
   if (isSoftCloseEligible({ participantText: text, phase: input.phase })) {
