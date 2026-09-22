@@ -250,17 +250,26 @@ export function isReadinessToActionSignal(text: unknown): boolean {
 /**
  * High-confidence practical guidance / actionable-support requests.
  * Emotional "I don't know what to do anymore" does NOT match.
+ * Ambiguous anaphoric help ("help me with that") stays non-practical —
+ * this detector only receives the newest participant text (no history).
  */
 export function isPracticalSupportRequest(text: unknown): boolean {
   const n = normalizeParticipantTextForMode(text)
   if (!n) return false
+
+  // Medical / treatment-seeking must never become practical coaching.
+  // (MEDICAL_BOUNDARY still wins in selectStampleyResponseMode when detected.)
+  if (isPersonalizedMedicalDecisionRequest(n)) return false
+  if (hasMedicationTreatmentActionLanguage(n)) return false
+  if (isTreatmentSeekingPracticalCollision(n)) return false
 
   // Emotional overwhelm — not an actionable ask.
   if (
     /\bi (don't|do not) know what to do( anymore| any more)?\b/.test(n) &&
     !/\bwhat (should|can|else) i do\b/.test(n) &&
     !/\bany suggestions\b/.test(n) &&
-    !/\bany tips\b/.test(n)
+    !/\bany tips\b/.test(n) &&
+    !/\bany (options|ideas|alternatives)\b/.test(n)
   ) {
     return false
   }
@@ -286,6 +295,40 @@ export function isPracticalSupportRequest(text: unknown): boolean {
     return false
   }
 
+  // Negated / refused help or idea-seeking.
+  if (
+    /\b(don't|do not|doesn't|does not) (need|want) (any )?(help|ideas?|options?|suggestions?|tips?|alternatives?)\b/.test(
+      n
+    ) ||
+    /\bi already have (some )?(options?|ideas?|alternatives?)\b/.test(n)
+  ) {
+    return false
+  }
+
+  // Third-party / past descriptive statements — not a request to Stampley.
+  if (
+    /\b(my friend|my mother|my mom|someone else) (needs|needed) help\b/.test(
+      n
+    ) ||
+    /\bi helped .{0,48}\b(make|prepare) (a )?list\b/.test(n) ||
+    /\b(my )?(doctor|clinician) (gave|suggested|recommended|told)\b.{0,48}\b(list|alternatives?|options?|ideas?)\b/.test(
+      n
+    )
+  ) {
+    return false
+  }
+
+  // Ambiguous anaphoric help without a concrete task — leave REFLECT.
+  // (Newest-text-only routing; no conversation history resolution.)
+  if (
+    /^(can|could) you help me with (that|this|it)\??$/.test(n) ||
+    /^help me with (that|this|it)\??$/.test(n) ||
+    /^help me$/.test(n) ||
+    /^help\??$/.test(n)
+  ) {
+    return false
+  }
+
   if (
     /\bwhat should i\b.{0,24}\b(do|try|ask)\b/.test(n) ||
     /\bwhat can i\b.{0,24}\b(do|try|ask)\b/.test(n) ||
@@ -305,7 +348,97 @@ export function isPracticalSupportRequest(text: unknown): boolean {
     /\bany suggestions\b/.test(n) ||
     /\bany advice\b/.test(n) ||
     /\bany tips\b/.test(n) ||
-    /\bdo you have (any )?ideas\b/.test(n)
+    /\bdo you have (any )?ideas\b/.test(n) ||
+    // B-5: list / question / appointment preparation
+    /\b(can|could) you help me (make|prepare|create|organize) (a |some )?(list|questions?|topics?)\b/.test(
+      n
+    ) ||
+    /\bhelp me (make|prepare|create|organize) (a |some )?(list|questions?|topics?)\b/.test(
+      n
+    ) ||
+    /\b(can|could) you help me prepare (some )?questions\b/.test(n) ||
+    /\bhelp me prepare (some )?questions\b/.test(n) ||
+    /\b(can|could) you help me (make|prepare) a list of questions\b/.test(n) ||
+    /\bhelp me (make|prepare) a list of questions\b/.test(n) ||
+    /\bhelp me organize (what|things) (i want to )?(discuss|say|ask)\b/.test(
+      n
+    ) ||
+    /\b(can|could) you help me organize .{0,40}\b(appointment|doctor|visit)\b/.test(
+      n
+    ) ||
+    // B-5: options
+    /\bwhat are some options\b/.test(n) ||
+    /\bwhat (are|is) (some of )?my options\b/.test(n) ||
+    /\bwhat options do i have\b/.test(n) ||
+    /\b(can|could) you (give|offer) (me )?(some |a few )?options\b/.test(n) ||
+    /\bgive me (some |a few )?options\b/.test(n) ||
+    // B-5: ideas (beyond existing "do you have any ideas")
+    /\b(can|could) you (give|offer) (me )?(some |a few )?ideas\b/.test(n) ||
+    /\bgive me (some |a few )?ideas\b/.test(n) ||
+    /\b(can|could) you help me think of (some )?ideas\b/.test(n) ||
+    /\bhelp me think of (some )?ideas\b/.test(n) ||
+    // B-5: alternatives (non-treatment; treatment collisions blocked above)
+    /\bwhat are some alternatives\b/.test(n) ||
+    /\b(can|could) you suggest (some )?alternatives\b/.test(n) ||
+    /\b(can|could) you help me (think of|find) (some )?alternatives\b/.test(
+      n
+    ) ||
+    /\bhelp me (think of|find) (some )?alternatives\b/.test(n)
+  ) {
+    return true
+  }
+
+  return false
+}
+
+/**
+ * Defensive block: help/options/ideas/alternatives seeking about
+ * medication/treatment topics must not route PRACTICAL_SUPPORT even when
+ * the medical detector misses a variant. Clinician-prep (questions/list for
+ * doctor/appointment) is allowed through for practical matching.
+ */
+function isTreatmentSeekingPracticalCollision(text: unknown): boolean {
+  const n = normalizeParticipantTextForMode(text)
+  if (!n) return false
+
+  const hasMedTopic =
+    /\b(insulin|metformin|medication|medicine|meds|pills?|dose|dosage|prescription|treatment)\b/.test(
+      n
+    )
+  if (!hasMedTopic) return false
+
+  const clinicianPrep =
+    /\b(questions?|topics?|list)\b.{0,48}\b(doctor|clinician|care team|appointment|visit|ask)\b/.test(
+      n
+    ) ||
+    /\b(prepare|make|organize|write)\b.{0,48}\b(questions?|list|topics?)\b.{0,48}\b(doctor|clinician|care team|appointment|visit)\b/.test(
+      n
+    ) ||
+    /\bhelp me prepare (some )?questions\b/.test(n) ||
+    /\bhelp me (make|prepare) a list of questions\b/.test(n)
+
+  if (clinicianPrep) return false
+
+  if (
+    /\balternative (medication|medicine|meds|insulin|treatment|dose|dosage)\b/.test(
+      n
+    ) ||
+    /\b(different|another) (medication|medicine|treatment)\b/.test(n) ||
+    /\b(options?|ideas?|alternatives?) (for|about|on|to)\b.{0,40}\b(insulin|dose|dosage|medication|medicine|meds|treatment|pills?)\b/.test(
+      n
+    ) ||
+    /\bhelp me (increase|decrease|lower|raise|change|adjust|decide|choose|skip|stop)\b.{0,40}\b(insulin|dose|dosage|medication|medicine|meds|treatment|pills?)\b/.test(
+      n
+    ) ||
+    /\bhelp me .{0,40}\b(how much|units|dosage)\b.{0,40}\b(insulin|medication|medicine|dose)\b/.test(
+      n
+    ) ||
+    /\b(give|suggest|offer) (me )?(some |a few )?(options?|ideas?|alternatives?).{0,40}\b(insulin|dose|dosage|medication|medicine|meds|treatment)\b/.test(
+      n
+    ) ||
+    /\b(options?|ideas?|alternatives?).{0,40}\b(changing|change|adjust|increase|decrease|lower|raise)\b.{0,40}\b(insulin|dose|dosage|medication|medicine|meds|treatment)\b/.test(
+      n
+    )
   ) {
     return true
   }

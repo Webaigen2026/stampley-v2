@@ -99,6 +99,206 @@ describe("practical-support detector", () => {
   }
 })
 
+describe("B-5 practical request recall", () => {
+  const listPrep = [
+    "Can you help me make a list?",
+    "Help me make a list.",
+    "Can you help me prepare a list?",
+    "Help me prepare some questions.",
+    "Can you help me prepare questions for my doctor?",
+    "Can you help me make a list of questions to ask?",
+    "Help me make a list of questions.",
+  ]
+
+  for (const text of listPrep) {
+    it(`list/question prep -> PRACTICAL: ${text}`, () => {
+      assert.equal(isPracticalSupportRequest(text), true)
+      assert.equal(
+        selectStampleyResponseMode({
+          participantText: text,
+          phase: "closure",
+        }),
+        "PRACTICAL_SUPPORT"
+      )
+    })
+  }
+
+  const options = [
+    "What are some options?",
+    "What options do I have?",
+    "Can you give me some options?",
+    "Give me a few options.",
+    "What are my options?",
+  ]
+
+  for (const text of options) {
+    it(`options request -> PRACTICAL: ${text}`, () => {
+      assert.equal(isPracticalSupportRequest(text), true)
+      assert.equal(
+        selectStampleyResponseMode({
+          participantText: text,
+          phase: "exploration",
+        }),
+        "PRACTICAL_SUPPORT"
+      )
+    })
+  }
+
+  const ideas = [
+    "Can you give me a few ideas?",
+    "Do you have any ideas?",
+    "Give me some ideas.",
+    "Can you help me think of some ideas?",
+    "Help me think of some ideas.",
+  ]
+
+  for (const text of ideas) {
+    it(`ideas request -> PRACTICAL: ${text}`, () => {
+      assert.equal(isPracticalSupportRequest(text), true)
+      assert.equal(
+        selectStampleyResponseMode({
+          participantText: text,
+          phase: "coping",
+        }),
+        "PRACTICAL_SUPPORT"
+      )
+    })
+  }
+
+  const alternatives = [
+    "What are some alternatives?",
+    "Can you suggest some alternatives?",
+    "Help me think of alternatives.",
+    "Can you help me find alternatives?",
+  ]
+
+  for (const text of alternatives) {
+    it(`alternatives request -> PRACTICAL: ${text}`, () => {
+      assert.equal(isPracticalSupportRequest(text), true)
+      assert.equal(
+        selectStampleyResponseMode({
+          participantText: text,
+          phase: "closure",
+        }),
+        "PRACTICAL_SUPPORT"
+      )
+    })
+  }
+
+  it("clinician appointment preparation routes PRACTICAL", () => {
+    for (const text of [
+      "Help me organize what I want to discuss at my appointment.",
+      "Can you help me prepare questions for my doctor?",
+    ]) {
+      assert.equal(isPracticalSupportRequest(text), true)
+      assert.equal(
+        selectStampleyResponseMode({
+          participantText: text,
+          phase: "closure",
+        }),
+        "PRACTICAL_SUPPORT"
+      )
+    }
+  })
+
+  it("descriptive / non-request statements stay non-practical", () => {
+    for (const text of [
+      "I made a list yesterday.",
+      "My doctor gave me a list.",
+      "I already have some options.",
+      "There are several options.",
+      "I wrote down some questions.",
+      "I helped my mother make a list.",
+      "My doctor suggested alternatives.",
+    ]) {
+      assert.equal(isPracticalSupportRequest(text), false)
+      assert.notEqual(
+        selectStampleyResponseMode({
+          participantText: text,
+          phase: "closure",
+        }),
+        "PRACTICAL_SUPPORT"
+      )
+    }
+  })
+
+  it("negated help / idea requests stay non-practical", () => {
+    for (const text of [
+      "I don't need help.",
+      "I don't want any ideas.",
+      "I do not want any options.",
+    ]) {
+      assert.equal(isPracticalSupportRequest(text), false)
+      assert.notEqual(
+        selectStampleyResponseMode({
+          participantText: text,
+          phase: "exploration",
+        }),
+        "PRACTICAL_SUPPORT"
+      )
+    }
+  })
+
+  it("third-party help statements stay non-practical", () => {
+    assert.equal(isPracticalSupportRequest("My friend needs help."), false)
+    assert.notEqual(
+      selectStampleyResponseMode({
+        participantText: "My friend needs help.",
+        phase: "closure",
+      }),
+      "PRACTICAL_SUPPORT"
+    )
+  })
+
+  it("bare ambiguous help stays conservative (no history resolution)", () => {
+    for (const text of [
+      "help me",
+      "Help me.",
+      "Can you help me with that?",
+      "Could you help me with this?",
+      "Help me with that.",
+    ]) {
+      assert.equal(isPracticalSupportRequest(text), false)
+      assert.notEqual(
+        selectStampleyResponseMode({
+          participantText: text,
+          phase: "closure",
+        }),
+        "PRACTICAL_SUPPORT"
+      )
+    }
+  })
+})
+
+describe("B-5 medical collision matrix for practical recall", () => {
+  const collisions = [
+    "Can you help me increase my insulin?",
+    "Can you help me lower my dose?",
+    "Can you help me decide how much insulin to take?",
+    "Give me options for changing my medication.",
+    "What are my options for increasing my dose?",
+    "Can you suggest an alternative medication?",
+    "Help me choose a different medicine.",
+    "Would another dose help?",
+    "Can you help me change my treatment?",
+    "Give me ideas for adjusting my insulin.",
+  ]
+
+  for (const text of collisions) {
+    it(`never PRACTICAL for treatment-seeking: ${text}`, () => {
+      assert.equal(isPracticalSupportRequest(text), false)
+      const mode = selectStampleyResponseMode({
+        participantText: text,
+        phase: "closure",
+      })
+      assert.notEqual(mode, "PRACTICAL_SUPPORT")
+      if (isPersonalizedMedicalDecisionRequest(text)) {
+        assert.equal(mode, "MEDICAL_BOUNDARY")
+      }
+    })
+  }
+})
+
 describe("medical-boundary detector", () => {
   const positives = [
     "Should I increase my insulin?",
