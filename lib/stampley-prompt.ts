@@ -7,6 +7,10 @@ import type {
   SupportDomain,
 } from "@/lib/stampley-openai-context"
 import { assertStampleyOpenAIContext } from "@/lib/stampley-openai-context"
+import {
+  buildResponseModePriorityBlock,
+  type StampleyResponseMode,
+} from "@/lib/stampley-response-mode"
 
 export type {
   ConversationPhase as StampleyPhase,
@@ -352,9 +356,11 @@ MULTI-TURN BEHAVIOR:
 }
 
 export function buildStampleyTurnInstruction(
-  ctx: StampleyOpenAIContext
+  ctx: StampleyOpenAIContext,
+  responseMode: StampleyResponseMode = "EMPATHY"
 ): string {
   const highStressBlock = ctx.highStress ? `\n${highStressTurnAddendum()}` : ""
+  const modeBlock = buildResponseModePriorityBlock(responseMode)
   const jsonSchema = `{
   "greeting": string,
   "validation": string,
@@ -382,9 +388,73 @@ export function buildStampleyTurnInstruction(
 - Keep total response concise (1–3 short paragraphs across populated fields)
 - Valid JSON only. No markdown. No extra text.${weekNote}`
 
+  // Strong intents: do not use the contradictory closure-phase template.
+  if (responseMode === "PRACTICAL_SUPPORT") {
+    return `${modeBlock}
+
+Study week ${week}. Conversation phase "${ctx.phase}" is pacing context only — RESPONSE MODE takes priority.
+
+Produce a single JSON object with exactly these keys:
+${jsonSchema}
+
+Usually populate:
+- validation: 1 brief sentence acknowledging their request/concern
+- Prefer answering the actionable request over wrap-up or a new reflective prompt
+- reflection_question: "" unless one short clarifying question is truly needed
+- micro_skill / education_chip / closure: "" unless a tiny non-clinical tip clearly helps
+
+Leave empty (""):
+- greeting (unless one short bridge)
+
+${sharedRules}${highStressBlock}`
+  }
+
+  if (responseMode === "MEDICAL_BOUNDARY") {
+    return `${modeBlock}
+
+Study week ${week}. Conversation phase "${ctx.phase}" is pacing context only — RESPONSE MODE takes priority.
+
+Produce a single JSON object with exactly these keys:
+${jsonSchema}
+
+Usually populate:
+- validation: brief acknowledgment of the concern
+- Do NOT answer with dosing, medication changes, diagnosis, or treatment decisions
+- You may briefly note that personalized medical decisions belong with their clinician/care team
+- reflection_question / micro_skill / education_chip / closure: usually ""
+
+Leave empty (""):
+- greeting (unless one short bridge)
+
+${sharedRules}${highStressBlock}`
+  }
+
+  if (responseMode === "CLOSE") {
+    return `${modeBlock}
+
+Study week ${week}.
+
+Produce a single JSON object with exactly these keys:
+${jsonSchema}
+
+Usually populate:
+- validation: 1–2 calm sentences
+- closure: brief permission to stop / Complete Check-in available — no pressure
+- reflection_question: usually ""
+
+Leave empty (""):
+- greeting
+- micro_skill (usually)
+- education_chip (optional one calm line max)
+
+${sharedRules}${highStressBlock}`
+  }
+
   switch (ctx.phase) {
     case "opening":
-      return `Begin today's Stampley check-in (OPENING phase). Study week ${week}.
+      return `${modeBlock}
+
+Begin today's Stampley check-in (OPENING phase). Study week ${week}.
 
 Produce a single JSON object with exactly these keys:
 ${jsonSchema}
@@ -408,7 +478,9 @@ Example shape: validation + question only, or brief greeting + validation + ques
 ${sharedRules}${highStressBlock}`
 
     case "exploration":
-      return `Continue check-in (EXPLORATION phase). Study week ${week}. Participant replied once.
+      return `${modeBlock}
+
+Continue check-in (EXPLORATION phase). Study week ${week}. Participant replied once.
 
 Produce a single JSON object with exactly these keys:
 ${jsonSchema}
@@ -430,7 +502,9 @@ Leave empty (""):
 ${sharedRules}${highStressBlock}`
 
     case "coping":
-      return `Continue check-in (COPING phase). Study week ${week}. Participant replied twice.
+      return `${modeBlock}
+
+Continue check-in (COPING phase). Study week ${week}. Participant replied twice.
 
 Produce a single JSON object with exactly these keys:
 ${jsonSchema}
@@ -456,7 +530,9 @@ It is valid to respond with only validation + micro_skill and no question.
 ${sharedRules}${highStressBlock}`
 
     case "closure":
-      return `Continue check-in (CLOSURE phase). Study week ${week}. Participant replied three or more times.
+      return `${modeBlock}
+
+Continue check-in (CLOSURE phase). Study week ${week}. Participant replied three or more times.
 
 Produce a single JSON object with exactly these keys:
 ${jsonSchema}
@@ -577,7 +653,8 @@ export function getStampleyFallbackResponse(
 }
 
 export function buildOpenAIMessages(
-  ctx: StampleyOpenAIContext
+  ctx: StampleyOpenAIContext,
+  responseMode: StampleyResponseMode = "EMPATHY"
 ): OpenAIChatMessage[] {
   const safe = assertStampleyOpenAIContext(ctx)
   return [
@@ -591,7 +668,7 @@ export function buildOpenAIMessages(
     })),
     {
       role: "user",
-      content: buildStampleyTurnInstruction(safe),
+      content: buildStampleyTurnInstruction(safe, responseMode),
     },
   ]
 }

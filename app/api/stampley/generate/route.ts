@@ -35,6 +35,7 @@ import {
   resolveIncomingParticipantTurn,
   INVALID_PARTICIPANT_MESSAGE_ID_MESSAGE,
 } from "@/lib/stampley-open-session"
+import { selectStampleyResponseMode } from "@/lib/stampley-response-mode"
 import type { Domain } from "@/store/checkin-store"
 
 export async function POST(req: NextRequest) {
@@ -82,6 +83,7 @@ export async function POST(req: NextRequest) {
     let openSessionId: string | null = null
     let participantMessageId: string | null = null
     let authoritativeHistory: StampleyHistoryMessage[] = []
+    let authoritativeParticipantText: string | null = null
 
     if (incomingTurn.kind === "accepted") {
       // 3D.2A-1/2/3: persist under advisory + completion guard; history from DB.
@@ -116,6 +118,8 @@ export async function POST(req: NextRequest) {
       authoritativeHistory = buildAuthoritativeOpenAIConversationHistory(
         persisted.messages
       )
+      // Mode selection uses persisted text (same-id/different-text safe).
+      authoritativeParticipantText = persisted.participantContent
 
       // Pre-OpenAI idempotency: successful prior assistant for this messageId.
       if (openSessionId && participantMessageId) {
@@ -138,6 +142,11 @@ export async function POST(req: NextRequest) {
     const distressScore = parseScore(distress)
     const highStress = isHighStress(distressScore)
     const phase = resolvePhase(authoritativeHistory, conversationPhase)
+    // highStress remains an independent tone modifier — not a response mode.
+    const responseMode = selectStampleyResponseMode({
+      participantText: authoritativeParticipantText,
+      phase,
+    })
 
     let liveStudyContext
 
@@ -192,7 +201,7 @@ export async function POST(req: NextRequest) {
       },
     })
 
-    const messages = buildOpenAIMessages(openaiContext)
+    const messages = buildOpenAIMessages(openaiContext, responseMode)
 
     const apiKey = process.env.OPENAI_API_KEY?.trim()
 
