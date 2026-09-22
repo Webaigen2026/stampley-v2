@@ -440,9 +440,31 @@ export type OpenSessionRecord = {
   assistantMessageCount: number
 }
 
+export type PersistParticipantTurnResult =
+  | {
+      ok: true
+      sessionId: string
+      participantAlreadyPersisted: boolean
+    }
+  | {
+      ok: false
+      error:
+        | "invalid_user"
+        | "invalid_content"
+        | "invalid_message_id"
+        | "persist_failed"
+    }
+
 export type OpenSessionStore = {
+  /** Transaction-scoped advisory lock for same user + CURRENT_DATE. */
+  acquireCurrentDayOpenSessionLock(userId: string): Promise<void>
   findLatestTodayOpenSessionId(userId: string): Promise<string | null>
   createOpenSession(userId: string): Promise<string>
+  /** Lock + load owned open SERVER_AUTHORITATIVE session for JSON RMW. */
+  lockOwnedOpenSession(
+    userId: string,
+    sessionId: string
+  ): Promise<OpenSessionRecord | null>
   loadOwnedOpenSession(
     userId: string,
     sessionId: string
@@ -463,6 +485,24 @@ export type OpenSessionStoreRunner = {
 export type PersistTurnResult =
   | { ok: true; sessionId: string }
   | { ok: false }
+
+/** Opaque participant retry id (UUID). Normalized to lowercase. */
+const PARTICIPANT_MESSAGE_ID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
+
+export const INVALID_PARTICIPANT_MESSAGE_ID_MESSAGE = "Invalid request"
+
+/**
+ * Validate client messageId for participant turns.
+ * Returns canonical lowercase UUID or null.
+ */
+export function parseParticipantMessageId(value: unknown): string | null {
+  if (typeof value !== "string") return null
+  if (value.length !== 36) return null
+  const normalized = value.toLowerCase()
+  if (!PARTICIPANT_MESSAGE_ID_RE.test(normalized)) return null
+  return normalized
+}
 
 export function resolveIncomingParticipantTurn(
   history: unknown
@@ -533,12 +573,40 @@ export function hasServerOwnedParticipantProof(messages: unknown): boolean {
   return countServerOwnedParticipantTurns(messages) >= 1
 }
 
+/**
+ * Find an authoritative participant turn with the given messageId.
+ * Reuses turn.id as the opaque client messageId (no separate JSON field / no migration).
+ * Malformed rows never count as duplicates.
+ */
+export function findServerOwnedParticipantTurnByMessageId(
+  messages: unknown,
+  messageId: string
+): ServerOwnedStampleyTurn | null {
+  const parsed = parseParticipantMessageId(messageId)
+  if (!parsed) return null
+
+  for (const item of parseStoredTurns(messages)) {
+    if (!isServerOwnedTurn(item) || item.role !== "user") continue
+    if (typeof item.content !== "string" || item.content.trim().length === 0) {
+      continue
+    }
+    if (item.id.toLowerCase() === parsed) return item
+  }
+  return null
+}
+
+/**
+ * Build a server-owned user turn.
+ * `messageId` is the validated client opaque UUID stored as turn.id for idempotency.
+ */
 export function buildServerOwnedUserTurn(
   content: string,
+  messageId: string = crypto.randomUUID(),
   now = new Date()
 ): ServerOwnedStampleyTurn {
+  const id = parseParticipantMessageId(messageId) ?? crypto.randomUUID()
   return {
-    id: crypto.randomUUID(),
+    id,
     role: "user",
     content,
     timestamp: now.toISOString(),
@@ -581,33 +649,56 @@ export function protectAuthoritativeTranscript(
   return parseStoredTurns(current).filter((item) => isServerOwnedTurn(item))
 }
 
+/**
+ * Persist one authoritative participant turn with messageId idempotency.
+ * Advisory lock + session row lock; no OpenAI inside this transaction.
+ */
 export async function persistOwnedParticipantTurn(
   runner: OpenSessionStoreRunner,
   userId: string,
-  content: string
-): Promise<PersistTurnResult> {
+  content: string,
+  messageId: unknown
+): Promise<PersistParticipantTurnResult> {
   if (typeof userId !== "string" || userId.length === 0) {
-    return { ok: false }
+    return { ok: false, error: "invalid_user" }
+  }
+  const parsedMessageId = parseParticipantMessageId(messageId)
+  if (!parsedMessageId) {
+    return { ok: false, error: "invalid_message_id" }
   }
   const accepted = resolveIncomingParticipantTurn([
     { role: "user", content },
   ])
   if (accepted.kind !== "accepted") {
-    return { ok: false }
+    return { ok: false, error: "invalid_content" }
   }
 
   return runner.run(async (store) => {
+    await store.acquireCurrentDayOpenSessionLock(userId)
+
     let sessionId = await store.findLatestTodayOpenSessionId(userId)
     if (!sessionId) {
       sessionId = await store.createOpenSession(userId)
     }
 
-    const owned = await store.loadOwnedOpenSession(userId, sessionId)
-    if (!owned) return { ok: false }
+    const owned = await store.lockOwnedOpenSession(userId, sessionId)
+    if (!owned) return { ok: false, error: "persist_failed" }
+
+    const existing = findServerOwnedParticipantTurnByMessageId(
+      owned.messages,
+      parsedMessageId
+    )
+    if (existing) {
+      return {
+        ok: true,
+        sessionId,
+        participantAlreadyPersisted: true,
+      }
+    }
 
     const next = appendServerOwnedTurn(
       owned.messages,
-      buildServerOwnedUserTurn(accepted.content)
+      buildServerOwnedUserTurn(accepted.content, parsedMessageId)
     )
     const saved = await store.saveOwnedOpenSession({
       userId,
@@ -616,8 +707,12 @@ export async function persistOwnedParticipantTurn(
       userMessageCount: countServerOwnedParticipantTurns(next),
       assistantMessageCount: countServerOwnedAssistantTurns(next),
     })
-    if (!saved) return { ok: false }
-    return { ok: true, sessionId }
+    if (!saved) return { ok: false, error: "persist_failed" }
+    return {
+      ok: true,
+      sessionId,
+      participantAlreadyPersisted: false,
+    }
   })
 }
 
@@ -707,12 +802,24 @@ function prismaOpenSessionStore(
   tx: PrismaOpenSessionClient
 ): OpenSessionStore {
   return {
+    async acquireCurrentDayOpenSessionLock(userId) {
+      // Transaction-scoped lock: authenticated user + DB CURRENT_DATE only.
+      await tx.$queryRaw`
+        SELECT pg_advisory_xact_lock(
+          hashtextextended(
+            (${userId} || (':' || CURRENT_DATE::text)),
+            0
+          )
+        )
+      `
+    },
     async findLatestTodayOpenSessionId(userId) {
       const rows = await tx.$queryRaw<Array<{ id: string }>>`
         SELECT id
         FROM stampley_chat_sessions
         WHERE user_id = ${userId}
           AND check_in_submission_id IS NULL
+          AND transcript_origin::text = ${STAMPLEY_TRANSCRIPT_ORIGIN.SERVER_AUTHORITATIVE}
           AND created_at::date = CURRENT_DATE
         ORDER BY created_at DESC
         LIMIT 1
@@ -732,6 +839,36 @@ function prismaOpenSessionStore(
         select: { id: true },
       })
       return created.id
+    },
+    async lockOwnedOpenSession(userId, sessionId) {
+      const rows = await tx.$queryRaw<
+        Array<{
+          id: string
+          messages: unknown
+          user_message_count: number | null
+          assistant_message_count: number | null
+        }>
+      >`
+        SELECT
+          id,
+          messages,
+          user_message_count,
+          assistant_message_count
+        FROM stampley_chat_sessions
+        WHERE id = ${sessionId}
+          AND user_id = ${userId}
+          AND check_in_submission_id IS NULL
+          AND transcript_origin::text = ${STAMPLEY_TRANSCRIPT_ORIGIN.SERVER_AUTHORITATIVE}
+        FOR UPDATE
+      `
+      const row = rows[0]
+      if (!row) return null
+      return {
+        id: row.id,
+        messages: row.messages,
+        userMessageCount: Number(row.user_message_count ?? 0),
+        assistantMessageCount: Number(row.assistant_message_count ?? 0),
+      }
     },
     async loadOwnedOpenSession(userId, sessionId) {
       const row = await tx.stampleyChatSession.findFirst({

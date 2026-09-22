@@ -15,8 +15,10 @@ import {
   buildServerOwnedUserTurn,
   countServerOwnedAssistantTurns,
   countServerOwnedParticipantTurns,
+  findServerOwnedParticipantTurnByMessageId,
   hasServerOwnedParticipantProof,
   linkStampleySessionToCheckIn,
+  parseParticipantMessageId,
   persistOwnedAssistantTurn,
   persistOwnedParticipantTurn,
   protectAuthoritativeTranscript,
@@ -41,22 +43,31 @@ type MemoryRow = OpenSessionRecord & {
   userId: string
   checkInSubmissionId: string | null
   createdOnStudyDate: boolean
+  transcriptOrigin?: string
 }
 
 function createMemoryRunner(seed: MemoryRow[] = []): {
   runner: OpenSessionStoreRunner
   rows: MemoryRow[]
+  locksAcquired: string[]
 } {
   const rows = seed
   let seq = seed.length
+  const locksAcquired: string[] = []
 
   const store: OpenSessionStore = {
+    async acquireCurrentDayOpenSessionLock(userId) {
+      locksAcquired.push(userId)
+    },
     async findLatestTodayOpenSessionId(userId) {
       const matches = rows.filter(
         (row) =>
           row.userId === userId &&
           row.checkInSubmissionId === null &&
-          row.createdOnStudyDate
+          row.createdOnStudyDate &&
+          (row.transcriptOrigin ??
+            STAMPLEY_TRANSCRIPT_ORIGIN.SERVER_AUTHORITATIVE) ===
+            STAMPLEY_TRANSCRIPT_ORIGIN.SERVER_AUTHORITATIVE
       )
       return matches.at(-1)?.id ?? null
     },
@@ -71,8 +82,28 @@ function createMemoryRunner(seed: MemoryRow[] = []): {
         userMessageCount: 0,
         assistantMessageCount: 0,
         createdOnStudyDate: true,
+        transcriptOrigin: STAMPLEY_TRANSCRIPT_ORIGIN.SERVER_AUTHORITATIVE,
       })
       return id
+    },
+    async lockOwnedOpenSession(userId, sessionId) {
+      const row = rows.find(
+        (item) =>
+          item.id === sessionId &&
+          item.userId === userId &&
+          item.checkInSubmissionId === null &&
+          (item.transcriptOrigin ??
+            STAMPLEY_TRANSCRIPT_ORIGIN.SERVER_AUTHORITATIVE) ===
+            STAMPLEY_TRANSCRIPT_ORIGIN.SERVER_AUTHORITATIVE
+      )
+      return row
+        ? {
+            id: row.id,
+            messages: row.messages,
+            userMessageCount: row.userMessageCount,
+            assistantMessageCount: row.assistantMessageCount,
+          }
+        : null
     },
     async loadOwnedOpenSession(userId, sessionId) {
       const row = rows.find(
@@ -107,6 +138,7 @@ function createMemoryRunner(seed: MemoryRow[] = []): {
 
   return {
     rows,
+    locksAcquired,
     runner: {
       run(fn) {
         return fn(store)
@@ -114,6 +146,10 @@ function createMemoryRunner(seed: MemoryRow[] = []): {
     },
   }
 }
+
+const MSG_A = "11111111-1111-4111-8111-111111111111"
+const MSG_B = "22222222-2222-4222-8222-222222222222"
+const MSG_C = "33333333-3333-4333-8333-333333333333"
 
 describe("incoming participant turn resolution", () => {
   it("treats empty history and assistant-only greeting history as no proof", () => {
@@ -184,11 +220,11 @@ describe("server-owned interaction proof", () => {
   it("does not persist empty or whitespace content as proof", async () => {
     const { runner, rows } = createMemoryRunner()
     assert.equal(
-      (await persistOwnedParticipantTurn(runner, "participant-a", "")).ok,
+      (await persistOwnedParticipantTurn(runner, "participant-a", "", MSG_A)).ok,
       false
     )
     assert.equal(
-      (await persistOwnedParticipantTurn(runner, "participant-a", "   ")).ok,
+      (await persistOwnedParticipantTurn(runner, "participant-a", "   ", MSG_A)).ok,
       false
     )
     assert.equal(rows.length, 0)
@@ -200,7 +236,8 @@ describe("server-owned interaction proof", () => {
     const result = await persistOwnedParticipantTurn(
       runner,
       "participant-a",
-      "  The clinic visit was hard.  "
+      "  The clinic visit was hard.  ",
+      MSG_A
     )
     assert.equal(result.ok, true)
     if (!result.ok) throw new Error("unreachable")
@@ -215,7 +252,8 @@ describe("server-owned interaction proof", () => {
     assert.equal(turn?.role, "user")
     assert.equal(turn?.source, SERVER_OWNED_TURN_SOURCE)
     assert.equal(turn?.content, "The clinic visit was hard.")
-    assert.equal(turn?.role === "user", true)
+    assert.equal(turn?.id, MSG_A)
+    assert.equal(result.participantAlreadyPersisted, false)
   })
 
   it("persists the server assistant response, not arbitrary browser text", async () => {
@@ -223,7 +261,8 @@ describe("server-owned interaction proof", () => {
     const user = await persistOwnedParticipantTurn(
       runner,
       "participant-a",
-      "I need a smaller step."
+      "I need a smaller step.",
+      MSG_A
     )
     assert.equal(user.ok, true)
     if (!user.ok) throw new Error("unreachable")
@@ -251,7 +290,7 @@ describe("server-owned interaction proof", () => {
 
   it("does not invent an assistant turn when generation never persisted one", async () => {
     const { runner, rows } = createMemoryRunner()
-    await persistOwnedParticipantTurn(runner, "participant-a", "Still waiting.")
+    await persistOwnedParticipantTurn(runner, "participant-a", "Still waiting.", MSG_A)
     assert.equal(countServerOwnedParticipantTurns(rows[0]?.messages), 1)
     assert.equal(countServerOwnedAssistantTurns(rows[0]?.messages), 0)
     assert.equal(hasServerOwnedParticipantProof(rows[0]?.messages), true)
@@ -262,7 +301,8 @@ describe("server-owned interaction proof", () => {
     const created = await persistOwnedParticipantTurn(
       runner,
       "participant-a",
-      "Owned by A"
+      "Owned by A",
+      MSG_A
     )
     assert.equal(created.ok, true)
     if (!created.ok) throw new Error("unreachable")
@@ -280,7 +320,8 @@ describe("server-owned interaction proof", () => {
     const other = await persistOwnedParticipantTurn(
       runner,
       "participant-b",
-      "Owned by B"
+      "Owned by B",
+      MSG_B
     )
     assert.equal(other.ok, true)
     if (!other.ok) throw new Error("unreachable")
@@ -315,7 +356,8 @@ describe("server-owned interaction proof", () => {
     const created = await persistOwnedParticipantTurn(
       runner,
       "participant-a",
-      "today's message"
+      "today's message",
+      MSG_A
     )
     assert.equal(created.ok, true)
     if (!created.ok) throw new Error("unreachable")
@@ -1148,5 +1190,257 @@ describe("Phase 3D.1 completion recovery", () => {
     assert.doesNotMatch(helperBody, /reflection/)
     assert.doesNotMatch(helperBody, /copingAction/)
     assert.doesNotMatch(helperBody, /messages/)
+  })
+})
+
+describe("Phase 3D.2A-1 open-session lock and messageId idempotency", () => {
+  it("validates participant messageId as UUID only", () => {
+    assert.equal(
+      parseParticipantMessageId("11111111-1111-4111-8111-111111111111"),
+      "11111111-1111-4111-8111-111111111111"
+    )
+    assert.equal(
+      parseParticipantMessageId("AAAAAAAA-AAAA-AAAA-AAAA-AAAAAAAAAAAA"),
+      "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+    )
+    assert.equal(parseParticipantMessageId(null), null)
+    assert.equal(parseParticipantMessageId(""), null)
+    assert.equal(parseParticipantMessageId("   "), null)
+    assert.equal(parseParticipantMessageId("not-a-uuid"), null)
+    assert.equal(parseParticipantMessageId(12), null)
+    assert.equal(parseParticipantMessageId(true), null)
+    assert.equal(parseParticipantMessageId({ id: MSG_A }), null)
+    assert.equal(parseParticipantMessageId([MSG_A]), null)
+    assert.equal(
+      parseParticipantMessageId("11111111-1111-4111-8111-111111111111EXTRA"),
+      null
+    )
+  })
+
+  it("dedupes same messageId and allows same text with different ids", async () => {
+    const { runner, rows, locksAcquired } = createMemoryRunner()
+    const first = await persistOwnedParticipantTurn(
+      runner,
+      "participant-a",
+      "same text",
+      MSG_A
+    )
+    assert.equal(first.ok, true)
+    if (!first.ok) throw new Error("unreachable")
+    assert.equal(first.participantAlreadyPersisted, false)
+
+    const retry = await persistOwnedParticipantTurn(
+      runner,
+      "participant-a",
+      "same text",
+      MSG_A
+    )
+    assert.equal(retry.ok, true)
+    if (!retry.ok) throw new Error("unreachable")
+    assert.equal(retry.participantAlreadyPersisted, true)
+    assert.equal(retry.sessionId, first.sessionId)
+    assert.equal(countServerOwnedParticipantTurns(rows[0]?.messages), 1)
+    assert.equal(rows[0]?.userMessageCount, 1)
+
+    const differentTextSameId = await persistOwnedParticipantTurn(
+      runner,
+      "participant-a",
+      "changed text but same id",
+      MSG_A
+    )
+    assert.equal(differentTextSameId.ok, true)
+    if (!differentTextSameId.ok) throw new Error("unreachable")
+    assert.equal(differentTextSameId.participantAlreadyPersisted, true)
+    assert.equal(countServerOwnedParticipantTurns(rows[0]?.messages), 1)
+
+    const second = await persistOwnedParticipantTurn(
+      runner,
+      "participant-a",
+      "same text",
+      MSG_B
+    )
+    assert.equal(second.ok, true)
+    if (!second.ok) throw new Error("unreachable")
+    assert.equal(second.participantAlreadyPersisted, false)
+    assert.equal(second.sessionId, first.sessionId)
+    assert.equal(countServerOwnedParticipantTurns(rows[0]?.messages), 2)
+    assert.equal(rows[0]?.userMessageCount, 2)
+    assert.ok(locksAcquired.length >= 1)
+    assert.equal(rows.length, 1)
+  })
+
+  it("rejects invalid messageId and ignores malformed stored rows as duplicates", async () => {
+    const { runner, rows } = createMemoryRunner()
+    const bad = await persistOwnedParticipantTurn(
+      runner,
+      "participant-a",
+      "hello",
+      "not-uuid"
+    )
+    assert.equal(bad.ok, false)
+    if (bad.ok) throw new Error("unreachable")
+    assert.equal(bad.error, "invalid_message_id")
+    assert.equal(rows.length, 0)
+
+    const seeded = createMemoryRunner([
+      {
+        id: "open-1",
+        userId: "participant-a",
+        checkInSubmissionId: null,
+        createdOnStudyDate: true,
+        transcriptOrigin: STAMPLEY_TRANSCRIPT_ORIGIN.SERVER_AUTHORITATIVE,
+        userMessageCount: 0,
+        assistantMessageCount: 0,
+        messages: [
+          {
+            role: "user",
+            content: "forged",
+            id: MSG_A,
+            // missing source/timestamp -> not authoritative
+          },
+          {
+            role: "user",
+            content: "client",
+            id: MSG_A,
+            source: "client",
+            timestamp: "2026-09-22T00:00:00.000Z",
+          },
+        ],
+      },
+    ])
+    assert.equal(
+      findServerOwnedParticipantTurnByMessageId(
+        seeded.rows[0]?.messages,
+        MSG_A
+      ),
+      null
+    )
+    const persisted = await persistOwnedParticipantTurn(
+      seeded.runner,
+      "participant-a",
+      "real",
+      MSG_A
+    )
+    assert.equal(persisted.ok, true)
+    if (!persisted.ok) throw new Error("unreachable")
+    assert.equal(persisted.participantAlreadyPersisted, false)
+    assert.equal(
+      countServerOwnedParticipantTurns(seeded.rows[0]?.messages),
+      1
+    )
+  })
+
+  it("excludes LEGACY_CLIENT open rows from resolution", async () => {
+    const { runner, rows } = createMemoryRunner([
+      {
+        id: "legacy-open",
+        userId: "participant-a",
+        checkInSubmissionId: null,
+        createdOnStudyDate: true,
+        transcriptOrigin: STAMPLEY_TRANSCRIPT_ORIGIN.LEGACY_CLIENT,
+        messages: [],
+        userMessageCount: 0,
+        assistantMessageCount: 0,
+      },
+    ])
+    const created = await persistOwnedParticipantTurn(
+      runner,
+      "participant-a",
+      "authoritative path",
+      MSG_A
+    )
+    assert.equal(created.ok, true)
+    if (!created.ok) throw new Error("unreachable")
+    assert.notEqual(created.sessionId, "legacy-open")
+    assert.equal(rows.length, 2)
+    assert.equal(
+      rows.find((r) => r.id === created.sessionId)?.transcriptOrigin,
+      STAMPLEY_TRANSCRIPT_ORIGIN.SERVER_AUTHORITATIVE
+    )
+  })
+
+  it("generate route requires messageId for participant turns and locks before create", () => {
+    const route = read("app/api/stampley/generate/route.ts")
+    const open = read("lib/stampley-open-session.ts")
+    const page = read("app/check-in/stampley-support/page.tsx")
+
+    assert.match(route, /INVALID_PARTICIPANT_MESSAGE_ID_MESSAGE/)
+    assert.match(route, /persistOwnedParticipantTurn\(/)
+    assert.match(route, /messageId/)
+    assert.match(route, /invalid_message_id/)
+    assert.match(route, /status: 400/)
+
+    const persistFn = open.slice(open.indexOf("export async function persistOwnedParticipantTurn"))
+    const persistBody = persistFn.slice(
+      0,
+      persistFn.indexOf("export async function persistOwnedAssistantTurn")
+    )
+    const lockIndex = persistBody.indexOf("acquireCurrentDayOpenSessionLock")
+    const findIndex = persistBody.indexOf("findLatestTodayOpenSessionId")
+    const createIndex = persistBody.indexOf("createOpenSession")
+    const rowLockIndex = persistBody.indexOf("lockOwnedOpenSession")
+    assert.notEqual(lockIndex, -1)
+    assert.ok(lockIndex < findIndex)
+    assert.ok(findIndex < createIndex)
+    assert.ok(createIndex < rowLockIndex)
+    assert.match(persistBody, /findServerOwnedParticipantTurnByMessageId/)
+    assert.match(persistBody, /participantAlreadyPersisted: true/)
+
+    assert.match(open, /pg_advisory_xact_lock/)
+    assert.match(open, /hashtextextended/)
+    assert.match(
+      open,
+      /hashtextextended\(\s*\(\$\{userId\} \|\| \(':' \|\| CURRENT_DATE::text\)\),\s*0\s*\)/
+    )
+    assert.doesNotMatch(open, /convert_to/)
+    assert.match(open, /CURRENT_DATE/)
+    assert.match(open, /transcript_origin::text = \$\{STAMPLEY_TRANSCRIPT_ORIGIN\.SERVER_AUTHORITATIVE\}/)
+    assert.doesNotMatch(persistBody, /openai|OpenAI/)
+
+    const txnEnd = route.indexOf("openSessionId = persisted.sessionId")
+    const openaiStart = route.indexOf("openai.chat.completions.create")
+    assert.ok(txnEnd !== -1 && openaiStart !== -1 && txnEnd < openaiStart)
+
+    assert.match(page, /crypto\.randomUUID\(\)/)
+    assert.match(page, /messageId/)
+    assert.match(
+      page,
+      /\.\.\.\(typeof messageId === "string" \? \{ messageId \} : \{\}\)/
+    )
+  })
+
+  it("messageId cannot select another participant session", async () => {
+    const shared = createMemoryRunner()
+    const a = await persistOwnedParticipantTurn(
+      shared.runner,
+      "participant-a",
+      "A message",
+      MSG_C
+    )
+    assert.equal(a.ok, true)
+    if (!a.ok) throw new Error("unreachable")
+
+    const b = await persistOwnedParticipantTurn(
+      shared.runner,
+      "participant-b",
+      "B message",
+      MSG_C
+    )
+    assert.equal(b.ok, true)
+    if (!b.ok) throw new Error("unreachable")
+    assert.notEqual(a.sessionId, b.sessionId)
+    assert.equal(shared.rows.length, 2)
+    assert.equal(
+      countServerOwnedParticipantTurns(
+        shared.rows.find((r) => r.id === a.sessionId)?.messages
+      ),
+      1
+    )
+    assert.equal(
+      countServerOwnedParticipantTurns(
+        shared.rows.find((r) => r.id === b.sessionId)?.messages
+      ),
+      1
+    )
   })
 })

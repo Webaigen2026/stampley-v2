@@ -29,6 +29,7 @@ import {
   persistOwnedAssistantTurn,
   persistOwnedParticipantTurn,
   resolveIncomingParticipantTurn,
+  INVALID_PARTICIPANT_MESSAGE_ID_MESSAGE,
 } from "@/lib/stampley-open-session"
 import type { Domain } from "@/store/checkin-store"
 
@@ -61,6 +62,7 @@ export async function POST(req: NextRequest) {
       domain,
       messageHistory,
       conversationPhase,
+      messageId,
     } = body
 
     const incomingTurn = resolveIncomingParticipantTurn(messageHistory)
@@ -73,12 +75,22 @@ export async function POST(req: NextRequest) {
 
     let openSessionId: string | null = null
     if (incomingTurn.kind === "accepted") {
+      // 3D.2A-1: participant turn is idempotent by messageId.
+      // Assistant linkage/idempotency is deferred to 3D.2A-2; OpenAI may still run
+      // after a duplicate participant persist.
       const persisted = await persistOwnedParticipantTurn(
         createPrismaOpenSessionRunner(prisma),
         userId,
-        incomingTurn.content
+        incomingTurn.content,
+        messageId
       )
       if (!persisted.ok) {
+        if (persisted.error === "invalid_message_id") {
+          return jsonWithSensitiveCache(
+            { error: INVALID_PARTICIPANT_MESSAGE_ID_MESSAGE },
+            { status: 400 }
+          )
+        }
         stampleyGenerateLog(console, { event: "db_failure" })
         return jsonWithSensitiveCache(
           { error: "Failed to generate response" },

@@ -262,7 +262,11 @@ export default function StampleySupportPage() {
   ])
 
   const generateStampleyResponse = useCallback(
-    async (history: StampleyHistoryMessage[], m: SavedMetrics) => {
+    async (
+      history: StampleyHistoryMessage[],
+      m: SavedMetrics,
+      messageId?: string
+    ) => {
       const res = await fetch("/api/stampley/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -279,6 +283,7 @@ export default function StampleySupportPage() {
           weekNumber: m.weekNumber,
           messageHistory: history,
           conversationPhase: deriveConversationPhase(history),
+          ...(typeof messageId === "string" ? { messageId } : {}),
         }),
       })
 
@@ -524,8 +529,12 @@ export default function StampleySupportPage() {
 
     const text = inputText.trim()
     setInputText("")
+    // Opaque UUID for this send; reuse if the same pending request is retried
+    // through generateStampleyResponse(messageId). No automatic retry UI yet —
+    // a fresh manual send creates a new messageId (same text allowed).
+    const messageId = crypto.randomUUID()
     const userMsg: StoredMessage = {
-      id: Date.now().toString(),
+      id: messageId,
       role: "user",
       content: text,
       timestamp: getCurrentTime(),
@@ -537,7 +546,11 @@ export default function StampleySupportPage() {
     const history = buildStampleyHistory([...messages, userMsg])
 
     try {
-      const response = await generateStampleyResponse(history, chatSnapshot)
+      const response = await generateStampleyResponse(
+        history,
+        chatSnapshot,
+        messageId
+      )
       const msgId = Date.now().toString()
       setMessages((prev) => [
         ...prev,
