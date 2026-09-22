@@ -19,12 +19,14 @@ import {
   buildStampleyOpenAIContext,
   isHighStress,
   parseScore,
-  sanitizeHistory,
   stampleyGenerateLog,
   type LongitudinalScoreRow,
+  type StampleyHistoryMessage,
 } from "@/lib/stampley-openai-context"
 import { resolveCheckInMutationAccess } from "@/lib/check-in-mutation-authz"
 import {
+  CHECK_IN_ALREADY_COMPLETED_MESSAGE,
+  buildAuthoritativeOpenAIConversationHistory,
   createPrismaOpenSessionRunner,
   findOwnedAuthoritativeAssistantReply,
   parseParticipantMessageId,
@@ -67,6 +69,8 @@ export async function POST(req: NextRequest) {
       messageId,
     } = body
 
+    // messageHistory is tolerated for incoming-turn detection / greeting only.
+    // It is NOT used as OpenAI conversation authority (3D.2A-3).
     const incomingTurn = resolveIncomingParticipantTurn(messageHistory)
     if (incomingTurn.kind === "rejected") {
       return jsonWithSensitiveCache(
@@ -77,9 +81,10 @@ export async function POST(req: NextRequest) {
 
     let openSessionId: string | null = null
     let participantMessageId: string | null = null
+    let authoritativeHistory: StampleyHistoryMessage[] = []
+
     if (incomingTurn.kind === "accepted") {
-      // 3D.2A-1: participant turn is idempotent by messageId.
-      // 3D.2A-2: assistant replies are linked + idempotent by the same messageId.
+      // 3D.2A-1/2/3: persist under advisory + completion guard; history from DB.
       const persisted = await persistOwnedParticipantTurn(
         createPrismaOpenSessionRunner(prisma),
         userId,
@@ -93,6 +98,12 @@ export async function POST(req: NextRequest) {
             { status: 400 }
           )
         }
+        if (persisted.error === "check_in_completed") {
+          return jsonWithSensitiveCache(
+            { error: CHECK_IN_ALREADY_COMPLETED_MESSAGE },
+            { status: 409 }
+          )
+        }
         stampleyGenerateLog(console, { event: "db_failure" })
         return jsonWithSensitiveCache(
           { error: "Failed to generate response" },
@@ -101,6 +112,10 @@ export async function POST(req: NextRequest) {
       }
       openSessionId = persisted.sessionId
       participantMessageId = parseParticipantMessageId(messageId)
+      // Server-authoritative conversation only (ignores browser messageHistory).
+      authoritativeHistory = buildAuthoritativeOpenAIConversationHistory(
+        persisted.messages
+      )
 
       // Pre-OpenAI idempotency: successful prior assistant for this messageId.
       if (openSessionId && participantMessageId) {
@@ -122,8 +137,7 @@ export async function POST(req: NextRequest) {
     const resolvedDomain = normalizeDomain(domain)
     const distressScore = parseScore(distress)
     const highStress = isHighStress(distressScore)
-    const fullHistory = sanitizeHistory(messageHistory)
-    const phase = resolvePhase(fullHistory, conversationPhase)
+    const phase = resolvePhase(authoritativeHistory, conversationPhase)
 
     let liveStudyContext
 
@@ -169,7 +183,7 @@ export async function POST(req: NextRequest) {
       reflection,
       copingAction,
       phase,
-      recentConversation: fullHistory,
+      recentConversation: authoritativeHistory,
       longitudinalRows,
       themeMemory: {
         recurringThemes: themeMemory.recurringThemes,
@@ -330,7 +344,7 @@ async function loadLongitudinalScoreRows(
 }
 
 function resolvePhase(
-  history: ReturnType<typeof sanitizeHistory>,
+  history: StampleyHistoryMessage[],
   clientPhase: unknown
 ): StampleyPhase {
   const derived = deriveConversationPhase(history)

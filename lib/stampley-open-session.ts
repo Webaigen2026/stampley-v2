@@ -2,10 +2,15 @@ import { Prisma } from "@/lib/generated/prisma/client"
 import {
   USER_MESSAGE_MAX_CHARS,
   buildChatSessionSummary,
+  type StampleyHistoryMessage,
 } from "@/lib/stampley-openai-context"
+import { formatAssistantMessageForHistory } from "@/lib/stampley-prompt"
 
 export const MISSING_STAMPLEY_PROOF_MESSAGE =
   "Complete a Stampley chat reply before submitting today's check-in."
+
+export const CHECK_IN_ALREADY_COMPLETED_MESSAGE =
+  "Today's check-in has already been completed."
 
 export class MissingStampleyProofError extends Error {
   constructor() {
@@ -18,6 +23,14 @@ export class StampleySessionLinkError extends Error {
   constructor() {
     super("Failed to link Stampley session")
     this.name = "StampleySessionLinkError"
+  }
+}
+
+/** Thrown inside a persistence transaction so Prisma rolls back (e.g. orphan create). */
+export class CheckInAlreadyCompletedError extends Error {
+  constructor() {
+    super(CHECK_IN_ALREADY_COMPLETED_MESSAGE)
+    this.name = "CheckInAlreadyCompletedError"
   }
 }
 
@@ -447,6 +460,10 @@ export type PersistParticipantTurnResult =
       ok: true
       sessionId: string
       participantAlreadyPersisted: boolean
+      /** Authoritative persisted content for messageId (not retry body). */
+      participantContent: string
+      /** Session transcript snapshot after persist/dedupe (same txn). */
+      messages: unknown
     }
   | {
       ok: false
@@ -454,12 +471,15 @@ export type PersistParticipantTurnResult =
         | "invalid_user"
         | "invalid_content"
         | "invalid_message_id"
+        | "check_in_completed"
         | "persist_failed"
     }
 
 export type OpenSessionStore = {
   /** Transaction-scoped advisory lock for same user + CURRENT_DATE. */
   acquireCurrentDayOpenSessionLock(userId: string): Promise<void>
+  /** True when this user already has a CheckInSubmission for DB CURRENT_DATE. */
+  hasCurrentDayCheckInSubmission(userId: string): Promise<boolean>
   findLatestTodayOpenSessionId(userId: string): Promise<string | null>
   createOpenSession(userId: string): Promise<string>
   /** Lock + load owned open SERVER_AUTHORITATIVE session for JSON RMW. */
@@ -659,6 +679,93 @@ export function findServerOwnedAssistantReplyByParticipantMessageId(
   return null
 }
 
+function assistantTurnToHistoryContent(
+  turn: ServerOwnedStampleyTurn
+): string | null {
+  if (typeof turn.content === "string" && turn.content.trim().length > 0) {
+    return turn.content.trim()
+  }
+  if (turn.data !== undefined && turn.data !== null) {
+    if (typeof turn.data === "string") {
+      const trimmed = turn.data.trim()
+      return trimmed.length > 0 ? trimmed : null
+    }
+    if (typeof turn.data === "object" && !Array.isArray(turn.data)) {
+      const formatted = formatAssistantMessageForHistory(
+        turn.data as {
+          greeting?: string
+          validation?: string
+          reflection_question?: string
+          micro_skill?: string
+          education_chip?: string
+          closure?: string
+        }
+      ).trim()
+      return formatted.length > 0 ? formatted : null
+    }
+  }
+  return null
+}
+
+/**
+ * Build OpenAI conversation history from an authoritative session transcript.
+ *
+ * Ordering: walk physical order; for each authoritative user turn emit the user
+ * message then its linked assistant (inReplyToMessageId) if present. Historical
+ * unlinked assistants are emitted when encountered if not already paired.
+ * Client/malformed/LEGACY rows are excluded. No ids/metadata in output.
+ */
+export function buildAuthoritativeOpenAIConversationHistory(
+  messages: unknown
+): StampleyHistoryMessage[] {
+  const turns = parseStoredTurns(messages)
+  const history: StampleyHistoryMessage[] = []
+  const emittedAssistantIds = new Set<string>()
+
+  for (const item of turns) {
+    if (!isServerOwnedTurn(item)) continue
+
+    if (item.role === "user") {
+      if (typeof item.content !== "string" || item.content.trim().length === 0) {
+        continue
+      }
+      const userContent =
+        item.content.trim().length <= USER_MESSAGE_MAX_CHARS
+          ? item.content.trim()
+          : item.content.trim().slice(0, USER_MESSAGE_MAX_CHARS)
+      history.push({ role: "user", content: userContent })
+
+      const linked = findServerOwnedAssistantReplyByParticipantMessageId(
+        messages,
+        item.id
+      )
+      if (linked) {
+        const assistantContent = assistantTurnToHistoryContent(linked)
+        if (assistantContent) {
+          history.push({ role: "assistant", content: assistantContent })
+          emittedAssistantIds.add(linked.id)
+        }
+      }
+      continue
+    }
+
+    if (item.role === "assistant") {
+      if (emittedAssistantIds.has(item.id)) continue
+      const linked = parseParticipantMessageId(item.inReplyToMessageId)
+      // Linked assistants are emitted with their user turn; skip if unpaired here
+      // only when linkage is valid (user may be missing — then skip entirely).
+      if (linked) continue
+      if (!hasAuthoritativeAssistantPayload(item)) continue
+      const assistantContent = assistantTurnToHistoryContent(item)
+      if (!assistantContent) continue
+      history.push({ role: "assistant", content: assistantContent })
+      emittedAssistantIds.add(item.id)
+    }
+  }
+
+  return history
+}
+
 /**
  * Build a server-owned user turn.
  * `messageId` is the validated client opaque UUID stored as turn.id for idempotency.
@@ -726,7 +833,7 @@ export function protectAuthoritativeTranscript(
 
 /**
  * Persist one authoritative participant turn with messageId idempotency.
- * Advisory lock + session row lock; no OpenAI inside this transaction.
+ * Advisory lock + same-day completion guard + session row lock; no OpenAI inside.
  */
 export async function persistOwnedParticipantTurn(
   runner: OpenSessionStoreRunner,
@@ -748,47 +855,71 @@ export async function persistOwnedParticipantTurn(
     return { ok: false, error: "invalid_content" }
   }
 
-  return runner.run(async (store) => {
-    await store.acquireCurrentDayOpenSessionLock(userId)
+  try {
+    return await runner.run(async (store) => {
+      await store.acquireCurrentDayOpenSessionLock(userId)
 
-    let sessionId = await store.findLatestTodayOpenSessionId(userId)
-    if (!sessionId) {
-      sessionId = await store.createOpenSession(userId)
-    }
+      // Fail closed before resolve/create if today's check-in already exists.
+      if (await store.hasCurrentDayCheckInSubmission(userId)) {
+        throw new CheckInAlreadyCompletedError()
+      }
 
-    const owned = await store.lockOwnedOpenSession(userId, sessionId)
-    if (!owned) return { ok: false, error: "persist_failed" }
+      let sessionId = await store.findLatestTodayOpenSessionId(userId)
+      if (!sessionId) {
+        // Re-check immediately before create (submit may have committed).
+        if (await store.hasCurrentDayCheckInSubmission(userId)) {
+          throw new CheckInAlreadyCompletedError()
+        }
+        sessionId = await store.createOpenSession(userId)
+        // If submit committed after create, abort so the create rolls back.
+        if (await store.hasCurrentDayCheckInSubmission(userId)) {
+          throw new CheckInAlreadyCompletedError()
+        }
+      }
 
-    const existing = findServerOwnedParticipantTurnByMessageId(
-      owned.messages,
-      parsedMessageId
-    )
-    if (existing) {
+      const owned = await store.lockOwnedOpenSession(userId, sessionId)
+      if (!owned) return { ok: false, error: "persist_failed" }
+
+      const existing = findServerOwnedParticipantTurnByMessageId(
+        owned.messages,
+        parsedMessageId
+      )
+      if (existing) {
+        return {
+          ok: true,
+          sessionId,
+          participantAlreadyPersisted: true,
+          participantContent: existing.content ?? accepted.content,
+          messages: owned.messages,
+        }
+      }
+
+      const next = appendServerOwnedTurn(
+        owned.messages,
+        buildServerOwnedUserTurn(accepted.content, parsedMessageId)
+      )
+      const saved = await store.saveOwnedOpenSession({
+        userId,
+        sessionId,
+        messages: next,
+        userMessageCount: countServerOwnedParticipantTurns(next),
+        assistantMessageCount: countServerOwnedAssistantTurns(next),
+      })
+      if (!saved) return { ok: false, error: "persist_failed" }
       return {
         ok: true,
         sessionId,
-        participantAlreadyPersisted: true,
+        participantAlreadyPersisted: false,
+        participantContent: accepted.content,
+        messages: next,
       }
-    }
-
-    const next = appendServerOwnedTurn(
-      owned.messages,
-      buildServerOwnedUserTurn(accepted.content, parsedMessageId)
-    )
-    const saved = await store.saveOwnedOpenSession({
-      userId,
-      sessionId,
-      messages: next,
-      userMessageCount: countServerOwnedParticipantTurns(next),
-      assistantMessageCount: countServerOwnedAssistantTurns(next),
     })
-    if (!saved) return { ok: false, error: "persist_failed" }
-    return {
-      ok: true,
-      sessionId,
-      participantAlreadyPersisted: false,
+  } catch (error) {
+    if (error instanceof CheckInAlreadyCompletedError) {
+      return { ok: false, error: "check_in_completed" }
     }
-  })
+    throw error
+  }
 }
 
 export async function persistOwnedAssistantTurn(
@@ -881,6 +1012,14 @@ export async function findOwnedAuthoritativeAssistantReply(
   return runner.run(async (store) => {
     const owned = await store.lockOwnedOpenSession(userId, sessionId)
     if (!owned) return { found: false }
+
+    // Require authoritative participant turn before treating assistant as reusable.
+    const participant = findServerOwnedParticipantTurnByMessageId(
+      owned.messages,
+      parsedMessageId
+    )
+    if (!participant) return { found: false }
+
     const existing = findServerOwnedAssistantReplyByParticipantMessageId(
       owned.messages,
       parsedMessageId
@@ -957,6 +1096,16 @@ function prismaOpenSessionStore(
           )
         )
       `
+    },
+    async hasCurrentDayCheckInSubmission(userId) {
+      const rows = await tx.$queryRaw<Array<{ id: string }>>`
+        SELECT id
+        FROM check_in_submissions
+        WHERE user_id = ${userId}
+          AND check_in_date = CURRENT_DATE
+        LIMIT 1
+      `
+      return rows.length > 0
     },
     async findLatestTodayOpenSessionId(userId) {
       const rows = await tx.$queryRaw<Array<{ id: string }>>`
