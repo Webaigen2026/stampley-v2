@@ -5,6 +5,7 @@ import {
 } from "@/lib/check-in-submit-validation"
 import { DOMAIN_SUBSCALES, isCheckInDomain } from "@/lib/check-in-subscale"
 import { resolveCheckInMutationAccess } from "@/lib/check-in-mutation-authz"
+import type { StampleyGenerateDiagStage } from "@/lib/stampley-generate-diagnostics"
 
 export const SUPPORT_DOMAINS = [
   "Emotional",
@@ -178,8 +179,23 @@ export type StampleyGenerateLogEvent =
     }
   | { event: "openai_failure"; openaiStatus?: number }
   | { event: "parse_failure" }
-  | { event: "db_failure" }
-  | { event: "unhandled_failure" }
+  | {
+      event: "db_failure"
+      stage?: StampleyGenerateDiagStage
+      errorName?: string
+      safeErrorCode?: string
+    }
+  | {
+      event: "unhandled_failure"
+      stage?: StampleyGenerateDiagStage
+      errorName?: string
+      safeErrorCode?: string
+    }
+  | {
+      event: "diag_stage"
+      stage: StampleyGenerateDiagStage
+      outcome: "start" | "success"
+    }
 
 export function isHighStress(distress: number): boolean {
   return distress >= 9

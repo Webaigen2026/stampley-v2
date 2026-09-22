@@ -36,6 +36,10 @@ import {
   INVALID_PARTICIPANT_MESSAGE_ID_MESSAGE,
 } from "@/lib/stampley-open-session"
 import { selectStampleyResponseMode } from "@/lib/stampley-response-mode"
+import {
+  extractSafeErrorMetadata,
+  type StampleyGenerateDiagStage,
+} from "@/lib/stampley-generate-diagnostics"
 import type { Domain } from "@/store/checkin-store"
 
 export async function POST(req: NextRequest) {
@@ -54,7 +58,10 @@ export async function POST(req: NextRequest) {
 
   stampleyGenerateLog(console, { event: "auth_ok" })
 
+  let diagStage: StampleyGenerateDiagStage | undefined
+
   try {
+    diagStage = "request_parse"
     const body = await req.json()
 
     const {
@@ -87,12 +94,31 @@ export async function POST(req: NextRequest) {
 
     if (incomingTurn.kind === "accepted") {
       // 3D.2A-1/2/3: persist under advisory + completion guard; history from DB.
-      const persisted = await persistOwnedParticipantTurn(
-        createPrismaOpenSessionRunner(prisma),
-        userId,
-        incomingTurn.content,
-        messageId
-      )
+      diagStage = "participant_persist"
+      stampleyGenerateLog(console, {
+        event: "diag_stage",
+        stage: "participant_persist",
+        outcome: "start",
+      })
+      let persisted
+      try {
+        persisted = await persistOwnedParticipantTurn(
+          createPrismaOpenSessionRunner(prisma),
+          userId,
+          incomingTurn.content,
+          messageId
+        )
+      } catch (error) {
+        stampleyGenerateLog(console, {
+          event: "db_failure",
+          stage: "participant_persist",
+          ...extractSafeErrorMetadata(error),
+        })
+        return jsonWithSensitiveCache(
+          { error: "Failed to generate response" },
+          { status: 500 }
+        )
+      }
       if (!persisted.ok) {
         if (persisted.error === "invalid_message_id") {
           return jsonWithSensitiveCache(
@@ -106,12 +132,20 @@ export async function POST(req: NextRequest) {
             { status: 409 }
           )
         }
-        stampleyGenerateLog(console, { event: "db_failure" })
+        stampleyGenerateLog(console, {
+          event: "db_failure",
+          stage: "participant_persist",
+        })
         return jsonWithSensitiveCache(
           { error: "Failed to generate response" },
           { status: 500 }
         )
       }
+      stampleyGenerateLog(console, {
+        event: "diag_stage",
+        stage: "participant_persist",
+        outcome: "success",
+      })
       openSessionId = persisted.sessionId
       participantMessageId = parseParticipantMessageId(messageId)
       // Server-authoritative conversation only (ignores browser messageHistory).
@@ -123,12 +157,36 @@ export async function POST(req: NextRequest) {
 
       // Pre-OpenAI idempotency: successful prior assistant for this messageId.
       if (openSessionId && participantMessageId) {
-        const existingReply = await findOwnedAuthoritativeAssistantReply(
-          createPrismaOpenSessionRunner(prisma),
-          userId,
-          openSessionId,
-          participantMessageId
-        )
+        diagStage = "assistant_lookup"
+        stampleyGenerateLog(console, {
+          event: "diag_stage",
+          stage: "assistant_lookup",
+          outcome: "start",
+        })
+        let existingReply
+        try {
+          existingReply = await findOwnedAuthoritativeAssistantReply(
+            createPrismaOpenSessionRunner(prisma),
+            userId,
+            openSessionId,
+            participantMessageId
+          )
+        } catch (error) {
+          stampleyGenerateLog(console, {
+            event: "db_failure",
+            stage: "assistant_lookup",
+            ...extractSafeErrorMetadata(error),
+          })
+          return jsonWithSensitiveCache(
+            { error: "Failed to generate response" },
+            { status: 500 }
+          )
+        }
+        stampleyGenerateLog(console, {
+          event: "diag_stage",
+          stage: "assistant_lookup",
+          outcome: "success",
+        })
         if (existingReply.found) {
           return jsonWithSensitiveCache({
             success: true,
@@ -142,18 +200,48 @@ export async function POST(req: NextRequest) {
     const distressScore = parseScore(distress)
     const highStress = isHighStress(distressScore)
     const phase = resolvePhase(authoritativeHistory, conversationPhase)
-    // highStress remains an independent tone modifier — not a response mode.
-    const responseMode = selectStampleyResponseMode({
-      participantText: authoritativeParticipantText,
-      phase,
+
+    diagStage = "mode_select"
+    stampleyGenerateLog(console, {
+      event: "diag_stage",
+      stage: "mode_select",
+      outcome: "start",
+    })
+    let responseMode
+    try {
+      // highStress remains an independent tone modifier — not a response mode.
+      responseMode = selectStampleyResponseMode({
+        participantText: authoritativeParticipantText,
+        phase,
+      })
+    } catch (error) {
+      stampleyGenerateLog(console, {
+        event: "unhandled_failure",
+        stage: "mode_select",
+        ...extractSafeErrorMetadata(error),
+      })
+      return jsonWithSensitiveCache(
+        { error: "Failed to generate response" },
+        { status: 500 }
+      )
+    }
+    stampleyGenerateLog(console, {
+      event: "diag_stage",
+      stage: "mode_select",
+      outcome: "success",
     })
 
     let liveStudyContext
 
+    diagStage = "study_context"
     try {
       liveStudyContext = await loadLiveStudyContext(userId, resolvedDomain)
-    } catch {
-      stampleyGenerateLog(console, { event: "db_failure" })
+    } catch (error) {
+      stampleyGenerateLog(console, {
+        event: "db_failure",
+        stage: "study_context",
+        ...extractSafeErrorMetadata(error),
+      })
       return jsonWithSensitiveCache(
         { error: "Failed to generate response" },
         { status: 500 }
@@ -163,6 +251,7 @@ export async function POST(req: NextRequest) {
     let longitudinalRows: LongitudinalScoreRow[]
     let themeMemory
 
+    diagStage = "theme_memory"
     try {
       ;[longitudinalRows, themeMemory] = await Promise.all([
         loadLongitudinalScoreRows(userId),
@@ -173,35 +262,87 @@ export async function POST(req: NextRequest) {
           dayNumber: liveStudyContext?.dayNumber ?? 1,
         }),
       ])
-    } catch {
-      stampleyGenerateLog(console, { event: "db_failure" })
+    } catch (error) {
+      stampleyGenerateLog(console, {
+        event: "db_failure",
+        stage: "theme_memory",
+        ...extractSafeErrorMetadata(error),
+      })
       return jsonWithSensitiveCache(
         { error: "Failed to generate response" },
         { status: 500 }
       )
     }
 
-    const openaiContext = buildStampleyOpenAIContext({
-      distress: distressScore,
-      mood,
-      energy,
-      domain: resolvedDomain,
-      subscale: liveStudyContext?.subscale ?? "",
-      studyWeek: liveStudyContext?.weekNumber ?? 1,
-      contextTags,
-      reflection,
-      copingAction,
-      phase,
-      recentConversation: authoritativeHistory,
-      longitudinalRows,
-      themeMemory: {
-        recurringThemes: themeMemory.recurringThemes,
-        supportStyle: themeMemory.supportStyle,
-        allowThemeReference: themeMemory.allowThemeReference,
-      },
+    diagStage = "context_build"
+    stampleyGenerateLog(console, {
+      event: "diag_stage",
+      stage: "context_build",
+      outcome: "start",
+    })
+    let openaiContext
+    try {
+      openaiContext = buildStampleyOpenAIContext({
+        distress: distressScore,
+        mood,
+        energy,
+        domain: resolvedDomain,
+        subscale: liveStudyContext?.subscale ?? "",
+        studyWeek: liveStudyContext?.weekNumber ?? 1,
+        contextTags,
+        reflection,
+        copingAction,
+        phase,
+        recentConversation: authoritativeHistory,
+        longitudinalRows,
+        themeMemory: {
+          recurringThemes: themeMemory.recurringThemes,
+          supportStyle: themeMemory.supportStyle,
+          allowThemeReference: themeMemory.allowThemeReference,
+        },
+      })
+    } catch (error) {
+      stampleyGenerateLog(console, {
+        event: "unhandled_failure",
+        stage: "context_build",
+        ...extractSafeErrorMetadata(error),
+      })
+      return jsonWithSensitiveCache(
+        { error: "Failed to generate response" },
+        { status: 500 }
+      )
+    }
+    stampleyGenerateLog(console, {
+      event: "diag_stage",
+      stage: "context_build",
+      outcome: "success",
     })
 
-    const messages = buildOpenAIMessages(openaiContext, responseMode)
+    diagStage = "prompt_build"
+    stampleyGenerateLog(console, {
+      event: "diag_stage",
+      stage: "prompt_build",
+      outcome: "start",
+    })
+    let messages
+    try {
+      messages = buildOpenAIMessages(openaiContext, responseMode)
+    } catch (error) {
+      stampleyGenerateLog(console, {
+        event: "unhandled_failure",
+        stage: "prompt_build",
+        ...extractSafeErrorMetadata(error),
+      })
+      return jsonWithSensitiveCache(
+        { error: "Failed to generate response" },
+        { status: 500 }
+      )
+    }
+    stampleyGenerateLog(console, {
+      event: "diag_stage",
+      stage: "prompt_build",
+      outcome: "success",
+    })
 
     const apiKey = process.env.OPENAI_API_KEY?.trim()
 
@@ -306,8 +447,12 @@ export async function POST(req: NextRequest) {
       success: true,
       response: stampleyResponse,
     })
-  } catch {
-    stampleyGenerateLog(console, { event: "unhandled_failure" })
+  } catch (error) {
+    stampleyGenerateLog(console, {
+      event: "unhandled_failure",
+      stage: diagStage,
+      ...extractSafeErrorMetadata(error),
+    })
     return jsonWithSensitiveCache(
       { error: "Failed to generate response" },
       { status: 500 }

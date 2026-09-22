@@ -486,7 +486,23 @@ describe("auth and logging", () => {
       { event: "openai_failure", openaiStatus: 429 },
       { event: "parse_failure" },
       { event: "db_failure" },
+      {
+        event: "db_failure",
+        stage: "participant_persist",
+        errorName: "Error",
+        safeErrorCode: "P2002",
+      },
       { event: "unhandled_failure" },
+      {
+        event: "unhandled_failure",
+        stage: "prompt_build",
+        errorName: "TypeError",
+      },
+      {
+        event: "diag_stage",
+        stage: "mode_select",
+        outcome: "start",
+      },
     ]
 
     for (const event of events) {
@@ -496,8 +512,8 @@ describe("auth and logging", () => {
       assert.doesNotMatch(blob, new RegExp(EMAIL, "i"))
       assert.doesNotMatch(blob, new RegExp(REFLECTION_FIXTURE))
       assert.doesNotMatch(blob, new RegExp(COPING_FIXTURE))
-      assert.doesNotMatch(blob, /prompt/)
-      assert.doesNotMatch(blob, /messages/)
+      assert.doesNotMatch(blob, /"prompt"/)
+      assert.doesNotMatch(blob, /"messages"/)
     }
 
     const recorded = JSON.stringify(calls)
