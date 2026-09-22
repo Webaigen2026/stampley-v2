@@ -30,6 +30,9 @@ export function normalizeParticipantTextForMode(value: unknown): string {
     .trim()
 }
 
+const MED_NOUN =
+  "(insulin|medication|medicine|metformin|dose|dosage|pills?)"
+
 /**
  * High-confidence personalized medical/treatment-decision requests.
  * Ordinary "ask my doctor" / medication-memory questions do NOT match.
@@ -52,8 +55,17 @@ export function isPersonalizedMedicalDecisionRequest(text: unknown): boolean {
     return true
   }
 
+  // Dose / medication change asks (can/should/could + more/less/higher/lower/change).
   if (
-    /\bshould i\b.{0,40}\b(increase|decrease|lower|raise|change|stop|skip|start|take more|take less)\b.{0,40}\b(insulin|medication|medicine|metformin|dose|dosage|pills?)\b/.test(
+    new RegExp(
+      `\\b(can|should|could) i\\b.{0,40}\\b(take more|take less|take a (higher|lower) dose|increase|decrease|lower|raise|change|stop|skip|start)\\b.{0,40}\\b${MED_NOUN}\\b`
+    ).test(n)
+  ) {
+    return true
+  }
+
+  if (
+    /\b(can|should|could) i take (more|less)\b.{0,40}\b(insulin|medication|medicine|metformin|pills?)\b/.test(
       n
     )
   ) {
@@ -61,9 +73,35 @@ export function isPersonalizedMedicalDecisionRequest(text: unknown): boolean {
   }
 
   if (
-    /\b(increase|decrease|lower|raise|change|stop taking|skip)\b.{0,40}\b(my )?(insulin|medication|medicine|metformin|dose)\b/.test(
+    /\b(can|should|could) i (change|adjust) (my )?dose\b/.test(n) ||
+    /\b(can|should|could) i take a (higher|lower) dose\b/.test(n)
+  ) {
+    return true
+  }
+
+  // "Would it help to take more insulin / change my dose"
+  if (
+    new RegExp(
+      `\\bwould it help\\b.{0,48}\\b(take more|take less|increase|decrease|change|stop|adjust)\\b.{0,40}\\b${MED_NOUN}\\b`
+    ).test(n)
+  ) {
+    return true
+  }
+
+  // "What should I do about my insulin dose / medication dose"
+  if (
+    /\bwhat should i do about (my )?(insulin|medication|medicine|metformin)( dose|dosage)?\b/.test(
       n
-    )
+    ) ||
+    /\bwhat should i do about (my )?(medication |medicine )?dose\b/.test(n)
+  ) {
+    return true
+  }
+
+  if (
+    new RegExp(
+      `\\b(increase|decrease|lower|raise|change|stop taking|skip)\\b.{0,40}\\b(my )?${MED_NOUN}\\b`
+    ).test(n)
   ) {
     return true
   }
@@ -91,7 +129,8 @@ export function isPracticalSupportRequest(text: unknown): boolean {
   if (
     /\bi (don't|do not) know what to do( anymore| any more)?\b/.test(n) &&
     !/\bwhat (should|can|else) i do\b/.test(n) &&
-    !/\bany suggestions\b/.test(n)
+    !/\bany suggestions\b/.test(n) &&
+    !/\bany tips\b/.test(n)
   ) {
     return false
   }
@@ -108,20 +147,35 @@ export function isPracticalSupportRequest(text: unknown): boolean {
   if (/^i can do (this|that|it)\b/.test(n)) {
     return false
   }
+  // Clarification / emotion questions — not practical-support asks.
+  if (
+    /^what do you mean\b/.test(n) ||
+    /^really\??$/.test(n) ||
+    /^why do i feel\b/.test(n)
+  ) {
+    return false
+  }
 
   if (
     /\bwhat should i\b.{0,24}\b(do|try|ask)\b/.test(n) ||
-    /\bwhat can i\b.{0,24}\b(do|try)\b/.test(n) ||
+    /\bwhat can i\b.{0,24}\b(do|try|ask)\b/.test(n) ||
     /\bwhat else can i do\b/.test(n) ||
     /\bwhat do you recommend\b/.test(n) ||
     /\bwhat (are|is|s) your advice\b/.test(n) ||
     /\bwhat'?s your advice\b/.test(n) ||
     /\bcan you (give|offer) (me )?(some )?advice\b/.test(n) ||
     /\bhow (can|do) i handle (this|it)\b/.test(n) ||
+    /\bhow (can|do) i deal with (this|it)\b/.test(n) ||
     /\bwhat should i ask (my )?doctor\b/.test(n) ||
+    /\bwhat can i ask (my )?doctor\b/.test(n) ||
     /\bis there anything i can do\b/.test(n) ||
+    /\bis there anything that might help\b/.test(n) ||
+    /\bwhat would help\b/.test(n) ||
+    /\bwhat can help( me)?\b/.test(n) ||
     /\bany suggestions\b/.test(n) ||
-    /\bany advice\b/.test(n)
+    /\bany advice\b/.test(n) ||
+    /\bany tips\b/.test(n) ||
+    /\bdo you have (any )?ideas\b/.test(n)
   ) {
     return true
   }
@@ -205,10 +259,10 @@ export function buildResponseModePriorityBlock(
   switch (mode) {
     case "PRACTICAL_SUPPORT":
       return `RESPONSE MODE: PRACTICAL_SUPPORT
-PRIORITY (overrides phase pacing, including closure): The participant is asking for actionable support. Address the request before reflection or wrap-up. Do not force closure this turn.`
+PRIORITY (overrides phase pacing, including closure): The participant is asking for actionable support. Answer the newest request first with 1–3 bounded non-clinical options before reflection or wrap-up. Do not force closure this turn.`
     case "MEDICAL_BOUNDARY":
       return `RESPONSE MODE: MEDICAL_BOUNDARY
-PRIORITY (overrides phase pacing, including closure): The participant is asking for a personalized medical/treatment decision. Do not provide diagnosis, dosing, medication changes, or treatment decisions. Do not force closure this turn.`
+PRIORITY (overrides phase pacing, including closure): The participant is asking for a personalized medical/treatment decision. Do not diagnose, prescribe, dose, or change treatment. Give a useful clinician/care-team next step instead of only refusing. Do not force closure this turn.`
     case "CLOSE":
       return `RESPONSE MODE: CLOSE
 PRIORITY: The participant appears ready to wrap up. Keep validation calm and brief. Do not invent a new problem or push another reflective prompt.`

@@ -137,7 +137,7 @@ describe("HIPAA-5.6.1 unused participant DTO minimization", () => {
     assert.match(source, /highStress: openaiContext\.highStress/)
     assert.match(
       source,
-      /getStampleyFallbackResponse\(\s*openaiContext\.phase,\s*openaiContext\.highStress/
+      /getStampleyFallbackResponse\(\s*openaiContext\.phase,\s*openaiContext\.highStress,\s*responseMode/
     )
     assert.match(source, /resolveCheckInMutationAccess/)
   })

@@ -390,6 +390,10 @@ export function buildStampleyTurnInstruction(
 
   // Strong intents: do not use the contradictory closure-phase template.
   if (responseMode === "PRACTICAL_SUPPORT") {
+    const practicalStressNote = ctx.highStress
+      ? `\nHIGH STRESS + PRACTICAL: Keep 1–2 options max, shorter and calmer, less probing — still answer the actionable request directly.`
+      : ""
+
     return `${modeBlock}
 
 Study week ${week}. Conversation phase "${ctx.phase}" is pacing context only — RESPONSE MODE takes priority.
@@ -397,19 +401,28 @@ Study week ${week}. Conversation phase "${ctx.phase}" is pacing context only —
 Produce a single JSON object with exactly these keys:
 ${jsonSchema}
 
-Usually populate:
-- validation: 1 brief sentence acknowledging their request/concern
-- Prefer answering the actionable request over wrap-up or a new reflective prompt
-- reflection_question: "" unless one short clarifying question is truly needed
-- micro_skill / education_chip / closure: "" unless a tiny non-clinical tip clearly helps
+PRACTICAL_SUPPORT structure:
+- validation: 1 brief sentence acknowledging their concrete concern
+- Answer the newest actionable request first — before reflection or wrap-up
+- Provide 1–3 bounded, non-clinical practical options (short mobile-friendly list is fine across validation / micro_skill / education_chip)
+  Allowed: jot readings/symptoms for care team; prepare 1–2 clinician questions; follow the care plan already prescribed; take medications only as already prescribed; one manageable routine step; ask a trusted person for support; organize info for an appointment; contact care team when symptoms/readings are concerning or persist
+- NEVER diagnose, prescribe, recommend dose amounts, or tell them to start/stop/skip/change medication or treatment
+- Blood sugar or medication context does not authorize treatment advice — stay non-prescriptive; if personalized medical judgment is needed, note clinician/care team while still giving safe prep options (do not answer with only "talk to your doctor")
+- reflection_question: at most ONE, and only if it materially helps; usually "" when the practical answer is enough — do not force another reflective question
+- Keep total response to 1–3 short paragraphs; no essays; no excessive caveats
+- micro_skill / education_chip / closure: use only for a tiny non-clinical tip; otherwise ""
 
 Leave empty (""):
 - greeting (unless one short bridge)
 
-${sharedRules}${highStressBlock}`
+${sharedRules}${highStressBlock}${practicalStressNote}`
   }
 
   if (responseMode === "MEDICAL_BOUNDARY") {
+    const medicalStressNote = ctx.highStress
+      ? `\nHIGH STRESS + MEDICAL_BOUNDARY: Shorter and calmer; one next step is enough — still refuse personalized treatment decisions.`
+      : ""
+
     return `${modeBlock}
 
 Study week ${week}. Conversation phase "${ctx.phase}" is pacing context only — RESPONSE MODE takes priority.
@@ -417,16 +430,19 @@ Study week ${week}. Conversation phase "${ctx.phase}" is pacing context only —
 Produce a single JSON object with exactly these keys:
 ${jsonSchema}
 
-Usually populate:
-- validation: brief acknowledgment of the concern
-- Do NOT answer with dosing, medication changes, diagnosis, or treatment decisions
-- You may briefly note that personalized medical decisions belong with their clinician/care team
-- reflection_question / micro_skill / education_chip / closure: usually ""
+MEDICAL_BOUNDARY structure:
+- validation: brief acknowledgment of the concern (non-alarmist)
+- Do NOT diagnose, prescribe, recommend a dose/units, or tell them to start/stop/skip/change medication or treatment
+- Clearly explain that this specific decision belongs with their clinician, care team, or pharmacist
+- Still provide 1–2 useful non-prescriptive next steps (not a bare refusal), such as: follow the current prescribed plan; write down recent readings, symptoms, and timing; contact care team/pharmacist; prepare a question like "Should my current plan be adjusted?"
+- reflection_question: usually ""; optional only if it helps prepare for clinician discussion
+- micro_skill / education_chip / closure: use for the safe next step if needed; otherwise ""
+- Keep short and mobile-friendly (1–2 short paragraphs)
 
 Leave empty (""):
 - greeting (unless one short bridge)
 
-${sharedRules}${highStressBlock}`
+${sharedRules}${highStressBlock}${medicalStressNote}`
   }
 
   if (responseMode === "CLOSE") {
@@ -585,10 +601,72 @@ export function hasStampleyFieldText(value: unknown): boolean {
   return typeof value === "string" && value.trim().length > 0
 }
 
+function practicalSupportFallback(highStress: boolean) {
+  if (highStress) {
+    return {
+      greeting: "",
+      validation:
+        "You're looking for something workable right now — that makes sense.",
+      reflection_question: "",
+      micro_skill:
+        "Pick one small step you already know is safe for you, or write one question for your care team.",
+      education_chip: "",
+      closure: "",
+    }
+  }
+
+  return {
+    greeting: "",
+    validation:
+      "It sounds like you're looking for something concrete you can try.",
+    reflection_question: "",
+    micro_skill:
+      "Write down what felt hardest today and one question for your care team, or choose one small routine step you already know works for you.",
+    education_chip:
+      "If readings or symptoms feel concerning, contact your care team — keep following your current prescribed plan.",
+    closure: "",
+  }
+}
+
+function medicalBoundaryFallback(highStress: boolean) {
+  if (highStress) {
+    return {
+      greeting: "",
+      validation:
+        "I can't safely advise on changing medication or dose — your care team should guide that.",
+      reflection_question: "",
+      micro_skill: "",
+      education_chip:
+        "Follow your current prescribed plan for now, and contact your clinician or pharmacist with your readings and symptoms.",
+      closure: "",
+    }
+  }
+
+  return {
+    greeting: "",
+    validation:
+      "I can't advise on personalized medication or dose decisions — that needs your clinician or care team.",
+    reflection_question: "",
+    micro_skill: "",
+    education_chip:
+      "A useful next step is to follow your current prescribed plan and share recent readings, symptoms, and timing with your clinician, care team, or pharmacist so they can guide any change.",
+    closure: "",
+  }
+}
+
 export function getStampleyFallbackResponse(
   phase: ConversationPhase,
-  highStress: boolean
+  highStress: boolean,
+  responseMode: StampleyResponseMode = "EMPATHY"
 ) {
+  // Mode-aware fallbacks take priority over phase defaults (including closure).
+  if (responseMode === "PRACTICAL_SUPPORT") {
+    return practicalSupportFallback(highStress)
+  }
+  if (responseMode === "MEDICAL_BOUNDARY") {
+    return medicalBoundaryFallback(highStress)
+  }
+
   const microSkill =
     "Small reset: relax your shoulders once before moving to the next thing."
 

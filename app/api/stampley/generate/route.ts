@@ -266,7 +266,8 @@ export async function POST(req: NextRequest) {
       stampleyGenerateLog(console, { event: "parse_failure" })
       stampleyResponse = getStampleyFallbackResponse(
         openaiContext.phase,
-        openaiContext.highStress
+        openaiContext.highStress,
+        responseMode
       )
     }
 

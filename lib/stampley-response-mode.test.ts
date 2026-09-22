@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url"
 import {
   buildStampleyTurnInstruction,
   buildOpenAIMessages,
+  getStampleyFallbackResponse,
   type StampleyOpenAIContext,
 } from "./stampley-prompt"
 import {
@@ -54,6 +55,15 @@ describe("practical-support detector", () => {
     "Any suggestions?",
     "What can I try today?",
     "Is there anything I can do?",
+    "Any tips?",
+    "Do you have ideas?",
+    "What would help?",
+    "What can help me?",
+    "How do I deal with this?",
+    "What should I try?",
+    "What can I ask my doctor?",
+    "Is there anything that might help?",
+    "What can I do today?",
   ]
 
   for (const text of positives) {
@@ -74,6 +84,9 @@ describe("practical-support detector", () => {
     "My doctor told me what to do.",
     "I can do this.",
     "I don't know what to do anymore.",
+    "What do you mean?",
+    "Really?",
+    "Why do I feel like this?",
   ]
 
   for (const text of negatives) {
@@ -93,6 +106,17 @@ describe("medical-boundary detector", () => {
     "Can you diagnose this?",
     "Should I lower my insulin?",
     "Do I need a different medication?",
+    "Can I take more insulin?",
+    "Can I take less insulin?",
+    "Should I take more insulin?",
+    "Should I take less insulin?",
+    "Would it help to take more insulin?",
+    "What should I do about my insulin dose?",
+    "What should I do about my medication dose?",
+    "Can I change my dose?",
+    "Should I change my dose?",
+    "Can I take a higher dose?",
+    "Can I take a lower dose?",
   ]
 
   for (const text of positives) {
@@ -113,6 +137,10 @@ describe("medical-boundary detector", () => {
     "How can I remember my medication?",
     "I missed my medication and feel frustrated.",
     "What does blood sugar mean?",
+    "Can you explain insulin?",
+    "What does insulin do?",
+    "My doctor changed my medication.",
+    "What should I write down for my appointment?",
   ]
 
   for (const text of negatives) {
@@ -279,7 +307,10 @@ describe("response-mode prompt priority", () => {
     )
     assert.match(instruction, /RESPONSE MODE: PRACTICAL_SUPPORT/)
     assert.match(instruction, /overrides phase pacing/i)
-    assert.match(instruction, /Address the request before reflection or wrap-up/)
+    assert.match(instruction, /Answer the newest actionable request first/)
+    assert.match(instruction, /1–3 bounded, non-clinical practical options/)
+    assert.match(instruction, /at most ONE/)
+    assert.match(instruction, /NEVER diagnose, prescribe, recommend dose/)
     assert.doesNotMatch(instruction, /CLOSURE goal: emotional release/)
     assert.doesNotMatch(
       instruction,
@@ -293,7 +324,9 @@ describe("response-mode prompt priority", () => {
       "MEDICAL_BOUNDARY"
     )
     assert.match(instruction, /RESPONSE MODE: MEDICAL_BOUNDARY/)
-    assert.match(instruction, /Do not provide diagnosis, dosing/)
+    assert.match(instruction, /Do NOT diagnose, prescribe, recommend a dose/)
+    assert.match(instruction, /clinician, care team, or pharmacist/)
+    assert.match(instruction, /useful non-prescriptive next steps/)
     assert.match(instruction, /NEVER diagnose or give medical treatment advice/)
     assert.doesNotMatch(instruction, /CLOSURE goal: emotional release/)
   })
@@ -309,6 +342,22 @@ describe("response-mode prompt priority", () => {
     const turn = messages[messages.length - 1]
     assert.equal(turn?.role, "user")
     assert.match(String(turn?.content), /RESPONSE MODE: PRACTICAL_SUPPORT/)
+  })
+
+  it("highStress preserves PRACTICAL_SUPPORT mode semantics", () => {
+    const ctx = { ...baseCtx("closure"), highStress: true }
+    const instruction = buildStampleyTurnInstruction(ctx, "PRACTICAL_SUPPORT")
+    assert.match(instruction, /RESPONSE MODE: PRACTICAL_SUPPORT/)
+    assert.match(instruction, /HIGH STRESS \+ PRACTICAL/)
+    assert.match(instruction, /still answer the actionable request/)
+  })
+
+  it("highStress preserves MEDICAL_BOUNDARY mode semantics", () => {
+    const ctx = { ...baseCtx("closure"), highStress: true }
+    const instruction = buildStampleyTurnInstruction(ctx, "MEDICAL_BOUNDARY")
+    assert.match(instruction, /RESPONSE MODE: MEDICAL_BOUNDARY/)
+    assert.match(instruction, /HIGH STRESS \+ MEDICAL_BOUNDARY/)
+    assert.match(instruction, /still refuse personalized treatment/)
   })
 })
 
@@ -352,7 +401,88 @@ describe("authoritative participant-text wiring", () => {
     assert.match(route, /buildOpenAIMessages\(openaiContext, responseMode\)/)
     assert.match(
       route,
+      /getStampleyFallbackResponse\(\s*openaiContext\.phase,\s*openaiContext\.highStress,\s*responseMode/
+    )
+    assert.match(
+      route,
       /highStress remains an independent tone modifier/
     )
+  })
+})
+
+describe("mode-aware fallbacks", () => {
+  it("PRACTICAL_SUPPORT fallback is useful and non-clinical", () => {
+    const fb = getStampleyFallbackResponse("closure", false, "PRACTICAL_SUPPORT")
+    assert.match(fb.validation, /concrete|workable|looking for/i)
+    assert.ok(
+      fb.micro_skill.trim().length > 0 || fb.education_chip.trim().length > 0
+    )
+    const joined = Object.values(fb).join(" ").toLowerCase()
+    assert.doesNotMatch(joined, /\b(units?|mg|increase your|stop taking|diagnose)\b/)
+    assert.equal(fb.reflection_question, "")
+  })
+
+  it("MEDICAL_BOUNDARY fallback refuses treatment and gives care-team next step", () => {
+    const fb = getStampleyFallbackResponse("closure", false, "MEDICAL_BOUNDARY")
+    assert.match(fb.validation, /can'?t advise|cannot advise/i)
+    assert.match(
+      Object.values(fb).join(" "),
+      /clinician|care team|pharmacist/i
+    )
+    const joined = Object.values(fb).join(" ").toLowerCase()
+    assert.doesNotMatch(joined, /\b(increase your dose|take \d+|diagnose)\b/)
+    assert.match(joined, /prescribed plan|readings|symptoms/)
+  })
+
+  it("highStress keeps PRACTICAL_SUPPORT semantics shorter", () => {
+    const normal = getStampleyFallbackResponse(
+      "closure",
+      false,
+      "PRACTICAL_SUPPORT"
+    )
+    const stressed = getStampleyFallbackResponse(
+      "closure",
+      true,
+      "PRACTICAL_SUPPORT"
+    )
+    assert.match(stressed.validation, /workable|looking for/i)
+    assert.ok(stressed.micro_skill.trim().length > 0)
+    assert.ok(
+      Object.values(stressed).join("").length <=
+        Object.values(normal).join("").length
+    )
+    assert.doesNotMatch(
+      Object.values(stressed).join(" ").toLowerCase(),
+      /\b(increase your|stop taking|units?)\b/
+    )
+  })
+
+  it("highStress keeps MEDICAL_BOUNDARY semantics", () => {
+    const stressed = getStampleyFallbackResponse(
+      "closure",
+      true,
+      "MEDICAL_BOUNDARY"
+    )
+    assert.match(stressed.validation, /can'?t|medication|dose/i)
+    assert.match(
+      Object.values(stressed).join(" "),
+      /clinician|care team|pharmacist/i
+    )
+  })
+
+  it("mode-aware fallback ignores closure phase template", () => {
+    const practical = getStampleyFallbackResponse(
+      "closure",
+      false,
+      "PRACTICAL_SUPPORT"
+    )
+    const medical = getStampleyFallbackResponse(
+      "closure",
+      false,
+      "MEDICAL_BOUNDARY"
+    )
+    assert.doesNotMatch(practical.closure, /solve everything tonight/i)
+    assert.doesNotMatch(medical.closure, /solve everything tonight/i)
+    assert.doesNotMatch(practical.validation, /Thank you for checking in honestly/i)
   })
 })
