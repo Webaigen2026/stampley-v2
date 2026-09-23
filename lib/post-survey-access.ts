@@ -1,7 +1,7 @@
 import "server-only"
 
 import { prisma } from "@/lib/prisma"
-import { STUDY_TOTAL_CHECKINS } from "@/lib/check-in-utils"
+import { isPostSurveyStudyComplete } from "@/lib/post-survey-submit-validation"
 
 export type PostSurveyAccessStatus = {
   totalCheckins: number
@@ -24,7 +24,7 @@ export async function getPostSurveyAccessStatus(
   ])
 
   const totalCheckins = Number(progress?.totalCheckins ?? 0)
-  const studyComplete = totalCheckins >= STUDY_TOTAL_CHECKINS
+  const studyComplete = isPostSurveyStudyComplete(totalCheckins)
   const postSurveyCompleted = Boolean(postSurvey?.completedAt)
 
   return { totalCheckins, studyComplete, postSurveyCompleted }

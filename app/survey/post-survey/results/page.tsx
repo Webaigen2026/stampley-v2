@@ -3,22 +3,27 @@ import Image from "next/image"
 import { auth } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import { getPostSurveyAccessStatus } from "@/lib/post-survey-access"
+import {
+  resolvePostSurveyPageSession,
+  resolvePostSurveyResultsPageDestination,
+} from "@/lib/post-survey-submit-validation"
 
 export default async function PostSurveyResultsPage() {
   const session = await auth()
+  const pageSession = resolvePostSurveyPageSession(session)
 
-  if (!session?.user?.id) {
+  if (pageSession.status === "unauthenticated") {
     redirect("/login")
   }
-
-  const access = await getPostSurveyAccessStatus(session.user.id)
-
-  if (!access.studyComplete) {
+  if (pageSession.status === "forbidden") {
     redirect("/dashboard")
   }
 
-  if (!access.postSurveyCompleted) {
-    redirect("/survey/post-survey")
+  const access = await getPostSurveyAccessStatus(pageSession.userId)
+  const destination = resolvePostSurveyResultsPageDestination(access)
+
+  if (destination.status === "redirect") {
+    redirect(destination.to)
   }
 
   return (

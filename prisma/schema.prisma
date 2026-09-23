@@ -258,6 +258,7 @@ model PostSurveyResponse {
   phqAnswers            Json?     @map("phq_answers") @db.JsonB
   phqTotal              Int?      @map("phq_total")
   phqSeverity           String?   @map("phq_severity")
+  needsMentalHealthFollowup Boolean? @map("needs_mental_health_followup")
   susAnswers            Json?     @map("sus_answers") @db.JsonB
   susScore              Decimal?  @map("sus_score") @db.Decimal
   stampleyFeedback      Json?     @map("stampley_feedback") @db.JsonB

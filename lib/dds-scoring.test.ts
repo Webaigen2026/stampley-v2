@@ -374,8 +374,11 @@ describe("DDS-17 post-survey equivalence", () => {
 
   it("post-survey submit uses the shared parser and wrapper", () => {
     const source = read("actions/post-survey.ts")
-    assert.match(source, /parseDdsAnswers\(data\.dds\)/)
+    const validation = read("lib/post-survey-submit-validation.ts")
+    assert.match(source, /validatePostSurveySubmitPayload/)
     assert.match(source, /scorePostSurveyDds\(ddsAnswers\)/)
+    assert.match(validation, /parsePostSurveyDdsAnswers/)
+    assert.match(validation, /parseDdsAnswers\(raw\)/)
     assert.doesNotMatch(source, /parseInt/)
     assert.doesNotMatch(source, /hasNumericAnswer\(value\) \|\| value < 1 \|\| value > 6/)
   })

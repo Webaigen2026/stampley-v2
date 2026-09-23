@@ -2,51 +2,22 @@
 
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
-import { parseDdsAnswers } from "@/lib/dds-scoring"
 import {
   calculatePhqSeverity,
   calculatePhqTotal,
   calculateSusScore,
-  hasNumericAnswer,
   scorePostSurveyDds,
-  type PhqAnswers,
-  type SusAnswers,
 } from "@/lib/post-survey-scoring"
 import { getPostSurveyAccessStatus } from "@/lib/post-survey-access"
+import {
+  isPrismaUniqueConflict,
+  needsMentalHealthFollowupFromPhq,
+  POST_SURVEY_NOT_ELIGIBLE,
+  POST_SURVEY_UNAUTHORIZED,
+  resolvePostSurveySubmitAuth,
+  validatePostSurveySubmitPayload,
+} from "@/lib/post-survey-submit-validation"
 import { redirect } from "next/navigation"
-
-function parsePhqAnswers(raw: Record<string, unknown>): PhqAnswers | null {
-  const answers = {} as PhqAnswers
-  for (let i = 1; i <= 9; i++) {
-    const key = `phq${i}` as keyof PhqAnswers
-    const value = raw[key]
-    if (!hasNumericAnswer(value) || value < 0 || value > 3) return null
-    answers[key] = value
-  }
-  return answers
-}
-
-function parseSusAnswers(raw: Record<string, unknown>): SusAnswers | null {
-  const answers = {} as SusAnswers
-  for (let i = 1; i <= 10; i++) {
-    const key = `sus${i}` as keyof SusAnswers
-    const value = raw[key]
-    if (!hasNumericAnswer(value) || value < 1 || value > 5) return null
-    answers[key] = value
-  }
-  return answers
-}
-
-function parseStampleyFeedback(raw: Record<string, unknown>): Record<string, number> | null {
-  const feedback: Record<string, number> = {}
-  for (let i = 1; i <= 5; i++) {
-    const key = `se${i}`
-    const value = raw[key]
-    if (!hasNumericAnswer(value) || value < 1 || value > 5) return null
-    feedback[key] = value
-  }
-  return feedback
-}
 
 export async function submitPostSurvey(data: {
   dds: Record<string, unknown>
@@ -60,64 +31,78 @@ export async function submitPostSurvey(data: {
   contactPhone: string
 }) {
   const session = await auth()
-  if (!session?.user?.id) {
-    throw new Error("Unauthorized")
+  const authz = resolvePostSurveySubmitAuth(session)
+  if (!authz.ok) {
+    throw new Error(POST_SURVEY_UNAUTHORIZED)
   }
 
-  const access = await getPostSurveyAccessStatus(session.user.id)
+  const access = await getPostSurveyAccessStatus(authz.userId)
   if (!access.studyComplete) {
-    throw new Error("Post-survey is available after completing all 20 check-ins.")
+    throw new Error(POST_SURVEY_NOT_ELIGIBLE)
   }
   if (access.postSurveyCompleted) {
     redirect("/survey/post-survey/results")
   }
 
-  const ddsAnswers = parseDdsAnswers(data.dds)
-  const phqAnswers = parsePhqAnswers(data.phq)
-  const susAnswers = parseSusAnswers(data.sus)
-  const stampleyFeedback = parseStampleyFeedback(data.stampley)
-
-  if (!ddsAnswers || !phqAnswers || !susAnswers || !stampleyFeedback) {
-    return { error: "Please complete all required survey sections." }
+  const validated = validatePostSurveySubmitPayload(data)
+  if (!validated.ok) {
+    return { error: validated.error }
   }
 
-  if (data.futureResearchContact === null) {
-    return { error: "Please indicate whether you would like future research contact." }
-  }
+  const {
+    ddsAnswers,
+    phqAnswers,
+    susAnswers,
+    stampleyFeedback,
+    openReflection,
+    futureResearchContact,
+    contactName,
+    contactEmail,
+    contactPhone,
+  } = validated.data
 
+  // Server calculates scores from validated raw answers only.
   const ddsScores = scorePostSurveyDds(ddsAnswers)
   const phqTotal = calculatePhqTotal(phqAnswers)
   const phqSeverity = calculatePhqSeverity(phqTotal)
+  const needsMentalHealthFollowup = needsMentalHealthFollowupFromPhq({
+    phq9: phqAnswers.phq9,
+    phqTotal,
+  })
   const susScore = calculateSusScore(susAnswers)
 
   const now = new Date()
-  const values = {
-    ddsAnswers,
-    ddsScores,
-    phqAnswers,
-    phqTotal,
-    phqSeverity,
-    susAnswers,
-    susScore,
-    stampleyFeedback,
-    openReflection: data.openReflection.trim() || null,
-    futureResearchContact: data.futureResearchContact,
-    contactName: data.contactName.trim() || null,
-    contactEmail: data.contactEmail.trim() || null,
-    contactPhone: data.contactPhone.trim() || null,
-    completedAt: now,
-    updatedAt: now,
-  }
 
-  await prisma.postSurveyResponse.upsert({
-    where: { userId: session.user.id },
-    create: {
-      userId: session.user.id,
-      ...values,
-      createdAt: now,
-    },
-    update: values,
-  })
+  try {
+    await prisma.postSurveyResponse.create({
+      data: {
+        userId: authz.userId,
+        ddsAnswers,
+        ddsScores,
+        phqAnswers,
+        phqTotal,
+        phqSeverity,
+        needsMentalHealthFollowup,
+        susAnswers,
+        susScore,
+        stampleyFeedback,
+        openReflection,
+        futureResearchContact,
+        contactName,
+        contactEmail,
+        contactPhone,
+        completedAt: now,
+        createdAt: now,
+        updatedAt: now,
+      },
+    })
+  } catch (error) {
+    // Concurrent first submit: unique(userId) wins; treat as already submitted.
+    if (isPrismaUniqueConflict(error)) {
+      redirect("/survey/post-survey/results")
+    }
+    throw error
+  }
 
   return { success: true }
 }

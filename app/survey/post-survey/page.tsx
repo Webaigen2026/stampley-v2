@@ -1,23 +1,28 @@
 import { auth } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import { getPostSurveyAccessStatus } from "@/lib/post-survey-access"
+import {
+  resolvePostSurveyFormPageDestination,
+  resolvePostSurveyPageSession,
+} from "@/lib/post-survey-submit-validation"
 import PostSurveyClient from "./post-survey-client"
 
 export default async function PostSurveyPage() {
   const session = await auth()
+  const pageSession = resolvePostSurveyPageSession(session)
 
-  if (!session?.user?.id) {
+  if (pageSession.status === "unauthenticated") {
     redirect("/login")
   }
-
-  const access = await getPostSurveyAccessStatus(session.user.id)
-
-  if (!access.studyComplete) {
+  if (pageSession.status === "forbidden") {
     redirect("/dashboard")
   }
 
-  if (access.postSurveyCompleted) {
-    redirect("/survey/post-survey/results")
+  const access = await getPostSurveyAccessStatus(pageSession.userId)
+  const destination = resolvePostSurveyFormPageDestination(access)
+
+  if (destination.status === "redirect") {
+    redirect(destination.to)
   }
 
   return <PostSurveyClient />
