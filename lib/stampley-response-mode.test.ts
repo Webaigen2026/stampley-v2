@@ -1148,3 +1148,209 @@ describe("mode-aware fallbacks", () => {
     assert.doesNotMatch(fb.closure, /solve everything tonight/i)
   })
 })
+
+describe("B-6 direct guidance routing recall", () => {
+  const directPositives = [
+    // Screenshot / production failures
+    "what will you suggest me to do next",
+    "what to do",
+    "I dont know you tell me",
+    "I don't know, you tell me.",
+    "you tell me",
+    // Suggestion family
+    "What will you suggest me to do next?",
+    "What do you suggest I do next?",
+    "What do you suggest?",
+    "Can you suggest something?",
+    "Can you suggest something I can try?",
+    "Suggest something I can do.",
+    // What-to-do / can-try
+    "What should I do next?",
+    "What can I do right now?",
+    "What to do next?",
+    "What can I try?",
+    "What can I do next?",
+    // Tell-me
+    "Tell me what to do.",
+    "Tell me what I can try.",
+    // Idea / next-step
+    "Give me an idea.",
+    "Give me a next step.",
+    // Recommend
+    "What would you recommend I try?",
+    "What would you recommend?",
+    // Guidance
+    "I need some guidance.",
+    "Can you give me some guidance?",
+  ]
+
+  for (const text of directPositives) {
+    it(`direct guidance -> PRACTICAL: ${text}`, () => {
+      assert.equal(isPracticalSupportRequest(text), true)
+      assert.equal(
+        selectStampleyResponseMode({
+          participantText: text,
+          phase: "coping",
+        }),
+        "PRACTICAL_SUPPORT"
+      )
+      assert.equal(
+        selectStampleyResponseMode({
+          participantText: text,
+          phase: "closure",
+        }),
+        "PRACTICAL_SUPPORT"
+      )
+    })
+  }
+
+  it("screenshot phrase #1 exact production string", () => {
+    assert.equal(
+      selectStampleyResponseMode({
+        participantText: "what will you suggest me to do next",
+        phase: "coping",
+      }),
+      "PRACTICAL_SUPPORT"
+    )
+  })
+
+  it("screenshot phrase #2 exact production string", () => {
+    assert.equal(
+      selectStampleyResponseMode({
+        participantText: "what to do",
+        phase: "coping",
+      }),
+      "PRACTICAL_SUPPORT"
+    )
+  })
+
+  it("screenshot phrase #3 narrow you-tell-me family (newest-text, no history)", () => {
+    // Safe as an explicit handoff to Stampley ("provide the guidance"),
+    // not bare "I don't know" and not history-resolved anaphora.
+    assert.equal(
+      selectStampleyResponseMode({
+        participantText: "I dont know you tell me",
+        phase: "coping",
+      }),
+      "PRACTICAL_SUPPORT"
+    )
+  })
+
+  const emotional = [
+    "I don't know what to do anymore.",
+    "I don't know how to handle this anymore.",
+    "I feel lost.",
+    "I don't know.",
+    "I have no idea what to do anymore.",
+    "I don't know if I can do this.",
+    "I feel overwhelmed and don't know what to do.",
+    "I don't know what comes next.",
+    "help me",
+    "help me with that",
+  ]
+
+  for (const text of emotional) {
+    it(`emotional/ambiguous stays non-practical: ${text}`, () => {
+      assert.equal(isPracticalSupportRequest(text), false)
+      assert.notEqual(
+        selectStampleyResponseMode({
+          participantText: text,
+          phase: "coping",
+        }),
+        "PRACTICAL_SUPPORT"
+      )
+    })
+  }
+
+  const negated = [
+    "I don't want suggestions.",
+    "Don't suggest anything.",
+    "I am not asking for advice.",
+    "I don't need guidance.",
+    "Please don't tell me what to do.",
+    "I don't want ideas.",
+    "I don't need recommendations.",
+  ]
+
+  for (const text of negated) {
+    it(`negation stays non-practical: ${text}`, () => {
+      assert.equal(isPracticalSupportRequest(text), false)
+      assert.notEqual(
+        selectStampleyResponseMode({
+          participantText: text,
+          phase: "coping",
+        }),
+        "PRACTICAL_SUPPORT"
+      )
+    })
+  }
+
+  const thirdParty = [
+    "My friend asked what to do.",
+    "My wife asked me what she should do.",
+    "My doctor told me what to do.",
+    "My friend wants suggestions.",
+    "My brother needs guidance.",
+  ]
+
+  for (const text of thirdParty) {
+    it(`third-party stays non-practical: ${text}`, () => {
+      assert.equal(isPracticalSupportRequest(text), false)
+      assert.notEqual(
+        selectStampleyResponseMode({
+          participantText: text,
+          phase: "coping",
+        }),
+        "PRACTICAL_SUPPORT"
+      )
+    })
+  }
+
+  const medicalMustWin = [
+    "What should I do about my insulin dose?",
+    "Tell me how much insulin to take.",
+    "What medication should I try?",
+    "Can you suggest a different medication?",
+    "What would you recommend for my insulin?",
+    "Give me an idea for changing my dose.",
+    "What should I take next?",
+    "Should I take another dose?",
+    "Tell me what dose I should use.",
+    "Can you suggest how much metformin to take?",
+    "What can I do about my medication dose?",
+    "What should I do with my insulin?",
+  ]
+
+  for (const text of medicalMustWin) {
+    it(`medical guidance stays MEDICAL_BOUNDARY: ${text}`, () => {
+      assert.equal(isPersonalizedMedicalDecisionRequest(text), true)
+      assert.equal(
+        selectStampleyResponseMode({
+          participantText: text,
+          phase: "coping",
+        }),
+        "MEDICAL_BOUNDARY"
+      )
+      assert.notEqual(
+        selectStampleyResponseMode({
+          participantText: text,
+          phase: "coping",
+        }),
+        "PRACTICAL_SUPPORT"
+      )
+    })
+  }
+
+  it("MEDICAL_BOUNDARY still precedes PRACTICAL_SUPPORT for suggest+med", () => {
+    const text = "Can you suggest a different medication?"
+    // Even if practical patterns mention "suggest", medical wins.
+    assert.equal(isPersonalizedMedicalDecisionRequest(text), true)
+    assert.equal(
+      selectStampleyResponseMode({
+        participantText: text,
+        phase: "exploration",
+      }),
+      "MEDICAL_BOUNDARY"
+    )
+  })
+})

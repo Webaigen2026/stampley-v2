@@ -93,7 +93,32 @@ export function isPersonalizedMedicalDecisionRequest(text: unknown): boolean {
     /\bwhat should i do about (my )?(insulin|medication|medicine|metformin)( dose|dosage)?\b/.test(
       n
     ) ||
-    /\bwhat should i do about (my )?(medication |medicine )?dose\b/.test(n)
+    /\bwhat should i do about (my )?(medication |medicine )?dose\b/.test(n) ||
+    /\bwhat can i do about (my )?(medication |medicine )?dose\b/.test(n) ||
+    /\bwhat should i do with (my )?insulin\b/.test(n)
+  ) {
+    return true
+  }
+
+  // Medication / dose choice asks (B-6 medical safety for guidance verbs).
+  if (
+    /\bwhat (medication|medicine|meds|pills?) should i try\b/.test(n) ||
+    /\b(can|could) you suggest (a |an |some )?(different |another )?(medication|medicine|metformin|insulin|dose|dosage)\b/.test(
+      n
+    ) ||
+    /\b(can|could) you suggest how much (metformin|insulin|medication|medicine)\b/.test(
+      n
+    ) ||
+    /\bwhat (would|do) you recommend (for|about) (my )?(insulin|medication|medicine|metformin|dose|dosage)\b/.test(
+      n
+    ) ||
+    /\bgive me (an |a |some )?idea for (changing|change|adjusting|adjust) (my )?dose\b/.test(
+      n
+    ) ||
+    /\bwhat should i take next\b/.test(n) ||
+    /\bshould i take another dose\b/.test(n) ||
+    /\btell me (what|how much|which) dose\b/.test(n) ||
+    /\btell me how much (insulin|metformin|medication|medicine)\b/.test(n)
   ) {
     return true
   }
@@ -252,6 +277,9 @@ export function isReadinessToActionSignal(text: unknown): boolean {
  * Emotional "I don't know what to do anymore" does NOT match.
  * Ambiguous anaphoric help ("help me with that") stays non-practical —
  * this detector only receives the newest participant text (no history).
+ *
+ * B-6: also matches direct non-medical suggestion / what-to-do / tell-me /
+ * idea / guidance requests. Isolated words alone do not match.
  */
 export function isPracticalSupportRequest(text: unknown): boolean {
   const n = normalizeParticipantTextForMode(text)
@@ -263,14 +291,10 @@ export function isPracticalSupportRequest(text: unknown): boolean {
   if (hasMedicationTreatmentActionLanguage(n)) return false
   if (isTreatmentSeekingPracticalCollision(n)) return false
 
-  // Emotional overwhelm — not an actionable ask.
-  if (
-    /\bi (don't|do not) know what to do( anymore| any more)?\b/.test(n) &&
-    !/\bwhat (should|can|else) i do\b/.test(n) &&
-    !/\bany suggestions\b/.test(n) &&
-    !/\bany tips\b/.test(n) &&
-    !/\bany (options|ideas|alternatives)\b/.test(n)
-  ) {
+  // Emotional overwhelm / uncertainty — not an actionable ask.
+  // Keep "I don't know, you tell me" out of this block (handled below as
+  // a narrow direct-guidance family).
+  if (isEmotionalUncertaintyNotPracticalAsk(n)) {
     return false
   }
 
@@ -296,30 +320,18 @@ export function isPracticalSupportRequest(text: unknown): boolean {
   }
 
   // Negated / refused help or idea-seeking.
-  if (
-    /\b(don't|do not|doesn't|does not) (need|want) (any )?(help|ideas?|options?|suggestions?|tips?|alternatives?)\b/.test(
-      n
-    ) ||
-    /\bi already have (some )?(options?|ideas?|alternatives?)\b/.test(n)
-  ) {
+  if (isNegatedGuidanceRequest(n)) {
     return false
   }
 
   // Third-party / past descriptive statements — not a request to Stampley.
-  if (
-    /\b(my friend|my mother|my mom|someone else) (needs|needed) help\b/.test(
-      n
-    ) ||
-    /\bi helped .{0,48}\b(make|prepare) (a )?list\b/.test(n) ||
-    /\b(my )?(doctor|clinician) (gave|suggested|recommended|told)\b.{0,48}\b(list|alternatives?|options?|ideas?)\b/.test(
-      n
-    )
-  ) {
+  if (isThirdPartyGuidanceStatement(n)) {
     return false
   }
 
   // Ambiguous anaphoric help without a concrete task — leave REFLECT.
   // (Newest-text-only routing; no conversation history resolution.)
+  // Distinct from the narrow "you tell me" guidance family below.
   if (
     /^(can|could) you help me with (that|this|it)\??$/.test(n) ||
     /^help me with (that|this|it)\??$/.test(n) ||
@@ -334,6 +346,7 @@ export function isPracticalSupportRequest(text: unknown): boolean {
     /\bwhat can i\b.{0,24}\b(do|try|ask)\b/.test(n) ||
     /\bwhat else can i do\b/.test(n) ||
     /\bwhat do you recommend\b/.test(n) ||
+    /\bwhat would you recommend\b/.test(n) ||
     /\bwhat (are|is|s) your advice\b/.test(n) ||
     /\bwhat'?s your advice\b/.test(n) ||
     /\bcan you (give|offer) (me )?(some )?advice\b/.test(n) ||
@@ -383,11 +396,114 @@ export function isPracticalSupportRequest(text: unknown): boolean {
     /\b(can|could) you help me (think of|find) (some )?alternatives\b/.test(
       n
     ) ||
-    /\bhelp me (think of|find) (some )?alternatives\b/.test(n)
+    /\bhelp me (think of|find) (some )?alternatives\b/.test(n) ||
+    // B-6: suggestion requests
+    /\bwhat (will|would|do|can) you suggest\b/.test(n) ||
+    /\b(can|could) you suggest (something|anything|one|a few)\b/.test(n) ||
+    /\b(can|could) you suggest\b.{0,40}\b(i can|to )?(do|try)\b/.test(n) ||
+    /^suggest (something|anything)\b/.test(n) ||
+    /\bsuggest (something|anything) i can (do|try)\b/.test(n) ||
+    // B-6: bare / short "what to do" asks (utterance-shaped; not embedded
+    // emotional "I don't know what to do anymore")
+    /^what to do(\s+next)?\??$/.test(n) ||
+    // B-6: direct imperative guidance
+    /\btell me what (to do|i can try|i should (do|try)|i could try)\b/.test(
+      n
+    ) ||
+    // B-6: narrow "you tell me" / "I don't know, you tell me" — explicit
+    // handoff to Stampley for guidance (not bare "I don't know").
+    /^you tell me\??$/.test(n) ||
+    /^i (don't|do not|dont) know[, ]+you tell me\??$/.test(n) ||
+    // B-6: singular idea / next-step
+    /\bgive me (an |a )?idea\b/.test(n) ||
+    /\b(can|could) you (give|offer) (me )?(an |a )?idea\b/.test(n) ||
+    /\bgive me (a |one )?(next )?step\b/.test(n) ||
+    /\b(can|could) you give me (a |one )?(next )?step\b/.test(n) ||
+    // B-6: guidance requests
+    /\bi need (some )?guidance\b/.test(n) ||
+    /\b(can|could) you (give|offer) (me )?(some )?guidance\b/.test(n) ||
+    /\bgive me (some )?guidance\b/.test(n) ||
+    /\bany guidance\b/.test(n)
   ) {
     return true
   }
 
+  return false
+}
+
+/**
+ * Emotional uncertainty / overwhelm that must not route PRACTICAL_SUPPORT
+ * merely because it contains "what to do", "idea", or "next".
+ */
+function isEmotionalUncertaintyNotPracticalAsk(n: string): boolean {
+  // Bare uncertainty (not "I don't know, you tell me").
+  if (/^i (don't|do not|dont) know\.?$/.test(n)) return true
+  if (/^i feel lost\.?$/.test(n)) return true
+
+  if (
+    /\bi (don't|do not|dont) know what to do( anymore| any more)?\b/.test(n) ||
+    /\bi have no idea what to do( anymore| any more)?\b/.test(n) ||
+    /\bi (don't|do not|dont) know how to handle (this|it)( anymore| any more)?\b/.test(
+      n
+    ) ||
+    /\bi (don't|do not|dont) know if i can( do this)?\b/.test(n) ||
+    /\bi (don't|do not|dont) know what comes next\b/.test(n) ||
+    /\bi feel overwhelmed\b.{0,48}\b(don't|do not|dont) know what to do\b/.test(
+      n
+    )
+  ) {
+    // Still allow when an independent explicit practical ask is also present.
+    if (
+      /\bwhat (should|can|else) i (do|try)\b/.test(n) ||
+      /\bany suggestions\b/.test(n) ||
+      /\bany tips\b/.test(n) ||
+      /\bany (options|ideas|alternatives)\b/.test(n) ||
+      /\bwhat (will|would|do|can) you suggest\b/.test(n) ||
+      /\btell me what (to do|i can try)\b/.test(n)
+    ) {
+      return false
+    }
+    return true
+  }
+
+  return false
+}
+
+function isNegatedGuidanceRequest(n: string): boolean {
+  if (
+    /\b(don't|do not|doesn't|does not|dont) (need|want) (any )?(help|ideas?|options?|suggestions?|tips?|alternatives?|guidance|recommendations?|advice)\b/.test(
+      n
+    ) ||
+    /\bi already have (some )?(options?|ideas?|alternatives?)\b/.test(n) ||
+    /\b(don't|do not|dont) suggest\b/.test(n) ||
+    /\b(please )?(don't|do not|dont) tell me what to do\b/.test(n) ||
+    /\b(i am|i'm|im) not asking for (any )?(advice|suggestions?|guidance|ideas?|recommendations?)\b/.test(
+      n
+    )
+  ) {
+    return true
+  }
+  return false
+}
+
+function isThirdPartyGuidanceStatement(n: string): boolean {
+  if (
+    /\b(my friend|my mother|my mom|someone else) (needs|needed) help\b/.test(
+      n
+    ) ||
+    /\bi helped .{0,48}\b(make|prepare) (a )?list\b/.test(n) ||
+    /\b(my )?(doctor|clinician) (gave|suggested|recommended|told)\b.{0,48}\b(list|alternatives?|options?|ideas?|what to do)\b/.test(
+      n
+    ) ||
+    /\b(my )?(friend|wife|husband|brother|sister|partner|mom|mother|dad) (asked|wants|wanted|needs|needed)\b.{0,48}\b(what to do|suggestions?|guidance|ideas?|recommendations?|what (she|he|they) should do)\b/.test(
+      n
+    ) ||
+    /\b(my )?(wife|husband|friend|brother|sister) asked me what (she|he|they) should do\b/.test(
+      n
+    )
+  ) {
+    return true
+  }
   return false
 }
 
@@ -424,7 +540,7 @@ function isTreatmentSeekingPracticalCollision(text: unknown): boolean {
       n
     ) ||
     /\b(different|another) (medication|medicine|treatment)\b/.test(n) ||
-    /\b(options?|ideas?|alternatives?) (for|about|on|to)\b.{0,40}\b(insulin|dose|dosage|medication|medicine|meds|treatment|pills?)\b/.test(
+    /\b(options?|ideas?|alternatives?|suggestions?|guidance|recommendations?) (for|about|on|to)\b.{0,40}\b(insulin|dose|dosage|medication|medicine|meds|treatment|pills?)\b/.test(
       n
     ) ||
     /\bhelp me (increase|decrease|lower|raise|change|adjust|decide|choose|skip|stop)\b.{0,40}\b(insulin|dose|dosage|medication|medicine|meds|treatment|pills?)\b/.test(
@@ -433,10 +549,13 @@ function isTreatmentSeekingPracticalCollision(text: unknown): boolean {
     /\bhelp me .{0,40}\b(how much|units|dosage)\b.{0,40}\b(insulin|medication|medicine|dose)\b/.test(
       n
     ) ||
-    /\b(give|suggest|offer) (me )?(some |a few )?(options?|ideas?|alternatives?).{0,40}\b(insulin|dose|dosage|medication|medicine|meds|treatment)\b/.test(
+    /\b(give|suggest|offer|recommend|tell) (me )?(some |a few |an |a )?(options?|ideas?|alternatives?|suggestion|guidance)?\b.{0,48}\b(insulin|dose|dosage|medication|medicine|meds|treatment|metformin)\b/.test(
       n
     ) ||
     /\b(options?|ideas?|alternatives?).{0,40}\b(changing|change|adjust|increase|decrease|lower|raise)\b.{0,40}\b(insulin|dose|dosage|medication|medicine|meds|treatment)\b/.test(
+      n
+    ) ||
+    /\bwhat (should|can|would) i (do|try|take|use)\b.{0,40}\b(insulin|dose|dosage|medication|medicine|meds|metformin|treatment)\b/.test(
       n
     )
   ) {
